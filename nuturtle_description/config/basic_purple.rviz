@@ -76,7 +76,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Best Effort
-        Value: /scan
+        Value: /purple/scan
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -90,7 +90,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_description
+        Value: /purple/robot_description
       Enabled: true
       Links:
         All Links Enabled: true
@@ -214,7 +214,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /odom
+        Value: /purple/odom
       Value: true
   Enabled: true
   Global Options:
@@ -234,7 +234,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /move_base_simple/goal
+        Value: /purple/move_base_simple/goal
     - Class: rviz_default_plugins/PublishPoint
       Single click: true
       Topic:
@@ -242,7 +242,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /clicked_point
+        Value: /purple/clicked_point
   Transformation:
     Current:
       Class: rviz_default_plugins/TF

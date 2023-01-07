@@ -46,6 +46,7 @@ def generate_launch_description():
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
+            namespace=LaunchConfiguration('color'),
             parameters=[{
                 'robot_description':
                 ParameterValue(
@@ -65,12 +66,14 @@ def generate_launch_description():
         Node(
             package='joint_state_publisher',
             executable='joint_state_publisher',
+            namespace=LaunchConfiguration('color'),
             condition=IfCondition(LaunchConfiguration('use_jsp')),
         ),
         Node(
             package='rviz2',
             executable='rviz2',
             output='screen',
+            namespace=LaunchConfiguration('color'),
             condition=IfCondition(LaunchConfiguration('use_rviz')),
             arguments=[
                 '-d',
