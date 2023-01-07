@@ -47,7 +47,7 @@ def generate_launch_description():
                         TextSubstitution(text='xacro '),
                         PathJoinSubstitution([
                             FindPackageShare('nuturtle_description'),
-                            'urdf/turtlebot3_burger.urdf'
+                            'urdf/turtlebot3_burger.urdf.xacro'
                         ])
                     ]),
                     value_type=str
