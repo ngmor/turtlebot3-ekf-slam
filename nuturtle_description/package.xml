@@ -5,12 +5,14 @@
   <version>0.0.4</version>
   <description>Debugging, testing, visualization, and description, for NU turtle.</description>
   <maintainer email="ngmorales97@gmail.com">ngm</maintainer>
-  <license>Apache 2.0</license>
+  <license>APLv2</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+
+  <exec_depend>ros2launch</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
