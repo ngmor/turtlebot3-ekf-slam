@@ -37,6 +37,12 @@ def generate_launch_description():
             choices=['true', 'false'],
             description='Selects whether or not to launch the joint state publisher.',
         ),
+        DeclareLaunchArgument(
+            name='color',
+            default_value='purple',
+            choices=['red','green','blue','purple'],
+            description='Selects the color of the turtlebot.',
+        ),
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
@@ -48,7 +54,9 @@ def generate_launch_description():
                         PathJoinSubstitution([
                             FindPackageShare('nuturtle_description'),
                             'urdf/turtlebot3_burger.urdf.xacro'
-                        ])
+                        ]),
+                        TextSubstitution(text=' color:='),
+                        LaunchConfiguration('color'),
                     ]),
                     value_type=str
                 )
