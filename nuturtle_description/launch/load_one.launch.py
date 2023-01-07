@@ -50,6 +50,14 @@ def generate_launch_description():
                 TextSubstitution(text='/'),
             ]
         ),
+        SetLaunchConfiguration(
+            name='rviz_config_filename',
+            value=[
+                TextSubstitution(text='basic_'),
+                LaunchConfiguration('color'),
+                TextSubstitution(text='.rviz'),
+            ]
+        ),
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
@@ -88,7 +96,8 @@ def generate_launch_description():
                 '-d',
                 PathJoinSubstitution([
                     FindPackageShare('nuturtle_description'),
-                    'config/basic_purple.rviz'
+                    'config',
+                    LaunchConfiguration('rviz_config_filename')
                 ]),
                 '-f',
                 [
