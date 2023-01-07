@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, Shutdown
 from launch.substitutions import Command, TextSubstitution, \
     PathJoinSubstitution, LaunchConfiguration
 from launch.conditions import IfCondition
@@ -70,6 +70,7 @@ def generate_launch_description():
                     FindPackageShare('nuturtle_description'),
                     'config/basic_purple.rviz'
                 ])
-            ]
+            ],
+            on_exit=Shutdown()
         ),
     ])
