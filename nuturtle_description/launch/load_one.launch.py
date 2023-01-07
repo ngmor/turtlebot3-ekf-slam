@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, Shutdown
+from launch.actions import DeclareLaunchArgument, SetLaunchConfiguration, Shutdown
 from launch.substitutions import Command, TextSubstitution, \
     PathJoinSubstitution, LaunchConfiguration
 from launch.conditions import IfCondition
@@ -43,24 +43,33 @@ def generate_launch_description():
             choices=['red','green','blue','purple'],
             description='Selects the color of the turtlebot.',
         ),
+        SetLaunchConfiguration(
+            name='tf_prefix',
+            value=[
+                LaunchConfiguration('color'),
+                TextSubstitution(text='/'),
+            ]
+        ),
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
             namespace=LaunchConfiguration('color'),
             parameters=[{
                 'robot_description':
-                ParameterValue(
-                    Command([
-                        TextSubstitution(text='xacro '),
-                        PathJoinSubstitution([
-                            FindPackageShare('nuturtle_description'),
-                            'urdf/turtlebot3_burger.urdf.xacro'
+                    ParameterValue(
+                        Command([
+                            TextSubstitution(text='xacro '),
+                            PathJoinSubstitution([
+                                FindPackageShare('nuturtle_description'),
+                                'urdf/turtlebot3_burger.urdf.xacro'
+                            ]),
+                            TextSubstitution(text=' color:='),
+                            LaunchConfiguration('color'),
                         ]),
-                        TextSubstitution(text=' color:='),
-                        LaunchConfiguration('color'),
-                    ]),
-                    value_type=str
-                )
+                        value_type=str
+                    ),
+                'frame_prefix':
+                    LaunchConfiguration('tf_prefix'),
             }]
         ),
         Node(
@@ -80,7 +89,12 @@ def generate_launch_description():
                 PathJoinSubstitution([
                     FindPackageShare('nuturtle_description'),
                     'config/basic_purple.rviz'
-                ])
+                ]),
+                '-f',
+                [
+                    LaunchConfiguration('tf_prefix'),
+                    TextSubstitution(text='base_footprint'),
+                ]
             ],
             on_exit=Shutdown()
         ),

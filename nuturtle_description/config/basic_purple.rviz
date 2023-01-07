@@ -132,7 +132,7 @@ Visualization Manager:
           Show Trail: false
           Value: true
       Name: RobotModel
-      TF Prefix: ""
+      TF Prefix: "purple"
       Update Interval: 0
       Value: true
       Visual Enabled: true
