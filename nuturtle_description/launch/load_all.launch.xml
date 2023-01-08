@@ -15,4 +15,6 @@
         <arg name="color" value="blue"/>
         <arg name="use_rviz" value="false"/>
     </include>
+    <node pkg="rviz2" exec="rviz2"
+        args="-d $(find-pkg-share nuturtle_description)/config/basic_all.rviz"/>
 </launch>
