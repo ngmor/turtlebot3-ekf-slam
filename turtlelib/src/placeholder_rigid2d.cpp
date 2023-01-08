@@ -1,0 +1,1 @@
+//rigid2d.cpp should be placed here when CMake is configured
