@@ -3,4 +3,4 @@
 * Winter 2022
 # Package List
 This repository consists of several ROS packages
-- TODO
+- [`nuturtle_description`](nuturtle_description) - contains URDF and configuration parameters for the NUTurtle.
