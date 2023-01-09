@@ -123,6 +123,17 @@ namespace turtlelib
         };
     }
 
+    /// \brief apply a transformation to a Twist2D
+    /// \param V - the twist to transform
+    /// \return a twist in the new coordinate system
+    Twist2D Transform2D::operator()(Twist2D V) const {
+        return Twist2D {
+            V.w,
+            V.w*trans_.y + V.x*std::cos(rot_) - V.y*std::sin(rot_),
+            -V.w*trans_.x + V.x*std::sin(rot_) + V.y*std::cos(rot_)
+        };
+    }
+
     /// \brief invert the transformation
     /// \return the inverse transformation. 
     Transform2D Transform2D::inv() const {

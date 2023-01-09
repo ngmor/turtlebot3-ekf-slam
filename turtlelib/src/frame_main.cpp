@@ -36,6 +36,7 @@ int main () {
 
     std::cout << "Enter twist V_b:\n";
     std::cin >> V_b;
-    //TODO - transformations
-    std::cout << V_b << '\n';
+    std::cout << "V_a: " << t_ab(V_b) << '\n'
+              << "V_b: " << V_b << '\n'
+              << "V_c: " << (t_bc.inv())(V_b) << '\n';
 }
