@@ -119,5 +119,28 @@ namespace turtlelib
     /// \return the angular displacement, in radians
     double Transform2D::rotation() const { return rot_; }
 
+    /// \brief should print a human readable version of the transform:
+    /// An example output:
+    /// deg: 90 x: 3 y: 5
+    /// \param os - an output stream
+    /// \param tf - the transform to print
+    std::ostream & operator<<(std::ostream & os, const Transform2D & tf) {
+        os << "deg: " << rad2deg(tf.rotation())
+           << " x: " << tf.translation().x
+           << " y: " << tf.translation().y;
+        return os;
+    }
+
+    //TODO >> operator
+
+    /// \brief multiply two transforms together, returning their composition
+    /// \param lhs - the left hand operand
+    /// \param rhs - the right hand operand
+    /// \return the composition of the two transforms
+    /// HINT: This function should be implemented in terms of *=
+    Transform2D operator*(Transform2D lhs, const Transform2D & rhs) {
+        return lhs*=rhs;
+    }
+
     /* TRANSFORM2D END */
 }
