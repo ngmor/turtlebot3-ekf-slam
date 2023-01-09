@@ -5,23 +5,18 @@ using std::cin;
 using namespace turtlelib; //TODO - good practice?
 
 int main () {
-    cout << "Hello World!" << '\n';
 
-    /*
-    //Vector2D
-    Vector2D v_a;
-    int test;
+    Transform2D t_ab, t_bc;
 
-    cout << "Enter v_a and an int: " << '\n';
-    cin >> v_a >> test;
-    cout << "v_a: " << v_a << '\n';
-    cout << "int: " << test << '\n';
-    */
+    std::cout << "Enter transform T_{a,b}:\n";
+    std::cin >> t_ab;
+    std::cout << "Enter transform T_{b,c}:\n";
+    std::cin >> t_bc;
+    std::cout << "T_{a,b}: " << t_ab << '\n'
+              << "T_{b,a}: " << t_ab.inv() << '\n'
+              << "T_{b,c}: " << t_bc << '\n'
+              << "T_{c,b}: " << t_bc.inv() << '\n'
+              << "T_{a,c}: " << t_ab*t_bc << '\n'
+              << "T_{c,a}: " << (t_ab*t_bc).inv() << '\n';
 
-    //Transform2D
-    Transform2D tf {Vector2D{1,2},PI/2};
-
-    cout << tf << '\n';
-    cin >> tf;
-    cout << tf << '\n';
 }
