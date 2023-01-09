@@ -1,1 +1,0 @@
-//frame_main.cpp should be placed here when CMake is configured

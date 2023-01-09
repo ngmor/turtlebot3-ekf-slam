@@ -1,1 +1,0 @@
-//rigid2d.hpp should be placed here when CMake is configured
