@@ -48,11 +48,19 @@ namespace turtlelib
     /// just to see what happens
     static_assert(almost_equal(0, 0), "is_zero failed");
 
-    static_assert(almost_equal(deg2rad(0.0), 0.0), "deg2rad failed");
+    static_assert(almost_equal(1.23456, 1.23456), "nonzero float almost equal failed");
 
-    static_assert(almost_equal(rad2deg(0.0), 0.0), "rad2deg) failed");
+    static_assert(almost_equal(deg2rad(0.0), 0.0), "deg2rad 0 failed");
 
-    static_assert(almost_equal(deg2rad(rad2deg(2.1)), 2.1), "deg2rad failed");
+    static_assert(almost_equal(deg2rad(135), 2.356194490192345), "deg2rad 135 failed");
+
+    static_assert(almost_equal(rad2deg(0.0), 0.0), "rad2deg 0 failed");
+
+    static_assert(almost_equal(rad2deg(PI / 6.0), 30.0), "rad2deg PI/6 failed");
+
+    static_assert(almost_equal(deg2rad(rad2deg(2.1)), 2.1), "rad2deg and deg2rad back failed");
+
+    static_assert(almost_equal(rad2deg(deg2rad(352.0)), 352.0), "deg2rad and rad2deg back failed");
 
     /// \brief A 2-Dimensional Vector
     struct Vector2D
