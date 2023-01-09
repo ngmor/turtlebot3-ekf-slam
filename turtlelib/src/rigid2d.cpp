@@ -44,12 +44,55 @@ namespace turtlelib
         }
 
         return is;
-    };
+    }
 
     /* VECTOR2D END */
 
 
 
+    /* TWIST2D START */
+
+    /// \brief output a 2 dimensional twist as [wcomponent xcomponent ycomponent]
+    /// os - stream to output to
+    /// t - the twist to print
+    std::ostream & operator<<(std::ostream & os, const Twist2D & V) {
+        os << '[' << V.w << ' ' << V.x << ' ' << V.y << ']';
+        return os;
+    }
+
+    // \brief input a 2 dimensional twist
+    ///   You should be able to read vectors entered as follows:
+    ///   [w x y] or w x y
+    /// \param is - stream from which to read
+    /// \param t [out] - output twist
+    std::istream & operator>>(std::istream & is, Twist2D & V) {
+        //remove leading whitespace
+        is >> std::ws;
+
+        char c = is.peek();
+
+        if (c == '[') {
+            //Remove leading bracket
+            c = is.get();
+        }
+
+        //Get actual data
+        is >> V.w >> V.x >> V.y;
+
+        c = is.peek();
+
+        if (c == ']') {
+            //Remove trailing bracket
+            c = is.get();
+        }
+
+        return is;
+    }
+
+    /* TWIST2D END */
+    
+    
+    
     /* TRANSFORM2D START */
 
     /// \brief Create an identity transformation

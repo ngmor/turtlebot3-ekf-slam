@@ -32,5 +32,10 @@ int main () {
               << "v_c: " << (t_bc.inv())(v_b) << '\n';
 
     //Twist2D
-    //TODO
+    Twist2D V_b;
+
+    std::cout << "Enter twist V_b:\n";
+    std::cin >> V_b;
+    //TODO - transformations
+    std::cout << V_b << '\n';
 }
