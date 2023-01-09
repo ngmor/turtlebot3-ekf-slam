@@ -103,6 +103,11 @@ namespace turtlelib
     /// \brief a rigid body transformation in 2 dimensions
     class Transform2D
     {
+    private:
+        /// \brief translational component
+        Vector2D trans_ {0.,0.};
+        /// \brief rotational component
+        double rot_ = 0.;
     public:
         /// \brief Create an identity transformation
         Transform2D();
@@ -112,14 +117,14 @@ namespace turtlelib
         explicit Transform2D(Vector2D trans);
 
         /// \brief create a pure rotation
-        /// \param radians - angle of the rotation, in radians
-        explicit Transform2D(double radians);
+        /// \param rot - angle of the rotation, in radians
+        explicit Transform2D(double rot);
 
         /// \brief Create a transformation with a translational and rotational
         /// component
         /// \param trans - the translation
         /// \param rot - the rotation, in radians
-        Transform2D(Vector2D trans, double radians);
+        Transform2D(Vector2D trans, double rot);
 
         /// \brief apply a transformation to a Vector2D
         /// \param v - the vector to transform
