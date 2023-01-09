@@ -46,6 +46,17 @@ namespace turtlelib
         return is;
     }
 
+    /// \brief normalize a 2 dimensional vector
+    /// \param v - the vector to normalize
+    Vector2D normalize(const Vector2D & v) {
+        double mag = std::sqrt(std::pow(v.x,2) + std::pow(v.y,2));
+
+        return Vector2D {
+            v.x / mag,
+            v.y / mag
+        };
+    }
+
     /* VECTOR2D END */
 
 

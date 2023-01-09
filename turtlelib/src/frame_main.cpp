@@ -25,8 +25,7 @@ int main () {
 
     std::cout << "Enter vector v_b:\n";
     std::cin >> v_b;
-    //TODO - normalize
-    std::cout << "v_bhat: " << '\n'
+    std::cout << "v_bhat: " << normalize(v_b) << '\n'
               << "v_a: " << t_ab(v_b) << '\n'
               << "v_b: " << v_b << '\n'
               << "v_c: " << (t_bc.inv())(v_b) << '\n';
@@ -36,7 +35,7 @@ int main () {
 
     std::cout << "Enter twist V_b:\n";
     std::cin >> V_b;
-    std::cout << "V_a: " << t_ab(V_b) << '\n'
-              << "V_b: " << V_b << '\n'
-              << "V_c: " << (t_bc.inv())(V_b) << '\n';
+    std::cout << "V_a " << t_ab(V_b) << '\n'
+              << "V_b " << V_b << '\n'
+              << "V_c " << (t_bc.inv())(V_b) << '\n';
 }
