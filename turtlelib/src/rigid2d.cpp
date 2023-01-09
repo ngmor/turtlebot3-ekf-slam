@@ -78,5 +78,46 @@ namespace turtlelib
         };
     }
 
+    /// \brief invert the transformation
+    /// \return the inverse transformation. 
+    Transform2D Transform2D::inv() const {
+        return Transform2D {
+            //translation
+            Vector2D {
+                -trans_.x*std::cos(rot_) - trans_.y*std::sin(rot_),
+                -trans_.y*std::cos(rot_) + trans_.x*std::sin(rot_)
+            },
+            //rotation
+            -rot_
+        };
+    }
+
+    /// \brief compose this transform with another and store the result 
+    /// in this object
+    /// \param rhs - the first transform to apply
+    /// \return a reference to the newly transformed operator
+    Transform2D & Transform2D::operator*=(const Transform2D & rhs) {
+        
+        //Output translation adds current translation to incoming translation
+        //modified by current rotation
+        this->trans_.x += rhs.translation().x*std::cos(this->rot_)
+                        - rhs.translation().y*std::sin(this->rot_);
+        this->trans_.y += rhs.translation().x*std::sin(this->rot_)
+                        - rhs.translation().y*std::cos(this->rot_);
+        
+        //Output rotation just adds the angles together
+        this->rot_ += rhs.rotation();
+        
+        return *this;
+    }
+
+    /// \brief the translational component of the transform
+    /// \return the x,y translation
+    Vector2D Transform2D::translation() const { return trans_; }
+
+    /// \brief get the angular displacement of the transform
+    /// \return the angular displacement, in radians
+    double Transform2D::rotation() const { return rot_; }
+
     /* TRANSFORM2D END */
 }
