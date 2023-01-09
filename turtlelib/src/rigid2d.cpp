@@ -1,6 +1,8 @@
 #include "turtlelib/rigid2d.hpp"
 #include <iostream>
 #include <cmath>
+#include <string>
+#include <sstream>
 
 namespace turtlelib
 {
@@ -131,7 +133,49 @@ namespace turtlelib
         return os;
     }
 
-    //TODO >> operator
+    /// \brief Read a transformation from stdin
+    /// Should be able to read input either as output by operator<< or
+    /// as 3 numbers (degrees, dx, dy) separated by spaces or newlines
+    /// For example:
+    /// 90 2 3
+    std::istream & operator>>(std::istream & is, Transform2D & tf) {
+
+        std::string line;
+
+        //Get whole line from input
+        std::getline(is,line);
+
+        //Parse string by removing label texts
+        std::string text = "deg:";
+        auto pos = line.find(text);
+        if (pos != std::string::npos) {
+            line.erase(pos, text.length());
+        }
+        text = "x:";
+        pos = line.find(text);
+        if (pos != std::string::npos) {
+            line.erase(pos, text.length());
+        }
+        text = "y:";
+        pos = line.find(text);
+        if (pos != std::string::npos) {
+            line.erase(pos, text.length());
+        }
+
+        //Convert back to an input stream
+        std::istringstream linestream{ line };
+
+        double deg, x, y;
+
+        linestream >> deg >> x >> y;
+
+        tf = Transform2D{
+            Vector2D{x,y},
+            deg2rad(deg)
+        };
+
+        return is;
+    }
 
     /// \brief multiply two transforms together, returning their composition
     /// \param lhs - the left hand operand
