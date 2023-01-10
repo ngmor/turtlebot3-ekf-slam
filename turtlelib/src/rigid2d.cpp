@@ -1,8 +1,6 @@
 #include "turtlelib/rigid2d.hpp"
 #include <iostream>
 #include <cmath>
-#include <string>
-#include <sstream>
 
 namespace turtlelib
 {
@@ -204,36 +202,47 @@ namespace turtlelib
     /// For example:
     /// 90 2 3
     std::istream & operator>>(std::istream & is, Transform2D & tf) {
-
-        std::string line;
-
-        //Get whole line from input
-        std::getline(is,line);
-
-        //Parse string by removing label texts
-        std::string text = "deg:";
-        auto pos = line.find(text);
-        if (pos != std::string::npos) {
-            line.erase(pos, text.length());
-        }
-        text = "x:";
-        pos = line.find(text);
-        if (pos != std::string::npos) {
-            line.erase(pos, text.length());
-        }
-        text = "y:";
-        pos = line.find(text);
-        if (pos != std::string::npos) {
-            line.erase(pos, text.length());
-        }
-
-        //Convert back to an input stream
-        std::istringstream linestream{ line };
-
         double deg, x, y;
+        
+        //remove leading whitespace
+        is >> std::ws;
 
-        linestream >> deg >> x >> y;
+        char c = is.peek();
 
+        //remove any characters that aren't digits
+        while (!std::isdigit(c)) {
+            c = is.get();
+            c = is.peek();
+        }
+
+        //Get rotation
+        is >> deg;
+
+
+        c = is.peek();
+
+        //remove any characters that aren't digits
+        while (!std::isdigit(c)) {
+            c = is.get();
+            c = is.peek();
+        }
+
+        //Get x translation
+        is >> x;
+
+
+        c = is.peek();
+
+        //remove any characters that aren't digits
+        while (!std::isdigit(c)) {
+            c = is.get();
+            c = is.peek();
+        }
+
+        //Get y translation
+        is >> y;
+
+        //Init transform
         tf = Transform2D{
             Vector2D{x,y},
             deg2rad(deg)
@@ -248,7 +257,8 @@ namespace turtlelib
     /// \return the composition of the two transforms
     /// HINT: This function should be implemented in terms of *=
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs) {
-        return lhs*=rhs;
+        lhs*=rhs;
+        return lhs;
     }
 
     /* TRANSFORM2D END */
