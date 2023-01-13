@@ -129,10 +129,18 @@ namespace turtlelib
         this->trans_.x += rhs.translation().x*std::cos(this->rot_)
                         - rhs.translation().y*std::sin(this->rot_);
         this->trans_.y += rhs.translation().x*std::sin(this->rot_)
-                        - rhs.translation().y*std::cos(this->rot_);
+                        + rhs.translation().y*std::cos(this->rot_);
         
         //Output rotation just adds the angles together
         this->rot_ += rhs.rotation();
+
+        //Bound rotation between -pi and pi
+        while (this->rot_ > PI) {
+            this->rot_ -= 2*PI;
+        }
+        while (this->rot_ < -PI) {
+            this->rot_ += 2*PI;
+        }
         
         return *this;
     }
@@ -157,7 +165,7 @@ namespace turtlelib
         char c = is.peek();
 
         //remove any characters that aren't digits
-        while (!std::isdigit(c)) {
+        while (!(std::isdigit(c) || (c == '-') || (c == '.'))) {
             c = is.get();
             c = is.peek();
         }
@@ -169,7 +177,7 @@ namespace turtlelib
         c = is.peek();
 
         //remove any characters that aren't digits
-        while (!std::isdigit(c)) {
+        while (!(std::isdigit(c) || (c == '-') || (c == '.'))) {
             c = is.get();
             c = is.peek();
         }
@@ -181,7 +189,7 @@ namespace turtlelib
         c = is.peek();
 
         //remove any characters that aren't digits
-        while (!std::isdigit(c)) {
+        while (!(std::isdigit(c) || (c == '-') || (c == '.'))) {
             c = is.get();
             c = is.peek();
         }
