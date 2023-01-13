@@ -4,6 +4,7 @@
 #include <string>
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "std_msgs/msg/u_int64.hpp"
 
 using namespace std::chrono_literals;
 
@@ -25,18 +26,25 @@ public:
             std::bind(&NuSim::timer_callback, this)
         );
         test_publisher_ = create_publisher<std_msgs::msg::String>("~/topic", 10);
+        timestep_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     }
 private:
     double sim_rate_;
     double sim_interval_;
+    uint64_t timestep_ = 0;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr test_publisher_;
+    rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr timestep_publisher_;
 
     void timer_callback() {
-        auto message = std_msgs::msg::String();
-        message.data = "Hello, world!";
-        //RCLCPP_INFO(get_logger(), "Publishing");
-        test_publisher_->publish(message);
+        // auto message = std_msgs::msg::String();
+        // message.data = "Hello, world!";
+        // //RCLCPP_INFO(get_logger(), "Publishing");
+        // test_publisher_->publish(message);
+
+        auto timestep_msg = std_msgs::msg::UInt64();
+        timestep_msg.data = timestep_++;
+        timestep_publisher_->publish(timestep_msg);
     }
 };
 
