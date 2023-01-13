@@ -98,7 +98,7 @@ namespace turtlelib
     Vector2D Transform2D::operator()(Vector2D v) const {
         return Vector2D {
             v.x*std::cos(rot_) - v.y*std::sin(rot_) + trans_.x,
-            v.x*std::sin(rot_) - v.y*std::cos(rot_) + trans_.y
+            v.x*std::sin(rot_) + v.y*std::cos(rot_) + trans_.y
         };
     }
 
