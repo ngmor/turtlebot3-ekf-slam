@@ -1,12 +1,17 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "turtlelib/rigid2d.hpp"
+#include <string>
+#include <sstream>
 using turtlelib::Transform2D;
 using turtlelib::Vector2D;
 using turtlelib::Twist2D;
+using turtlelib::deg2rad;
 using Catch::Matchers::WithinRel;
+using std::stringstream;
+using std::string;
 
-#define FLOAT_TOL 1e-8
+constexpr double FLOAT_TOL = 1e-8;
 
 TEST_CASE("constructors and getters", "[transform]") { //Nick Morales
     SECTION("default constructor") {
@@ -134,5 +139,51 @@ TEST_CASE("transform composition", "[transform]") { //Nick Morales
         REQUIRE_THAT(Tres.translation().x, WithinRel(xres, FLOAT_TOL));
         REQUIRE_THAT(Tres.translation().y, WithinRel(yres, FLOAT_TOL));
         REQUIRE_THAT(Tres.rotation(), WithinRel(rotres, FLOAT_TOL));
+    }
+}
+
+TEST_CASE("output stream", "[transform]") { //Nick Morales
+    stringstream ss;
+    
+    SECTION("input 1") {
+        Transform2D T{Vector2D{-3.38, -2.22}, deg2rad(117)};
+
+        ss << T;
+
+        REQUIRE (ss.str() == "deg: 117 x: -3.38 y: -2.22");
+    }
+
+    SECTION("input 2") {
+        Transform2D T{Vector2D{2.84, -2.97}, deg2rad(117)};
+
+        ss << T;
+
+        REQUIRE (ss.str() == "deg: 117 x: 2.84 y: -2.97");
+    }
+}
+
+TEST_CASE("input stream", "[transform]") { //Nick Morales
+    stringstream ss;
+    string line;
+    Transform2D T;
+
+    SECTION("with labels") {
+        line = "deg: -24 x: -3.24 y: 3.83";
+        ss << line;
+        ss >> T;
+
+        REQUIRE_THAT(T.translation().x, WithinRel(-3.24, FLOAT_TOL));
+        REQUIRE_THAT(T.translation().y, WithinRel(3.83, FLOAT_TOL));
+        REQUIRE_THAT(T.rotation(), WithinRel(deg2rad(-24), FLOAT_TOL));
+    }
+
+    SECTION("without labels") {
+        line = "142 1.73 -2.23";
+        ss << line;
+        ss >> T;
+
+        REQUIRE_THAT(T.translation().x, WithinRel(1.73, FLOAT_TOL));
+        REQUIRE_THAT(T.translation().y, WithinRel(-2.23, FLOAT_TOL));
+        REQUIRE_THAT(T.rotation(), WithinRel(deg2rad(142), FLOAT_TOL));
     }
 }
