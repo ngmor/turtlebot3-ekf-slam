@@ -13,17 +13,29 @@ using namespace std::chrono_literals;
 class NuSim : public rclcpp::Node {
 public:
     NuSim(): Node("nusim") {
-        timer_ = create_wall_timer(100ms, std::bind(&NuSim::timer_callback, this));
+        //Parameters
+        auto param_desc = rcl_interfaces::msg::ParameterDescriptor{};
+        param_desc.description = "The rate the simulation runs at.";
+        declare_parameter("rate", 200.0, param_desc);
+        sim_rate_ = get_parameter("rate").get_parameter_value().get<double>();
+        sim_interval_ = 1.0 / sim_rate_;
+
+        timer_ = create_wall_timer(
+            static_cast<std::chrono::microseconds>(static_cast<int>(sim_interval_*1000000.0)),
+            std::bind(&NuSim::timer_callback, this)
+        );
         test_publisher_ = create_publisher<std_msgs::msg::String>("~/topic", 10);
     }
 private:
+    double sim_rate_;
+    double sim_interval_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr test_publisher_;
 
     void timer_callback() {
         auto message = std_msgs::msg::String();
         message.data = "Hello, world!";
-        RCLCPP_INFO(get_logger(), "Publishing");
+        //RCLCPP_INFO(get_logger(), "Publishing");
         test_publisher_->publish(message);
     }
 };
