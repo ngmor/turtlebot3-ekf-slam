@@ -40,7 +40,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             name='color',
             default_value='purple',
-            choices=['red','green','blue','purple'],
+            choices=['red', 'green', 'blue', 'purple'],
             description='Selects the color of the turtlebot.',
         ),
         SetLaunchConfiguration(
