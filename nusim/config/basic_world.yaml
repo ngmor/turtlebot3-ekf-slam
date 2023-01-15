@@ -1,0 +1,9 @@
+/nusim:
+  ros__parameters:
+    x0: -0.6 # m
+    y0: 0.8 # m
+    theta0: 1.57 # rad
+    obstacles:
+      x: [-0.6, 0.7, 0.5] # m
+      y: [-0.8, -0.7, 0.9] # m
+      r: 0.038 # m
