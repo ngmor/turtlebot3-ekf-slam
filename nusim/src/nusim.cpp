@@ -9,6 +9,7 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_ros/transform_broadcaster.h"
+#include "nusim/srv/teleport.hpp"
 
 using namespace std::chrono_literals;
 
@@ -79,6 +80,7 @@ private:
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr pub_timestep_;
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_reset_;
+    rclcpp::Service<nusim::srv::Teleport>::SharedPtr srv_teleport_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster_;
 
     void timer_callback() {

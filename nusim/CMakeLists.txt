@@ -13,13 +13,15 @@ find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}_interfaces "srv/Teleport.srv")
 
 # executables
 add_executable(nusim src/nusim.cpp)
 ament_target_dependencies(nusim rclcpp std_msgs std_srvs geometry_msgs tf2 tf2_ros)
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_interfaces "rosidl_typesupport_cpp")
+target_link_libraries(nusim "${cpp_typesupport_target}")
 
 install(TARGETS
   nusim
