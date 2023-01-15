@@ -14,17 +14,18 @@ find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+ament_export_dependencies(rosidl_default_runtime)
 
-rosidl_generate_interfaces(${PROJECT_NAME}_interfaces "srv/Teleport.srv")
+rosidl_generate_interfaces(${PROJECT_NAME} "srv/Teleport.srv")
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 # executables
-add_executable(nusim src/nusim.cpp)
-ament_target_dependencies(nusim rclcpp std_msgs std_srvs geometry_msgs tf2 tf2_ros)
-rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_interfaces "rosidl_typesupport_cpp")
-target_link_libraries(nusim "${cpp_typesupport_target}")
+add_executable(nusim_node src/nusim.cpp)
+ament_target_dependencies(nusim_node rclcpp std_msgs std_srvs geometry_msgs tf2 tf2_ros)
+target_link_libraries(nusim_node "${cpp_typesupport_target}")
 
 install(TARGETS
-  nusim
+  nusim_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

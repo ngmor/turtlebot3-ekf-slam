@@ -69,10 +69,15 @@ public:
             "~/reset",
             std::bind(&NuSim::reset_callback, this, std::placeholders::_1, std::placeholders::_2)
         );
+        srv_teleport_ = create_service<nusim::srv::Teleport>(
+            "~/teleport",
+            std::bind(&NuSim::teleport_callback, this, std::placeholders::_1, std::placeholders::_2)
+        );
 
         //Broadcasters
         broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     }
+
 private:
     double sim_rate_, sim_interval_;
     Pose2D pose_initial_, pose_current_;
@@ -110,6 +115,19 @@ private:
 
         //Reset current pose
         pose_current_ = pose_initial_;
+    }
+
+    void teleport_callback(
+        const std::shared_ptr<nusim::srv::Teleport::Request> request,
+        std::shared_ptr<nusim::srv::Teleport::Response> response
+    ) {
+        //Get rid of unused warnings
+        (void)response;
+
+        //Teleport current pose
+        pose_current_.x = request->x;
+        pose_current_.y = request->y;
+        pose_current_.theta = request->theta;
     }
 
 };
