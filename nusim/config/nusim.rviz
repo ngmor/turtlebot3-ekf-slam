@@ -93,11 +93,23 @@ Visualization Manager:
       Mass Properties:
         Inertia: false
         Mass: false
-      Name: GroundTruth
+      Name: GroundTruthRobot
       TF Prefix: red
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: GroundTruthObstacles
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /nusim/obstacles
+      Value: true
     - Class: rviz_default_plugins/TF
       Enabled: true
       Frame Timeout: 15
@@ -174,25 +186,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.8576908111572266
+      Distance: 3.482191801071167
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.04126894474029541
-        Y: -0.0892576277256012
-        Z: -0.10668662935495377
+        X: 0.0625283494591713
+        Y: 0.1669589728116989
+        Z: 0.03825405612587929
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6097971200942993
+      Pitch: 0.49979734420776367
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.985410690307617
+      Yaw: 4.160427570343018
     Saved: ~
 Window Geometry:
   Displays:

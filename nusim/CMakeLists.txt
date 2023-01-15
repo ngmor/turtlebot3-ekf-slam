@@ -7,13 +7,14 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
+find_package(visualization_msgs REQUIRED)
 ament_export_dependencies(rosidl_default_runtime)
 
 rosidl_generate_interfaces(${PROJECT_NAME} "srv/Teleport.srv")
@@ -21,7 +22,9 @@ rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typ
 
 # executables
 add_executable(nusim_node src/nusim.cpp)
-ament_target_dependencies(nusim_node rclcpp std_msgs std_srvs geometry_msgs tf2 tf2_ros)
+ament_target_dependencies(nusim_node
+  rclcpp std_msgs std_srvs geometry_msgs tf2 tf2_ros visualization_msgs
+)
 target_link_libraries(nusim_node "${cpp_typesupport_target}")
 
 install(TARGETS

@@ -2,8 +2,10 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <exception>
+#include <typeinfo>
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
@@ -12,8 +14,16 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "nusim/srv/teleport.hpp"
+#include "visualization_msgs/msg/marker.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 using namespace std::chrono_literals;
+
+// Constants
+//TODO - define somewhere centrally?
+constexpr std::string_view WORLD_FRAME = "nusim/world";
+constexpr std::string_view ROBOT_GROUND_TRUTH_FRAME = "red/base_footprint";
+constexpr double OBSTACLE_HEIGHT = 0.25;
 
 //Simple pose struct
 struct Pose2D {
@@ -101,6 +111,7 @@ public:
 
         //Publishers
         pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
+        pub_obstacles_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
 
         // Services
         srv_reset_ = create_service<std_srvs::srv::Empty>(
@@ -114,11 +125,14 @@ public:
 
         //Broadcasters
         broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
+        init_obstacles();
     }
 
 private:
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr pub_timestep_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_obstacles_;
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_reset_;
     rclcpp::Service<nusim::srv::Teleport>::SharedPtr srv_teleport_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster_;
@@ -128,6 +142,7 @@ private:
     Pose2D pose_initial_, pose_current_;
     std::vector<double> obstacles_x_, obstacles_y_;
     double obstacles_r_;
+    visualization_msgs::msg::MarkerArray obstacle_markers_;
 
     void timer_callback() {
         // //RCLCPP_INFO(get_logger(), "Publishing");
@@ -141,6 +156,9 @@ private:
         auto tf = pose_to_transform(pose_current_);
         tf.header.stamp = get_clock()->now();
         broadcaster_->sendTransform(tf);
+
+        //Publish markers
+        publish_obstacles();
     }
 
     void reset_callback(
@@ -171,14 +189,56 @@ private:
         pose_current_.theta = request->theta;
     }
 
+    void init_obstacles() {
+
+        visualization_msgs::msg::Marker marker;
+
+        //Create markers from input lists
+        for (size_t i = 0; i < obstacles_x_.size(); i++) {
+            //Reset marker
+            marker = visualization_msgs::msg::Marker {};
+
+            marker.header.frame_id = WORLD_FRAME;
+            marker.id = i;
+            marker.type = visualization_msgs::msg::Marker::CYLINDER;
+            marker.action = visualization_msgs::msg::Marker::ADD;
+            marker.pose.position.x = obstacles_x_[i];
+            marker.pose.position.y = obstacles_y_[i];
+            marker.pose.position.z = OBSTACLE_HEIGHT / 2;
+            marker.scale.x = obstacles_r_*2;
+            marker.scale.y = obstacles_r_*2;
+            marker.scale.z = OBSTACLE_HEIGHT;
+            marker.color.r = 1.0;
+            marker.color.g = 0.0;
+            marker.color.b = 0.0;
+            marker.color.a = 1.0;
+
+            //Append to marker array
+            obstacle_markers_.markers.push_back(marker);
+        }
+    }
+
+    void publish_obstacles() {
+        
+        auto time = get_clock()->now();
+
+        //Update timestamps of all markers
+        for (auto & marker : obstacle_markers_.markers) {
+            marker.header.stamp = time;
+        }
+
+        //Publish marker array
+        pub_obstacles_->publish(obstacle_markers_);
+    }
+
 };
 
 //Get transform from pose
 geometry_msgs::msg::TransformStamped pose_to_transform(Pose2D pose) {
     geometry_msgs::msg::TransformStamped tf;
 
-    tf.header.frame_id = "nusim/world";
-    tf.child_frame_id = "red/base_footprint";
+    tf.header.frame_id = WORLD_FRAME;
+    tf.child_frame_id = ROBOT_GROUND_TRUTH_FRAME;
 
     tf.transform.translation.x = pose.x;
     tf.transform.translation.y = pose.y;
