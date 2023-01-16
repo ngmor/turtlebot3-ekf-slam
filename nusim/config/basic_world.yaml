@@ -1,5 +1,6 @@
 /nusim:
   ros__parameters:
+    rate: 200.0 # hz
     x0: -0.6 # m
     y0: 0.8 # m
     theta0: 1.57 # rad
