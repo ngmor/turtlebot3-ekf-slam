@@ -86,14 +86,24 @@ namespace turtlelib
     
     /* TRANSFORM2D START */
 
+    void Transform2D::bound_rotation() {
+        //Bound rotation between -pi and pi
+        while (rot_ > PI) {
+            rot_ -= 2*PI;
+        }
+        while (rot_ < -PI) {
+            rot_ += 2*PI;
+        }
+    }
+
     /// Private variables are already initialized as an identity transformation
     Transform2D::Transform2D() {}
 
     Transform2D::Transform2D(Vector2D trans): trans_{trans} {}
 
-    Transform2D::Transform2D(double rot): rot_{rot} {}
+    Transform2D::Transform2D(double rot): rot_{rot} { bound_rotation(); }
 
-    Transform2D::Transform2D(Vector2D trans, double rot): trans_{trans}, rot_{rot} {}
+    Transform2D::Transform2D(Vector2D trans, double rot): trans_{trans}, rot_{rot} { bound_rotation(); }
 
     Vector2D Transform2D::operator()(Vector2D v) const {
         return Vector2D {
@@ -134,14 +144,9 @@ namespace turtlelib
         //Output rotation just adds the angles together
         this->rot_ += rhs.rotation();
 
-        //Bound rotation between -pi and pi
-        while (this->rot_ > PI) {
-            this->rot_ -= 2*PI;
-        }
-        while (this->rot_ < -PI) {
-            this->rot_ += 2*PI;
-        }
-        
+        //Bound rotation
+        this->bound_rotation();
+
         return *this;
     }
 

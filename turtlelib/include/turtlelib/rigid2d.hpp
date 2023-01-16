@@ -136,6 +136,10 @@ namespace turtlelib
         Vector2D trans_ {0.,0.};
         /// \brief rotational component
         double rot_ = 0.;
+
+        /// \brief bound rotation between PI and -PI
+        void bound_rotation();
+
     public:
         /// \brief Create an identity transformation
         Transform2D();
