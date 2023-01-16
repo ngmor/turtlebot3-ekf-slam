@@ -249,8 +249,8 @@ private:
       marker.id = i;
       marker.type = visualization_msgs::msg::Marker::CYLINDER;
       marker.action = visualization_msgs::msg::Marker::ADD;
-      marker.pose.position.x = obstacles_x_[i];
-      marker.pose.position.y = obstacles_y_[i];
+      marker.pose.position.x = obstacles_x_.at(i);
+      marker.pose.position.y = obstacles_y_.at(i);
       marker.pose.position.z = OBSTACLE_HEIGHT / 2;
       marker.scale.x = obstacles_r_ * 2;
       marker.scale.y = obstacles_r_ * 2;
