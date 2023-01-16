@@ -1,4 +1,4 @@
-# Nuturtle  Description
+# NUTurtle  Description
 URDF files for NUTurtle Gary
 * `ros2 launch nuturtle_description load_one.launch.py` to see the robot in rviz.
 * `ros2 launch nuturtle_description load_all.launch.xml` to see four copies of the robot in rviz.
@@ -9,7 +9,7 @@ URDF files for NUTurtle Gary
 
 ![](images/rqt_graph.svg)
 
-# Launch File Details
+## Launch File Details
 * `ros2 launch nuturtle_description load_one.launch.py --show-args` to show arguments for launch file that loads only one robot.
 
 ```
@@ -34,4 +34,5 @@ Arguments (pass arguments as '<name>:=<value>'):
 Currently there are no arguments for this launch file.
 ```
 
+## Collaboration
 I worked alone on this package.

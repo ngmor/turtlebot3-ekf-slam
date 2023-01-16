@@ -1,11 +1,11 @@
 # Turtlelib Library
 A library for handling transformations in SE(2) and other turtlebot-related math.
 
-# Components
+## Components
 - `rigid2d` - Handles 2D rigid body transformations
 - `frame_main` - Perform some rigid body computations based on user input
 
-# Conceptual Questions
+## Conceptual Questions
 1. We need to be able to ~normalize~ `Vector2D` objects (i.e., find the unit vector in the direction of a given `Vector2D`):
     - Propose three different designs for implementing the ~normalize~ functionality
 
@@ -75,3 +75,6 @@ A library for handling transformations in SE(2) and other turtlebot-related math
     C++ Core Guideline Con.2 says to make member functions `const` by default, unless they change the object's observable state. This practice communicates more precise design intent, is more readable, catches more errors in the compiler, and allows more optimization.
 
     With this in mind, `Transform2D::inv()` returns the inverse of a transformation without modifying the original transformation, so it can be left as `const` for all the benefits above. However, `Transform2D::operator*=()` modifies the transformation in-place, and therefore cannot be left as `const`.
+
+## Collaboration
+I worked alone on this library.
