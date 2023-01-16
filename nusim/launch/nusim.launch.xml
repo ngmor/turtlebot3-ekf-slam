@@ -6,7 +6,7 @@
     </include>
     <node pkg="rviz2" exec="rviz2"
         args="-d $(find-pkg-share nusim)/config/nusim.rviz"/>
-    <node pkg="nusim" exec="nusim_node">
+    <node pkg="nusim" exec="nusim">
         <param from="$(find-pkg-share nusim)/config/basic_world.yaml"/>
     </node>
 
