@@ -9,6 +9,7 @@ using turtlelib::Twist2D;
 using turtlelib::deg2rad;
 using turtlelib::PI;
 using turtlelib::normalize_angle;
+using turtlelib::dot;
 using Catch::Matchers::WithinRel;
 using std::stringstream;
 using std::string;
@@ -128,6 +129,27 @@ TEST_CASE("scaling vectors", "[vector]") { //Nick Morales
         REQUIRE_THAT(VresL.x, WithinRel(x1*scalar, FLOAT_TOL));
         REQUIRE_THAT(VresL.y, WithinRel(y1*scalar, FLOAT_TOL));
     }
+}
+
+TEST_CASE("vector dot product", "[vector]") { //Nick Morales
+    double x1 = 4.04, y1 = 4.68;
+    Vector2D V1 {x1,y1};
+    double x2 = 1.42, y2 = -2.41;
+    Vector2D V2 {x2,y2};
+
+
+    double dot_product = dot(V1,V2);
+
+    //V1 not modified
+    REQUIRE_THAT(V1.x, WithinRel(x1, FLOAT_TOL));
+    REQUIRE_THAT(V1.y, WithinRel(y1, FLOAT_TOL));
+
+    //V2 not modified
+    REQUIRE_THAT(V2.x, WithinRel(x2, FLOAT_TOL));
+    REQUIRE_THAT(V2.y, WithinRel(y2, FLOAT_TOL));
+
+    //Result
+    REQUIRE_THAT(dot_product, WithinRel(x1*x2 + y1*y2, FLOAT_TOL));
 }
 
 TEST_CASE("constructors and getters", "[transform]") { //Nick Morales

@@ -96,6 +96,10 @@ namespace turtlelib
         };
     }
 
+    double dot(const Vector2D & lhs, const Vector2D & rhs) {
+        return lhs.x*rhs.x + lhs.y*rhs.y;
+    }
+
     /* VECTOR2D END */
 
 

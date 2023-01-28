@@ -107,13 +107,13 @@ namespace turtlelib
     /// \return the difference of the two vectors
     Vector2D operator-(Vector2D lhs, const Vector2D & rhs);
 
-    /// \brief multiply a vectory by a scalar, returning the scaled vector
+    /// \brief multiply a vector by a scalar, returning the scaled vector
     /// \param vector - the vector to be multiplied
     /// \param scalar - the scalar to multiply by
     /// \return the scaled vector
     Vector2D operator*(Vector2D vector, const double scalar);
 
-    /// \brief multiply a vectory by a scalar, returning the scaled vector
+    /// \brief multiply a vector by a scalar, returning the scaled vector
     /// \param scalar - the scalar to multiply by
     /// \param vector - the vector to be multiplied
     /// \return the scaled vector
@@ -148,6 +148,12 @@ namespace turtlelib
     /// \brief normalize a 2 dimensional vector
     /// \param v - the vector to normalize
     Vector2D normalize(const Vector2D & v);
+
+    /// \brief compute the dot product of two vectors
+    /// \param lhs - the left hand operand
+    /// \param rhs - the right hand operand
+    /// \return the dot product
+    double dot(const Vector2D & lhs, const Vector2D & rhs);
 
     /// \brief A 2-Dimensional Twist
     struct Twist2D {
