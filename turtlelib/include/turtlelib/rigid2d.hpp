@@ -81,6 +81,12 @@ namespace turtlelib
         /// \param rhs - the vector to add
         /// \return a reference to the newly transformed operator
         Vector2D & operator+=(const Vector2D & rhs);
+
+        /// \brief subtract another vector from this vector and store
+        /// the result in this object
+        /// \param rhs - the vector to subtract
+        /// \return a reference to the newly transformed operator
+        Vector2D & operator-=(const Vector2D & rhs);
     };
 
     /// \brief add two vectors together, returning their sum
@@ -88,6 +94,12 @@ namespace turtlelib
     /// \param rhs - the right hand operand
     /// \return the sum of the two vectors
     Vector2D operator+(Vector2D lhs, const Vector2D & rhs);
+
+    /// \brief subtract a vector from another, returning the difference
+    /// \param lhs - the left hand operand
+    /// \param rhs - the right hand operand
+    /// \return the difference of the two vectors
+    Vector2D operator-(Vector2D lhs, const Vector2D & rhs);
 
 
 

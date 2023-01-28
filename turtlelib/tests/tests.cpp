@@ -32,32 +32,69 @@ TEST_CASE("vector addition", "[vector]") { //Nick Morales
 
 
     SECTION("in-place modification") {
-        V1+=V2;
+        V1 += V2;
 
-        //T1 modified
+        //V1 modified
         REQUIRE_THAT(V1.x, WithinRel(x1 + x2, FLOAT_TOL));
         REQUIRE_THAT(V1.y, WithinRel(y1 + y2, FLOAT_TOL));
 
-        //T2 not modified
+        //V2 not modified
         REQUIRE_THAT(V2.x, WithinRel(x2, FLOAT_TOL));
         REQUIRE_THAT(V2.y, WithinRel(y2, FLOAT_TOL));
 
     }
 
     SECTION("return to separate variable") {
-        Vector2D Vres = V1+V2;
+        Vector2D Vres = V1 + V2;
 
-        //T1 not modified
+        //V1 not modified
         REQUIRE_THAT(V1.x, WithinRel(x1, FLOAT_TOL));
         REQUIRE_THAT(V1.y, WithinRel(y1, FLOAT_TOL));
 
-        //T2 not modified
+        //V2 not modified
         REQUIRE_THAT(V2.x, WithinRel(x2, FLOAT_TOL));
         REQUIRE_THAT(V2.y, WithinRel(y2, FLOAT_TOL));
 
         //Result
         REQUIRE_THAT(Vres.x, WithinRel(x1 + x2, FLOAT_TOL));
         REQUIRE_THAT(Vres.y, WithinRel(y1 + y2, FLOAT_TOL));
+    }
+}
+
+TEST_CASE("vector subtraction", "[vector]") { //Nick Morales
+    double x1 = 3.94, y1 = -0.70;
+    Vector2D V1 {x1,y1};
+    double x2 = -4.90, y2 = 2.34;
+    Vector2D V2 {x2,y2};
+
+
+    SECTION("in-place modification") {
+        V1 -= V2;
+
+        //V1 modified
+        REQUIRE_THAT(V1.x, WithinRel(x1 - x2, FLOAT_TOL));
+        REQUIRE_THAT(V1.y, WithinRel(y1 - y2, FLOAT_TOL));
+
+        //V2 not modified
+        REQUIRE_THAT(V2.x, WithinRel(x2, FLOAT_TOL));
+        REQUIRE_THAT(V2.y, WithinRel(y2, FLOAT_TOL));
+
+    }
+
+    SECTION("return to separate variable") {
+        Vector2D Vres = V1 - V2;
+
+        //V1 not modified
+        REQUIRE_THAT(V1.x, WithinRel(x1, FLOAT_TOL));
+        REQUIRE_THAT(V1.y, WithinRel(y1, FLOAT_TOL));
+
+        //V2 not modified
+        REQUIRE_THAT(V2.x, WithinRel(x2, FLOAT_TOL));
+        REQUIRE_THAT(V2.y, WithinRel(y2, FLOAT_TOL));
+
+        //Result
+        REQUIRE_THAT(Vres.x, WithinRel(x1 - x2, FLOAT_TOL));
+        REQUIRE_THAT(Vres.y, WithinRel(y1 - y2, FLOAT_TOL));
     }
 }
 
