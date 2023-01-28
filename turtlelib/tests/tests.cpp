@@ -10,6 +10,7 @@ using turtlelib::deg2rad;
 using turtlelib::PI;
 using turtlelib::normalize_angle;
 using turtlelib::dot;
+using turtlelib::angle;
 using Catch::Matchers::WithinRel;
 using std::stringstream;
 using std::string;
@@ -158,6 +159,23 @@ TEST_CASE("vector dot product", "[vector]") { //Nick Morales
 
     //Result
     REQUIRE_THAT(dot_product, WithinRel(x1*x2 + y1*y2, FLOAT_TOL));
+}
+
+TEST_CASE("vector angle", "[vector]") { //Nick Morales
+    Vector2D Vright {1,0};
+    Vector2D Vleft {-1,0};
+    Vector2D Vup {0,1};
+    Vector2D Vdown {0,-1};
+    Vector2D Vupdiag {1,1};
+    Vector2D Vdowndiag {1,-1};
+
+    REQUIRE_THAT(angle(Vright, Vup), WithinRel(PI/2, FLOAT_TOL));
+    REQUIRE_THAT(angle(Vright, Vdown), WithinRel(-PI/2, FLOAT_TOL));
+    REQUIRE_THAT(angle(Vup, Vright), WithinRel(-PI/2, FLOAT_TOL));
+    REQUIRE_THAT(angle(Vleft, Vdown), WithinRel(PI/2, FLOAT_TOL));
+    REQUIRE_THAT(angle(Vdown, Vleft), WithinRel(-PI/2, FLOAT_TOL));
+    REQUIRE_THAT(angle(Vupdiag, Vright), WithinRel(-PI/4, FLOAT_TOL));
+    REQUIRE_THAT(angle(Vdowndiag, Vleft), WithinRel(-3*PI/4, FLOAT_TOL));
 }
 
 TEST_CASE("constructors and getters", "[transform]") { //Nick Morales

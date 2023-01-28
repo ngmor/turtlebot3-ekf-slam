@@ -104,6 +104,11 @@ namespace turtlelib
         return lhs.x*rhs.x + lhs.y*rhs.y;
     }
 
+    double angle(const Vector2D & start, const Vector2D & end) {
+        //https://www.mathworks.com/matlabcentral/answers/180131-how-can-i-find-the-angle-between-two-vectors-including-directional-information
+        return std::atan2(start.x*end.y - start.y*end.x, dot(start, end));
+    }
+
     /* VECTOR2D END */
 
 

@@ -159,6 +159,14 @@ namespace turtlelib
     /// \return the dot product
     double dot(const Vector2D & lhs, const Vector2D & rhs);
 
+    /// \brief - compute the angle between two vectors, with directional information
+    /// (sign) based on the order in which the vectors are passed into the function
+    /// \param start - the vector from which the measurement is started
+    /// \param end - the vector to which the measurement goes
+    /// \return the angle between the vectors, signed positive for CCW motion and
+    /// negative for CW motion
+    double angle(const Vector2D & start, const Vector2D & end);
+
     /// \brief A 2-Dimensional Twist
     struct Twist2D {
         /// \brief the angular velocity
