@@ -98,6 +98,38 @@ TEST_CASE("vector subtraction", "[vector]") { //Nick Morales
     }
 }
 
+TEST_CASE("scaling vectors", "[vector]") { //Nick Morales
+    double x1 = -0.03, y1 = 4.19;
+    Vector2D V1 {x1,y1};
+    double scalar = -3.29;
+
+
+    SECTION("in-place modification") {
+        V1 *= scalar;
+
+        //V1 modified
+        REQUIRE_THAT(V1.x, WithinRel(x1*scalar, FLOAT_TOL));
+        REQUIRE_THAT(V1.y, WithinRel(y1*scalar, FLOAT_TOL));
+    }
+
+    SECTION("return to separate variable") {
+        Vector2D VresR = V1*scalar;
+        Vector2D VresL = scalar*V1;
+
+        //V1 not modified
+        REQUIRE_THAT(V1.x, WithinRel(x1, FLOAT_TOL));
+        REQUIRE_THAT(V1.y, WithinRel(y1, FLOAT_TOL));
+
+        //Result from right multiplication
+        REQUIRE_THAT(VresR.x, WithinRel(x1*scalar, FLOAT_TOL));
+        REQUIRE_THAT(VresR.y, WithinRel(y1*scalar, FLOAT_TOL));
+
+        //Result from left multiplication
+        REQUIRE_THAT(VresL.x, WithinRel(x1*scalar, FLOAT_TOL));
+        REQUIRE_THAT(VresL.y, WithinRel(y1*scalar, FLOAT_TOL));
+    }
+}
+
 TEST_CASE("constructors and getters", "[transform]") { //Nick Morales
     SECTION("default constructor") {
         Transform2D T;

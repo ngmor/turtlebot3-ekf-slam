@@ -42,6 +42,22 @@ namespace turtlelib
         return lhs;
     }
 
+    Vector2D & Vector2D::operator*=(const double scalar) {
+        x *= scalar;
+        y *= scalar;
+        return *this;
+    }
+
+    Vector2D operator*(Vector2D vector, const double scalar) {
+        vector*=scalar;
+        return vector;
+    }
+
+    Vector2D operator*(const double scalar, Vector2D vector) {
+        vector*=scalar;
+        return vector;
+    }
+
     std::ostream & operator<<(std::ostream & os, const Vector2D & v) {
         os << '[' << v.x << ' ' << v.y << ']';
         return os;
@@ -175,6 +191,11 @@ namespace turtlelib
         return *this;
     }
 
+    Transform2D operator*(Transform2D lhs, const Transform2D & rhs) {
+        lhs*=rhs;
+        return lhs;
+    }
+
     Vector2D Transform2D::translation() const { return trans_; }
 
     double Transform2D::rotation() const { return rot_; }
@@ -234,11 +255,6 @@ namespace turtlelib
         };
 
         return is;
-    }
-
-    Transform2D operator*(Transform2D lhs, const Transform2D & rhs) {
-        lhs*=rhs;
-        return lhs;
     }
 
     /* TRANSFORM2D END */

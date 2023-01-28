@@ -79,14 +79,20 @@ namespace turtlelib
         /// \brief add this vector with another and store the result 
         /// in this object
         /// \param rhs - the vector to add
-        /// \return a reference to the newly transformed operator
+        /// \return a reference to the newly added vector
         Vector2D & operator+=(const Vector2D & rhs);
 
         /// \brief subtract another vector from this vector and store
         /// the result in this object
         /// \param rhs - the vector to subtract
-        /// \return a reference to the newly transformed operator
+        /// \return a reference to the newly subtracted vector
         Vector2D & operator-=(const Vector2D & rhs);
+
+        /// \brief multiply a vector by a scalar and store
+        /// the result in this object
+        /// \param scalar - the scalar to multiply by
+        /// \return a reference to the newly multiplied vector
+        Vector2D & operator*=(const double scalar);
     };
 
     /// \brief add two vectors together, returning their sum
@@ -101,7 +107,17 @@ namespace turtlelib
     /// \return the difference of the two vectors
     Vector2D operator-(Vector2D lhs, const Vector2D & rhs);
 
+    /// \brief multiply a vectory by a scalar, returning the scaled vector
+    /// \param vector - the vector to be multiplied
+    /// \param scalar - the scalar to multiply by
+    /// \return the scaled vector
+    Vector2D operator*(Vector2D vector, const double scalar);
 
+    /// \brief multiply a vectory by a scalar, returning the scaled vector
+    /// \param scalar - the scalar to multiply by
+    /// \param vector - the vector to be multiplied
+    /// \return the scaled vector
+    Vector2D operator*(const double scalar, Vector2D vector);
 
     /// \brief output a 2 dimensional vector as [xcomponent ycomponent]
     /// \param os - stream to output to
