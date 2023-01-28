@@ -24,6 +24,43 @@ TEST_CASE("angle normalization", "[normalize_angle]") { //Nick Morales
     REQUIRE_THAT(normalize_angle(-5.0*PI/2.0), WithinRel(-PI/2.0, FLOAT_TOL));
 }
 
+TEST_CASE("vector addition", "[vector]") { //Nick Morales
+    double x1 = 0.44, y1 = 2.14;
+    Vector2D V1 {x1,y1};
+    double x2 = -1.37, y2 = 0.53;
+    Vector2D V2 {x2,y2};
+
+
+    SECTION("in-place modification") {
+        V1+=V2;
+
+        //T1 modified
+        REQUIRE_THAT(V1.x, WithinRel(x1 + x2, FLOAT_TOL));
+        REQUIRE_THAT(V1.y, WithinRel(y1 + y2, FLOAT_TOL));
+
+        //T2 not modified
+        REQUIRE_THAT(V2.x, WithinRel(x2, FLOAT_TOL));
+        REQUIRE_THAT(V2.y, WithinRel(y2, FLOAT_TOL));
+
+    }
+
+    SECTION("return to separate variable") {
+        Vector2D Vres = V1+V2;
+
+        //T1 not modified
+        REQUIRE_THAT(V1.x, WithinRel(x1, FLOAT_TOL));
+        REQUIRE_THAT(V1.y, WithinRel(y1, FLOAT_TOL));
+
+        //T2 not modified
+        REQUIRE_THAT(V2.x, WithinRel(x2, FLOAT_TOL));
+        REQUIRE_THAT(V2.y, WithinRel(y2, FLOAT_TOL));
+
+        //Result
+        REQUIRE_THAT(Vres.x, WithinRel(x1 + x2, FLOAT_TOL));
+        REQUIRE_THAT(Vres.y, WithinRel(y1 + y2, FLOAT_TOL));
+    }
+}
+
 TEST_CASE("constructors and getters", "[transform]") { //Nick Morales
     SECTION("default constructor") {
         Transform2D T;

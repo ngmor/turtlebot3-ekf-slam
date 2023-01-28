@@ -20,6 +20,17 @@ namespace turtlelib
 
     /* VECTOR2D START */
 
+    Vector2D & Vector2D::operator+=(const Vector2D & rhs) {
+        x += rhs.x;
+        y += rhs.y;
+        return *this;
+    }
+
+    Vector2D operator+(Vector2D lhs, const Vector2D & rhs) {
+        lhs += rhs;
+        return lhs;
+    }
+
     std::ostream & operator<<(std::ostream & os, const Vector2D & v) {
         os << '[' << v.x << ' ' << v.y << ']';
         return os;

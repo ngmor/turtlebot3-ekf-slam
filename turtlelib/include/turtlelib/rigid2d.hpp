@@ -75,7 +75,19 @@ namespace turtlelib
 
         /// \brief the y coordinate
         double y = 0.0;
+
+        /// \brief add this vector with another and store the result 
+        /// in this object
+        /// \param rhs - the vector to add
+        /// \return a reference to the newly transformed operator
+        Vector2D & operator+=(const Vector2D & rhs);
     };
+
+    /// \brief add two vectors together, returning their sum
+    /// \param lhs - the left hand operand
+    /// \param rhs - the right hand operand
+    /// \return the sum of the two vectors
+    Vector2D operator+(Vector2D lhs, const Vector2D & rhs);
 
 
 
