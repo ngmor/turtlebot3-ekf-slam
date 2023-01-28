@@ -7,11 +7,22 @@ using turtlelib::Transform2D;
 using turtlelib::Vector2D;
 using turtlelib::Twist2D;
 using turtlelib::deg2rad;
+using turtlelib::PI;
+using turtlelib::normalize_angle;
 using Catch::Matchers::WithinRel;
 using std::stringstream;
 using std::string;
 
 constexpr double FLOAT_TOL = 1e-8;
+
+TEST_CASE("angle normalization", "[normalize_angle]") { //Nick Morales
+    REQUIRE_THAT(normalize_angle(PI), WithinRel(PI, FLOAT_TOL));
+    REQUIRE_THAT(normalize_angle(-PI), WithinRel(PI, FLOAT_TOL));
+    REQUIRE_THAT(normalize_angle(0.0), WithinRel(0.0, FLOAT_TOL));
+    REQUIRE_THAT(normalize_angle(-PI/4.0), WithinRel(-PI/4.0, FLOAT_TOL));
+    REQUIRE_THAT(normalize_angle(3.0*PI/2.0), WithinRel(-PI/2.0, FLOAT_TOL));
+    REQUIRE_THAT(normalize_angle(-5.0*PI/2.0), WithinRel(-PI/2.0, FLOAT_TOL));
+}
 
 TEST_CASE("constructors and getters", "[transform]") { //Nick Morales
     SECTION("default constructor") {

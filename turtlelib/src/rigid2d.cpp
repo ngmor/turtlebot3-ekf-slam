@@ -5,6 +5,19 @@
 namespace turtlelib
 {
 
+    double normalize_angle(double rad) {
+        //Bound rotation between -pi and pi
+        while (rad > PI) {
+            rad -= 2*PI;
+        }
+        while (rad <= -PI) {
+            rad += 2*PI;
+        }
+
+        return rad;
+    }
+
+
     /* VECTOR2D START */
 
     std::ostream & operator<<(std::ostream & os, const Vector2D & v) {
@@ -86,24 +99,14 @@ namespace turtlelib
     
     /* TRANSFORM2D START */
 
-    void Transform2D::bound_rotation() {
-        //Bound rotation between -pi and pi
-        while (rot_ > PI) {
-            rot_ -= 2*PI;
-        }
-        while (rot_ < -PI) {
-            rot_ += 2*PI;
-        }
-    }
-
     /// Private variables are already initialized as an identity transformation
     Transform2D::Transform2D() {}
 
     Transform2D::Transform2D(Vector2D trans): trans_{trans} {}
 
-    Transform2D::Transform2D(double rot): rot_{rot} { bound_rotation(); }
+    Transform2D::Transform2D(double rot): rot_{normalize_angle(rot)} {}
 
-    Transform2D::Transform2D(Vector2D trans, double rot): trans_{trans}, rot_{rot} { bound_rotation(); }
+    Transform2D::Transform2D(Vector2D trans, double rot): trans_{trans}, rot_{normalize_angle(rot)} {}
 
     Vector2D Transform2D::operator()(Vector2D v) const {
         return Vector2D {
@@ -145,7 +148,7 @@ namespace turtlelib
         this->rot_ += rhs.rotation();
 
         //Bound rotation
-        this->bound_rotation();
+        rot_ = normalize_angle(rot_);
 
         return *this;
     }

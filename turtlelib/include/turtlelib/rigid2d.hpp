@@ -62,6 +62,11 @@ namespace turtlelib
 
     static_assert(almost_equal(rad2deg(deg2rad(352.0)), 352.0), "deg2rad and rad2deg back failed");
 
+    /// \brief bound an angle to equivalent angle between (-PI, PI]
+    /// @param rad angle to normalize
+    /// @return normalized angle
+    double normalize_angle(double rad);
+
     /// \brief A 2-Dimensional Vector
     struct Vector2D
     {
@@ -136,9 +141,6 @@ namespace turtlelib
         Vector2D trans_ {0.,0.};
         /// \brief rotational component
         double rot_ = 0.;
-
-        /// \brief bound rotation between PI and -PI
-        void bound_rotation();
 
     public:
         /// \brief Create an identity transformation
