@@ -25,6 +25,14 @@ TEST_CASE("angle normalization", "[normalize_angle]") { //Nick Morales
     REQUIRE_THAT(normalize_angle(-5.0*PI/2.0), WithinRel(-PI/2.0, FLOAT_TOL));
 }
 
+TEST_CASE("vector magnitude", "[vector]") { //Nick Morales
+    Vector2D V1 {3.0, 4.0};
+    Vector2D V2 {15.0, 112.0};
+
+    REQUIRE_THAT(V1.magnitude(), WithinRel(5.0, FLOAT_TOL));
+    REQUIRE_THAT(V2.magnitude(), WithinRel(113.0, FLOAT_TOL));
+}
+
 TEST_CASE("vector addition", "[vector]") { //Nick Morales
     double x1 = 0.44, y1 = 2.14;
     Vector2D V1 {x1,y1};

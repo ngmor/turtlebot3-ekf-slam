@@ -20,6 +20,10 @@ namespace turtlelib
 
     /* VECTOR2D START */
 
+    double Vector2D::magnitude() const {
+        return std::sqrt(std::pow(x,2) + std::pow(y,2));
+    }
+
     Vector2D & Vector2D::operator+=(const Vector2D & rhs) {
         x += rhs.x;
         y += rhs.y;
@@ -88,7 +92,7 @@ namespace turtlelib
     }
 
     Vector2D normalize(const Vector2D & v) {
-        double mag = std::sqrt(std::pow(v.x,2) + std::pow(v.y,2));
+        double mag = v.magnitude();
 
         return Vector2D {
             v.x / mag,

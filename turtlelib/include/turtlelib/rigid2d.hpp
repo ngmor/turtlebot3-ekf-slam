@@ -76,6 +76,10 @@ namespace turtlelib
         /// \brief the y coordinate
         double y = 0.0;
 
+        /// \brief compute the magnitude of the vector
+        /// \return the magnitude of the vector
+        double magnitude() const;
+
         /// \brief add this vector with another and store the result 
         /// in this object
         /// \param rhs - the vector to add
