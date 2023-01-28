@@ -270,5 +270,38 @@ namespace turtlelib
         return is;
     }
 
+    Transform2D integrate_twist(Twist2D twist) {
+        if (almost_equal(twist.w, 0.0)) {
+            return Transform2D{
+                Vector2D{twist.x, twist.y},
+                0.0
+            };
+        } else {
+            //Frames:
+            //b = body frame before motion
+            //bp = body frame after motion
+            //s = frame at center of rotation (COR) aligned with b frame
+            //sp = frame at center of rotation (COR) aligned with bp frame
+            
+            //Purely rotational motion at COR to get from s to sp
+            Transform2D Tssp {twist.w};
+
+            //Use adjoint between known twists in s and b frames to solve for Tsb
+            Transform2D Tsb {
+                Vector2D{
+                    twist.y / twist.w,
+                    -twist.x / twist.w
+                },
+                0.0 //no rotation between s and b frames, they are aligned
+            };
+
+            //Tbbp = TbsTsspTspbp
+            //Tsb = Tspbp
+            //so
+            //Tbbp = Tsb^-1 * Tssp * Tsb
+            return Tsb.inv()*Tssp*Tsb;
+        }
+    }
+
     /* TRANSFORM2D END */
 }
