@@ -11,6 +11,7 @@ using turtlelib::PI;
 using turtlelib::normalize_angle;
 using turtlelib::dot;
 using turtlelib::angle;
+using turtlelib::integrate_twist;
 using Catch::Matchers::WithinRel;
 using std::stringstream;
 using std::string;
@@ -350,5 +351,65 @@ TEST_CASE("input stream", "[transform]") { //Nick Morales
         REQUIRE_THAT(T.translation().x, WithinRel(1.73, FLOAT_TOL));
         REQUIRE_THAT(T.translation().y, WithinRel(-2.23, FLOAT_TOL));
         REQUIRE_THAT(T.rotation(), WithinRel(deg2rad(142), FLOAT_TOL));
+    }
+}
+
+TEST_CASE("integrate a twist", "[transform]") { //Nick Morales
+    Twist2D twist;
+    Transform2D Tbbp;
+
+    SECTION("pure translation") {
+        twist.x = -0.52;
+        twist.y = -0.05;
+
+        Tbbp = integrate_twist(twist);
+
+        REQUIRE_THAT(Tbbp.translation().x, WithinRel(twist.x, FLOAT_TOL));
+        REQUIRE_THAT(Tbbp.translation().y, WithinRel(twist.y, FLOAT_TOL));
+        REQUIRE_THAT(Tbbp.rotation(), WithinRel(0.0, FLOAT_TOL));
+    }
+
+    SECTION("pure rotation") {
+        //abs(twist.w) < PI
+        twist.w = 2.57;
+
+        Tbbp = integrate_twist(twist);
+
+        REQUIRE_THAT(Tbbp.translation().x, WithinRel(0.0, FLOAT_TOL));
+        REQUIRE_THAT(Tbbp.translation().y, WithinRel(0.0, FLOAT_TOL));
+        REQUIRE_THAT(Tbbp.rotation(), WithinRel(twist.w, FLOAT_TOL));
+
+        //abs(twist.w) > PI
+        twist.w = 3.66;
+
+        Tbbp = integrate_twist(twist);
+
+        REQUIRE_THAT(Tbbp.translation().x, WithinRel(0.0, FLOAT_TOL));
+        REQUIRE_THAT(Tbbp.translation().y, WithinRel(0.0, FLOAT_TOL));
+        REQUIRE_THAT(Tbbp.rotation(), WithinRel(twist.w - 2*PI, FLOAT_TOL));
+    }
+
+    SECTION("translation and rotation") {
+        //abs(twist.w) < PI
+        twist.w = -1.24;
+        twist.x = -2.15;
+        twist.y = -2.92;
+
+        Tbbp = integrate_twist(twist);
+
+        REQUIRE_THAT(Tbbp.translation().x, WithinRel(-3.229863264722, FLOAT_TOL));
+        REQUIRE_THAT(Tbbp.translation().y, WithinRel(-1.05645265317421, FLOAT_TOL));
+        REQUIRE_THAT(Tbbp.rotation(), WithinRel(twist.w, FLOAT_TOL));
+        
+        //abs(twist.w) > PI
+        twist.w = -4.84;
+        twist.x = 2.54;
+        twist.y = 1.08;
+
+        Tbbp = integrate_twist(twist);
+
+        REQUIRE_THAT(Tbbp.translation().x, WithinRel(-0.325783634885417, FLOAT_TOL));
+        REQUIRE_THAT(Tbbp.translation().y, WithinRel(-0.679331668841286, FLOAT_TOL));
+        REQUIRE_THAT(Tbbp.rotation(), WithinRel(twist.w + 2*PI, FLOAT_TOL));
     }
 }
