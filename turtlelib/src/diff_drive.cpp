@@ -55,6 +55,10 @@ namespace turtlelib
         }
     }
 
+    void DiffDrive::reset() {
+        config_ = config_init_;
+    }
+
     /* DIFF DRIVE END */
 
     InvalidDiffDriveSetup::InvalidDiffDriveSetup(double wheel_track, double wheel_radius)
