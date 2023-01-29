@@ -4,9 +4,13 @@
 /// \brief Modeling kinematics of a differential drive robot.
 
 #include "turtlelib/rigid2d.hpp"
+#include <exception>
+#include <string>
+
 
 namespace turtlelib
 {
+
     /// \brief configuration information for a differential drive robot
     struct DiffDriveConfig
     {
@@ -25,7 +29,10 @@ namespace turtlelib
     {
     private:
 
+        /// \brief distance between the robot's wheels, must be > 0
         double wheel_track_ = 0.0;
+
+        /// \brief wheel radius, must be > 0
         double wheel_radius_ = 0.0;
 
         /// \brief initial configuration
@@ -67,6 +74,20 @@ namespace turtlelib
 
         /// \brief reset current configuration to initial configuration
         void reset();
+    };
+
+    class InvalidDiffDriveSetup : public std::exception
+    {
+    private:
+        /// \brief error message
+        std::string msg_;
+    public:
+        /// \brief construct a custom invalid differential drive setup exception message
+        /// \param wheel_track 
+        /// \param wheel_radius 
+        InvalidDiffDriveSetup(double wheel_track, double wheel_radius);
+
+        const char * what() const throw ();
     };
 }
 
