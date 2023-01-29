@@ -74,6 +74,10 @@ namespace turtlelib
 
         /// \brief reset current configuration to initial configuration
         void reset();
+
+        /// \brief the current config of the robot
+        /// \return the current config structure
+        DiffDriveConfig config() const;
     };
 
     /// \brief custom invalid diff drive setup parameters exception 
