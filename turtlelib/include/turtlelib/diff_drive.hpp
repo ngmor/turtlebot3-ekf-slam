@@ -76,6 +76,7 @@ namespace turtlelib
         void reset();
     };
 
+    /// \brief custom invalid diff drive setup parameters exception 
     class InvalidDiffDriveSetup : public std::exception
     {
     private:
@@ -87,6 +88,8 @@ namespace turtlelib
         /// \param wheel_radius 
         InvalidDiffDriveSetup(double wheel_track, double wheel_radius);
 
+        /// \brief return exception message
+        /// \return - exception message pointer
         const char * what() const throw ();
     };
 }
