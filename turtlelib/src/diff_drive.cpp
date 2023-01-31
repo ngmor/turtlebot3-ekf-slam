@@ -1,5 +1,6 @@
 #include "turtlelib/diff_drive.hpp"
 #include <string_view>
+#include <stdexcept>
 
 namespace turtlelib
 {
@@ -81,17 +82,25 @@ namespace turtlelib
             0.0                                                     //y
         };
 
-        //TODO integrate twist
+        //integrate twist and compose it with the current location transformation
+        //Twbp = Twb * Tbbp
+        config_.location *= integrate_twist(body_twist);
 
-        //TODO Calculate new config
+        //Update wheel positions to new provided positions
+        config_.wheel_pos = new_wheel_pos;
 
-        //TODO - update wheel positions in config
         return config();
     }
 
     Wheel DiffDrive::get_required_wheel_vel(const Twist2D & twist) const
     {
-        //TODO throw error if twist y velocity is nonzero
+        //twists with any y velocity cannot be achieved without wheels sliding
+        //throw an exception if this is requested
+        if (twist.y != 0.0) {
+            throw std::logic_error(
+                "Differential drive robots cannot produce a body twist with a nonzero y velocity"
+            );
+        }
 
         return Wheel {
             -coeff_ik_w_*twist.w + coeff_ik_x_*twist.x,     //left
