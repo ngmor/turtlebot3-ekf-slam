@@ -4,8 +4,6 @@
 /// \brief Modeling kinematics of a differential drive robot.
 
 #include "turtlelib/rigid2d.hpp"
-#include <exception>
-#include <string>
 
 
 namespace turtlelib
@@ -113,23 +111,6 @@ namespace turtlelib
         /// \param twist the requested body twist
         /// \return wheel velocities
         Wheel get_required_wheel_vel(const Twist2D & twist) const;
-    };
-
-    /// \brief custom invalid diff drive setup parameters exception 
-    class InvalidDiffDriveSetup : public std::exception
-    {
-    private:
-        /// \brief error message
-        std::string msg_;
-    public:
-        /// \brief construct a custom invalid differential drive setup exception message
-        /// \param wheel_track 
-        /// \param wheel_radius 
-        InvalidDiffDriveSetup(double wheel_track, double wheel_radius);
-
-        /// \brief return exception message
-        /// \return - exception message pointer
-        const char * what() const throw ();
     };
 }
 

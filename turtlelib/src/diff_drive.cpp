@@ -56,7 +56,11 @@ namespace turtlelib
     {
         // Throw exception if robot parameters are not valid
         if ((wheel_track_ <= 0) || (wheel_radius_ <= 0)) {
-            throw InvalidDiffDriveSetup(wheel_track_, wheel_radius_);
+            throw std::logic_error(
+                 "Invalid differential drive robot dimensions, must be greater than 0:"
+                 "\nWheel Track: " + std::to_string(wheel_track) +
+                 "\nWheel Radius: " + std::to_string(wheel_radius)
+            );
         }
 
         calc_kinematic_coeff();
@@ -109,12 +113,4 @@ namespace turtlelib
     }
 
     /* DIFF DRIVE END */
-
-    InvalidDiffDriveSetup::InvalidDiffDriveSetup(double wheel_track, double wheel_radius)
-    : msg_{
-        "Invalid differential drive robot dimensions, must be greater than 0:\nWheel Track: " +
-        std::to_string(wheel_track) + "\nWheel Radius: " + std::to_string(wheel_radius)
-    } {}
-
-    const char * InvalidDiffDriveSetup::what() const throw () {return msg_.c_str();}
 }
