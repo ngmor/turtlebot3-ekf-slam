@@ -453,9 +453,9 @@ TEST_CASE("driving forward", "[diffdrive]") { //Nick Morales
 
         //Check that wheel velocities match the new wheel posiitons
         //(since we're looking at one time unit)
-        REQUIRE_THAT(robot.config().wheel_pos.left, 
+        REQUIRE_THAT(config.wheel_pos.left, 
             WithinRel(wheel_vel.left, FLOAT_TOL));
-        REQUIRE_THAT(robot.config().wheel_pos.right, 
+        REQUIRE_THAT(config.wheel_pos.right, 
             WithinRel(wheel_vel.right, FLOAT_TOL));
     }
 
