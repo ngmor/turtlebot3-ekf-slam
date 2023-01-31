@@ -41,6 +41,24 @@ namespace turtlelib
         /// \brief current configuration
         DiffDriveConfig config_ {{Vector2D{0,0},0}, 0, 0};
 
+        /// \brief calculate and store coefficients for kinematics
+        /// based on robot's physical parameters
+        void calc_kinematic_coeff();
+
+        /// \brief inverse kinematics angular velocity coefficient
+        double coeff_ik_w_ = 0.0;
+
+        /// \brief inverse kinematics linear x velocity coefficient
+        double coeff_ik_x_ = 0.0;
+
+        /// \brief forward kinematics angular velocity coefficient
+        double coeff_fk_w_ = 0.0;
+
+        /// \brief forward kinematics linear x velocity coefficient 
+        double coeff_fk_x_ = 0.0;
+
+        
+
     public:
 
         /// \brief create a differential drive robot starting at the origin

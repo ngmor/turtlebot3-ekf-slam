@@ -5,6 +5,14 @@ namespace turtlelib
 {
     /* DIFF DRIVE START */
 
+    void DiffDrive::calc_kinematic_coeff()
+    {
+        coeff_ik_w_ = wheel_track_ / (2.0*wheel_radius_);
+        coeff_ik_x_ = 1.0 / (2.0*wheel_radius_);
+        coeff_fk_w_ = wheel_radius_ / wheel_track_;
+        coeff_fk_x_ = wheel_radius_ / 2.0;
+    }
+
     DiffDrive::DiffDrive(double wheel_track, double wheel_radius)
     : DiffDrive(
         wheel_track,
@@ -53,6 +61,8 @@ namespace turtlelib
         if ((wheel_track_ <= 0) || (wheel_radius_ <= 0)) {
             throw InvalidDiffDriveSetup(wheel_track_, wheel_radius_);
         }
+
+        calc_kinematic_coeff();
     }
 
     void DiffDrive::reset() {
