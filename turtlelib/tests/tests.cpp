@@ -460,3 +460,89 @@ TEST_CASE("driving forward", "[diffdrive]") { //Nick Morales
     }
 
 }
+
+TEST_CASE("pure rotation", "[diffdrive]") { //Nick Morales
+
+    DiffDrive robot {0.16, 0.033};
+    Twist2D twist {0.515625,0,0};
+    DiffDriveConfig config {
+        Transform2D {Vector2D{0,0},0.515625},
+        Wheel {-1.25, 1.25}
+    };
+    
+
+    SECTION("forward kinematics") {
+        
+        //Update configuration using new wheel position
+        robot.update_config(config.wheel_pos);
+
+        //Check that configuration matches expected configuration
+        REQUIRE_THAT(robot.config().location.translation().x, 
+            WithinRel(config.location.translation().x, FLOAT_TOL));
+        REQUIRE_THAT(robot.config().location.translation().y, 
+            WithinRel(config.location.translation().y, FLOAT_TOL));
+        REQUIRE_THAT(robot.config().location.rotation(), 
+            WithinRel(config.location.rotation(), FLOAT_TOL));
+        REQUIRE_THAT(robot.config().wheel_pos.left, 
+            WithinRel(config.wheel_pos.left, FLOAT_TOL));
+        REQUIRE_THAT(robot.config().wheel_pos.right, 
+            WithinRel(config.wheel_pos.right, FLOAT_TOL));
+    }
+
+    SECTION("inverse kinematics") {
+        
+        //Calculate wheel velocities to get to location in one unit of time
+        Wheel wheel_vel = robot.get_required_wheel_vel(twist);
+
+        //Check that wheel velocities match the new wheel posiitons
+        //(since we're looking at one time unit)
+        REQUIRE_THAT(config.wheel_pos.left, 
+            WithinRel(wheel_vel.left, FLOAT_TOL));
+        REQUIRE_THAT(config.wheel_pos.right, 
+            WithinRel(wheel_vel.right, FLOAT_TOL));
+    }
+
+}
+
+TEST_CASE("arc of a circle", "[diffdrive]") { //Nick Morales
+
+    DiffDrive robot {0.16, 0.033};
+    Twist2D twist {0.309375,0.14025,0};
+    DiffDriveConfig config {
+        Transform2D {Vector2D{0.138023393683395,0.0215224326983102},0.309375},
+        Wheel {3.5, 5.0}
+    };
+    
+
+    SECTION("forward kinematics") {
+        
+        //Update configuration using new wheel position
+        robot.update_config(config.wheel_pos);
+
+        //Check that configuration matches expected configuration
+        REQUIRE_THAT(robot.config().location.translation().x, 
+            WithinRel(config.location.translation().x, FLOAT_TOL));
+        REQUIRE_THAT(robot.config().location.translation().y, 
+            WithinRel(config.location.translation().y, FLOAT_TOL));
+        REQUIRE_THAT(robot.config().location.rotation(), 
+            WithinRel(config.location.rotation(), FLOAT_TOL));
+        REQUIRE_THAT(robot.config().wheel_pos.left, 
+            WithinRel(config.wheel_pos.left, FLOAT_TOL));
+        REQUIRE_THAT(robot.config().wheel_pos.right, 
+            WithinRel(config.wheel_pos.right, FLOAT_TOL));
+    }
+
+    SECTION("inverse kinematics") {
+        
+        //Calculate wheel velocities to get to location in one unit of time
+        Wheel wheel_vel = robot.get_required_wheel_vel(twist);
+
+        //Check that wheel velocities match the new wheel posiitons
+        //(since we're looking at one time unit)
+        REQUIRE_THAT(config.wheel_pos.left, 
+            WithinRel(wheel_vel.left, FLOAT_TOL));
+        REQUIRE_THAT(config.wheel_pos.right, 
+            WithinRel(wheel_vel.right, FLOAT_TOL));
+    }
+
+}
