@@ -421,10 +421,10 @@ TEST_CASE("integrate a twist", "[transform]") { //Nick Morales
 TEST_CASE("driving forward", "[diffdrive]") { //Nick Morales
 
     DiffDrive robot {0.16, 0.033};
-    Twist2D twist {0,0,0}; //TODO
+    Twist2D twist {0,0.165,0};
     DiffDriveConfig config {
-        Transform2D {Vector2D{0,0},0}, //TODO
-        Wheel {0,0} //TODO
+        Transform2D {Vector2D{0.165,0},0},
+        Wheel {5.0, 5.0}
     };
     
 
