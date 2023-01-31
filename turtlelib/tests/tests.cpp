@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "turtlelib/rigid2d.hpp"
+#include "turtlelib/diff_drive.hpp"
 #include <string>
 #include <sstream>
 using turtlelib::Transform2D;
@@ -12,6 +13,9 @@ using turtlelib::normalize_angle;
 using turtlelib::dot;
 using turtlelib::angle;
 using turtlelib::integrate_twist;
+using turtlelib::DiffDrive;
+using turtlelib::DiffDriveConfig;
+using turtlelib::Wheel;
 using Catch::Matchers::WithinRel;
 using std::stringstream;
 using std::string;
@@ -412,4 +416,47 @@ TEST_CASE("integrate a twist", "[transform]") { //Nick Morales
         REQUIRE_THAT(Tbbp.translation().y, WithinRel(-0.679331668841286, FLOAT_TOL));
         REQUIRE_THAT(Tbbp.rotation(), WithinRel(twist.w + 2*PI, FLOAT_TOL));
     }
+}
+
+TEST_CASE("driving forward", "[diffdrive]") { //Nick Morales
+
+    DiffDrive robot {0.16, 0.033};
+    Twist2D twist {0,0,0}; //TODO
+    DiffDriveConfig config {
+        Transform2D {Vector2D{0,0},0}, //TODO
+        Wheel {0,0} //TODO
+    };
+    
+
+    SECTION("forward kinematics") {
+        
+        //Update configuration using new wheel position
+        robot.update_config(config.wheel_pos);
+
+        //Check that configuration matches expected configuration
+        REQUIRE_THAT(robot.config().location.translation().x, 
+            WithinRel(config.location.translation().x, FLOAT_TOL));
+        REQUIRE_THAT(robot.config().location.translation().y, 
+            WithinRel(config.location.translation().y, FLOAT_TOL));
+        REQUIRE_THAT(robot.config().location.rotation(), 
+            WithinRel(config.location.rotation(), FLOAT_TOL));
+        REQUIRE_THAT(robot.config().wheel_pos.left, 
+            WithinRel(config.wheel_pos.left, FLOAT_TOL));
+        REQUIRE_THAT(robot.config().wheel_pos.right, 
+            WithinRel(config.wheel_pos.right, FLOAT_TOL));
+    }
+
+    SECTION("inverse kinematics") {
+        
+        //Calculate wheel velocities to get to location in one unit of time
+        Wheel wheel_vel = robot.get_required_wheel_vel(twist);
+
+        //Check that wheel velocities match the new wheel posiitons
+        //(since we're looking at one time unit)
+        REQUIRE_THAT(robot.config().wheel_pos.left, 
+            WithinRel(wheel_vel.left, FLOAT_TOL));
+        REQUIRE_THAT(robot.config().wheel_pos.right, 
+            WithinRel(wheel_vel.right, FLOAT_TOL));
+    }
+
 }
