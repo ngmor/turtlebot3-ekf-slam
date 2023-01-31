@@ -18,8 +18,7 @@ namespace turtlelib
         wheel_track,
         wheel_radius,
         Transform2D {},     //start_location
-        0.0,                //start_position_left_wheel
-        0.0                 //start_position_right_wheel
+        Wheel {0,0}         //start_wheel_pos
     ) {}
 
     DiffDrive::DiffDrive(double wheel_track, double wheel_radius, Transform2D start_location)
@@ -27,33 +26,28 @@ namespace turtlelib
         wheel_track,
         wheel_radius,
         start_location,
-        0.0,                //start_position_left_wheel
-        0.0                 //start_position_right_wheel
+        Wheel {0,0}         //start_wheel_pos
     ) {}
 
-    DiffDrive::DiffDrive(double wheel_track, double wheel_radius,
-        double start_position_left_wheel, double start_position_right_wheel)
+    DiffDrive::DiffDrive(double wheel_track, double wheel_radius, Wheel start_wheel_pos)
     : DiffDrive(
         wheel_track,
         wheel_radius,
         Transform2D {},     //start_location
-        start_position_left_wheel,
-        start_position_right_wheel
+        start_wheel_pos
     ) {}
 
     DiffDrive::DiffDrive(
         double wheel_track,
         double wheel_radius,
         Transform2D start_location,
-        double start_position_left_wheel,
-        double start_position_right_wheel
+        Wheel start_wheel_pos
     )
     : wheel_track_{wheel_track},
       wheel_radius_{wheel_radius},
       config_init_{
         start_location,
-        start_position_left_wheel,
-        start_position_right_wheel
+        start_wheel_pos
       },
       config_{config_init_}
     {

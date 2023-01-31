@@ -11,17 +11,25 @@
 namespace turtlelib
 {
 
+    /// \brief wheel data (positions, velocities, etc)
+    struct Wheel
+    {
+        /// \brief left wheel data
+        double left = 0.0;
+
+        /// \brief right wheel data
+        double right = 0.0;
+
+    };
+
     /// \brief configuration information for a differential drive robot
     struct DiffDriveConfig
     {
         /// \brief location of robot in the world frame
         Transform2D location {Vector2D{0,0},0};
 
-        /// \brief left wheel position
-        double wheel_left = 0.0;
-
-        /// \brief right wheel position
-        double wheel_right = 0.0;
+        /// \brief wheel positions
+        Wheel wheel_pos {0,0};
 
     };
 
@@ -36,10 +44,10 @@ namespace turtlelib
         double wheel_radius_ = 0.0;
 
         /// \brief initial configuration
-        DiffDriveConfig config_init_ {{Vector2D{0,0},0}, 0, 0};
+        DiffDriveConfig config_init_ {{Vector2D{0,0},0}, Wheel{0, 0}};
 
         /// \brief current configuration
-        DiffDriveConfig config_ {{Vector2D{0,0},0}, 0, 0};
+        DiffDriveConfig config_ {{Vector2D{0,0},0}, Wheel{0, 0}};
 
         /// \brief calculate and store coefficients for kinematics
         /// based on robot's physical parameters
@@ -75,20 +83,17 @@ namespace turtlelib
         /// \brief create a differential drive robot with custom starting wheel positions
         /// \param wheel_track - distance between the robot's wheels, must be > 0
         /// \param wheel_radius - wheel radius, must be > 0
-        /// \param start_position_left_wheel - left wheel starting position
-        /// \param start_position_right_wheel - right wheel starting position
-        DiffDrive(double wheel_track, double wheel_radius,
-            double start_position_left_wheel, double start_position_right_wheel);
+        /// \param start_wheel_pos - starting position of the wheels
+        DiffDrive(double wheel_track, double wheel_radius, Wheel start_wheel_pos);
         
         /// \brief create a differential drive robot with a custom starting location
         /// and custom starting wheel position
         /// \param wheel_track - distance between the robot's wheels, must be > 0
         /// \param wheel_radius - wheel radius, must be > 0
         /// \param start_location - starting location transformation
-        /// \param start_position_left_wheel - left wheel starting position
-        /// \param start_position_right_wheel - right wheel starting position
+        /// \param start_wheel_pos - starting position of the wheels
         DiffDrive(double wheel_track, double wheel_radius, Transform2D start_location,
-            double start_position_left_wheel, double start_position_right_wheel);
+            Wheel start_wheel_pos);
 
         /// \brief reset current configuration to initial configuration
         void reset();
