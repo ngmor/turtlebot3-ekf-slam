@@ -78,13 +78,13 @@ namespace turtlelib
         /// \param wheel_track - distance between the robot's wheels, must be > 0
         /// \param wheel_radius - wheel radius, must be > 0
         /// \param start_location - starting location transformation
-        DiffDrive(double wheel_track, double wheel_radius, Transform2D start_location);
+        DiffDrive(double wheel_track, double wheel_radius, const Transform2D & start_location);
 
         /// \brief create a differential drive robot with custom starting wheel positions
         /// \param wheel_track - distance between the robot's wheels, must be > 0
         /// \param wheel_radius - wheel radius, must be > 0
         /// \param start_wheel_pos - starting position of the wheels
-        DiffDrive(double wheel_track, double wheel_radius, Wheel start_wheel_pos);
+        DiffDrive(double wheel_track, double wheel_radius, const Wheel & start_wheel_pos);
         
         /// \brief create a differential drive robot with a custom starting location
         /// and custom starting wheel position
@@ -92,8 +92,8 @@ namespace turtlelib
         /// \param wheel_radius - wheel radius, must be > 0
         /// \param start_location - starting location transformation
         /// \param start_wheel_pos - starting position of the wheels
-        DiffDrive(double wheel_track, double wheel_radius, Transform2D start_location,
-            Wheel start_wheel_pos);
+        DiffDrive(double wheel_track, double wheel_radius, const Transform2D & start_location,
+            const Wheel & start_wheel_pos);
 
         /// \brief reset current configuration to initial configuration
         void reset();
@@ -101,6 +101,18 @@ namespace turtlelib
         /// \brief the current config of the robot
         /// \return the current config structure
         DiffDriveConfig config() const;
+
+        /// \brief use forward kinematics to update the configuration of the robot
+        // given new wheel positions
+        /// \param new_wheel_pos new wheel positions with which to calculate new configuration
+        /// \return the updated config (also stored internally)
+        DiffDriveConfig update_config(const Wheel & new_wheel_pos);
+
+        /// \brief use inverse kinematics to get the required wheel velocities to
+        /// produce a given body twist
+        /// \param twist the requested body twist
+        /// \return wheel velocities
+        Wheel get_required_wheel_vel(const Twist2D & twist) const;
     };
 
     /// \brief custom invalid diff drive setup parameters exception 

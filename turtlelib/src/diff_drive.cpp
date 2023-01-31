@@ -8,7 +8,7 @@ namespace turtlelib
     void DiffDrive::calc_kinematic_coeff()
     {
         coeff_ik_w_ = wheel_track_ / (2.0*wheel_radius_);
-        coeff_ik_x_ = 1.0 / (2.0*wheel_radius_);
+        coeff_ik_x_ = 1.0 / (wheel_radius_);
         coeff_fk_w_ = wheel_radius_ / wheel_track_;
         coeff_fk_x_ = wheel_radius_ / 2.0;
     }
@@ -21,7 +21,8 @@ namespace turtlelib
         Wheel {0,0}         //start_wheel_pos
     ) {}
 
-    DiffDrive::DiffDrive(double wheel_track, double wheel_radius, Transform2D start_location)
+    DiffDrive::DiffDrive(double wheel_track, double wheel_radius, 
+        const Transform2D & start_location)
     : DiffDrive(
         wheel_track,
         wheel_radius,
@@ -29,7 +30,8 @@ namespace turtlelib
         Wheel {0,0}         //start_wheel_pos
     ) {}
 
-    DiffDrive::DiffDrive(double wheel_track, double wheel_radius, Wheel start_wheel_pos)
+    DiffDrive::DiffDrive(double wheel_track, double wheel_radius, 
+        const Wheel & start_wheel_pos)
     : DiffDrive(
         wheel_track,
         wheel_radius,
@@ -40,8 +42,8 @@ namespace turtlelib
     DiffDrive::DiffDrive(
         double wheel_track,
         double wheel_radius,
-        Transform2D start_location,
-        Wheel start_wheel_pos
+        const Transform2D & start_location,
+        const Wheel & start_wheel_pos
     )
     : wheel_track_{wheel_track},
       wheel_radius_{wheel_radius},
@@ -64,6 +66,38 @@ namespace turtlelib
     }
 
     DiffDriveConfig DiffDrive::config() const {return config_;}
+
+    DiffDriveConfig DiffDrive::update_config(const Wheel & new_wheel_pos) {
+        //Calculate change in wheel position
+        Wheel wheel_delta {
+            new_wheel_pos.left - config_.wheel_pos.left,    //left
+            new_wheel_pos.right - config_.wheel_pos.right   //right
+        };
+
+        //Calculate produced body twist
+        Twist2D body_twist {
+            coeff_fk_w_*(-wheel_delta.left + wheel_delta.right),    //w
+            coeff_fk_x_*(wheel_delta.left + wheel_delta.right),     //x
+            0.0                                                     //y
+        };
+
+        //TODO integrate twist
+
+        //TODO Calculate new config
+
+        //TODO - update wheel positions in config
+        return config();
+    }
+
+    Wheel DiffDrive::get_required_wheel_vel(const Twist2D & twist) const
+    {
+        //TODO throw error if twist y velocity is nonzero
+
+        return Wheel {
+            -coeff_ik_w_*twist.w + coeff_ik_x_*twist.x,     //left
+            coeff_ik_w_*twist.w + coeff_ik_x_*twist.x       //right
+        };
+    }
 
     /* DIFF DRIVE END */
 
