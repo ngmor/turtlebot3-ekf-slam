@@ -546,3 +546,32 @@ TEST_CASE("arc of a circle", "[diffdrive]") { //Nick Morales
     }
 
 }
+
+TEST_CASE("exceptions", "[diffdrive]") { //Nick Morales
+
+    SECTION("invalid robot dimensions") {
+        REQUIRE_THROWS(DiffDrive {0, 0});
+        REQUIRE_THROWS(DiffDrive {0, 5});
+        REQUIRE_THROWS(DiffDrive {7.2, 0});
+        REQUIRE_THROWS(DiffDrive {-3.4, 2});
+        REQUIRE_THROWS(DiffDrive {5.3, -1.2});
+        REQUIRE_THROWS(DiffDrive {-5.6, -1.7});
+        REQUIRE_NOTHROW(DiffDrive {8.2, 2.4});
+    }
+
+    SECTION("invalid twists") {
+        DiffDrive robot {0.16, 0.033};
+        
+        REQUIRE_NOTHROW(robot.get_required_wheel_vel(Twist2D{0, 0, 0}));
+        REQUIRE_NOTHROW(robot.get_required_wheel_vel(Twist2D{0.5, 0, 0}));
+        REQUIRE_NOTHROW(robot.get_required_wheel_vel(Twist2D{0, 0.5, 0}));
+        REQUIRE_THROWS(robot.get_required_wheel_vel(Twist2D{0, 0, 0.5}));
+        REQUIRE_NOTHROW(robot.get_required_wheel_vel(Twist2D{-0.5, 0, 0}));
+        REQUIRE_NOTHROW(robot.get_required_wheel_vel(Twist2D{0,-0.5, 0}));
+        REQUIRE_THROWS(robot.get_required_wheel_vel(Twist2D{0, 0, -0.5}));
+        REQUIRE_NOTHROW(robot.get_required_wheel_vel(Twist2D{0.5, 0.5, 0}));
+        REQUIRE_NOTHROW(robot.get_required_wheel_vel(Twist2D{-0.5, -0.5, 0}));
+        REQUIRE_THROWS(robot.get_required_wheel_vel(Twist2D{0.5, 0.5, 0.5}));
+        REQUIRE_THROWS(robot.get_required_wheel_vel(Twist2D{-0.5, -0.5, -0.5}));
+    }
+}
