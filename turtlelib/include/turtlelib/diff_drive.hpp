@@ -20,7 +20,7 @@ namespace turtlelib
 
     };
 
-    /// \brief configuration information for a differential drive robot
+    /// \brief models the kinematics of a differential drive robot
     struct DiffDriveConfig
     {
         /// \brief location of robot in the world frame
@@ -31,6 +31,7 @@ namespace turtlelib
 
     };
 
+    /// \brief differential drive robot 
     class DiffDrive
     {
     private:
