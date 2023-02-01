@@ -87,7 +87,7 @@ public:
 geometry_msgs::msg::TransformStamped pose_to_transform(Pose2D pose);
 
 
-//Node class
+/// \brief Runs the simulation for the NUTurtle.
 class NuSim : public rclcpp::Node
 {
 public:
@@ -164,6 +164,8 @@ public:
     broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     init_obstacles();
+
+    RCLCPP_INFO_STREAM(get_logger(), "nusim node started");
   }
 
 private:
