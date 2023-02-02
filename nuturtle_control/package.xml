@@ -15,6 +15,7 @@
   <depend>ros2launch</depend>
   <depend>rclcpp</depend>
   <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
   <depend>nuturtlebot_msgs</depend>
   <depend>nuturtle_description</depend>
   <depend>turtlelib</depend>
