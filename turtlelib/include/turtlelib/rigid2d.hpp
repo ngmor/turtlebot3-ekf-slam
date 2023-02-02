@@ -200,6 +200,16 @@ namespace turtlelib
         /// \brief rotational component
         double rot_ = 0.;
 
+        /// \brief cached sine of rotational angle
+        double rot_sin_ = 0.;
+
+        /// \brief cached cosine of rotational angle
+        double rot_cos_ = 1.;
+
+        /// \brief calculate and store trigonmetric values from rotational component
+        /// to increase computational efficiency
+        void cache_trig();
+
     public:
         /// \brief Create an identity transformation
         Transform2D();

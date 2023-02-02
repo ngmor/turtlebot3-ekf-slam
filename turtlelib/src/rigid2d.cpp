@@ -153,24 +153,33 @@ namespace turtlelib
     /// Private variables are already initialized as an identity transformation
     Transform2D::Transform2D() {}
 
-    Transform2D::Transform2D(Vector2D trans): trans_{trans} {}
+    Transform2D::Transform2D(Vector2D trans): Transform2D(trans, 0.0) {}
 
-    Transform2D::Transform2D(double rot): rot_{normalize_angle(rot)} {}
+    Transform2D::Transform2D(double rot): Transform2D(Vector2D {0.0, 0.0}, rot) {}
 
-    Transform2D::Transform2D(Vector2D trans, double rot): trans_{trans}, rot_{normalize_angle(rot)} {}
+    Transform2D::Transform2D(Vector2D trans, double rot)
+    : trans_{trans}, rot_{normalize_angle(rot)}
+    {
+        cache_trig();
+    }
+
+    void Transform2D::cache_trig() {
+        rot_sin_ = std::sin(rot_);
+        rot_cos_ = std::cos(rot_);
+    }
 
     Vector2D Transform2D::operator()(Vector2D v) const {
         return Vector2D {
-            v.x*std::cos(rot_) - v.y*std::sin(rot_) + trans_.x,
-            v.x*std::sin(rot_) + v.y*std::cos(rot_) + trans_.y
+            v.x*rot_cos_ - v.y*rot_sin_ + trans_.x,
+            v.x*rot_sin_ + v.y*rot_cos_ + trans_.y
         };
     }
 
     Twist2D Transform2D::operator()(Twist2D V) const {
         return Twist2D {
             V.w,
-            V.w*trans_.y + V.x*std::cos(rot_) - V.y*std::sin(rot_),
-            -V.w*trans_.x + V.x*std::sin(rot_) + V.y*std::cos(rot_)
+            V.w*trans_.y + V.x*rot_cos_ - V.y*rot_sin_,
+            -V.w*trans_.x + V.x*rot_sin_ + V.y*rot_cos_
         };
     }
 
@@ -178,8 +187,8 @@ namespace turtlelib
         return Transform2D {
             //translation
             Vector2D {
-                -trans_.x*std::cos(rot_) - trans_.y*std::sin(rot_),
-                -trans_.y*std::cos(rot_) + trans_.x*std::sin(rot_)
+                -trans_.x*rot_cos_ - trans_.y*rot_sin_,
+                -trans_.y*rot_cos_ + trans_.x*rot_sin_
             },
             //rotation
             -rot_
@@ -190,16 +199,19 @@ namespace turtlelib
         
         //Output translation adds current translation to incoming translation
         //modified by current rotation
-        this->trans_.x += rhs.translation().x*std::cos(this->rot_)
-                        - rhs.translation().y*std::sin(this->rot_);
-        this->trans_.y += rhs.translation().x*std::sin(this->rot_)
-                        + rhs.translation().y*std::cos(this->rot_);
+        this->trans_.x += rhs.translation().x*this->rot_cos_
+                        - rhs.translation().y*this->rot_sin_;
+        this->trans_.y += rhs.translation().x*this->rot_sin_
+                        + rhs.translation().y*this->rot_cos_;
         
         //Output rotation just adds the angles together
         this->rot_ += rhs.rotation();
 
         //Bound rotation
-        rot_ = normalize_angle(rot_);
+        this->rot_ = normalize_angle(this->rot_);
+
+        //Cache trig values
+        this->cache_trig();
 
         return *this;
     }
