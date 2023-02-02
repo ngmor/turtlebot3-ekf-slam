@@ -10,9 +10,11 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nuturtle_description REQUIRED)
+find_package(turtlelib REQUIRED)
 
 # executables
 add_executable(turtle_control src/turtle_control.cpp)
+target_link_libraries(turtle_control turtlelib::turtlelib)
 ament_target_dependencies(turtle_control
   rclcpp geometry_msgs nuturtle_description
 )
