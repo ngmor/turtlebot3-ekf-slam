@@ -12,10 +12,6 @@ using turtlelib::Twist2D;
 using turtlelib::PI;
 using turtlelib::almost_equal;
 
-constexpr int TICKS_PER_REV = 4096;
-constexpr double TICKS_PER_RAD = TICKS_PER_REV / (2.0*PI);
-constexpr double RAD_PER_TICKS = (2.0*PI) / TICKS_PER_REV;
-
 /// \brief Enables control of the turtlebot
 class TurtleControl : public rclcpp::Node
 {
@@ -31,24 +27,57 @@ public:
     //Parameters
     auto param = rcl_interfaces::msg::ParameterDescriptor{};
     
+    //Check if required parameters were provided
+    bool required_parameters_received = true;
+
     param.description = "The wheel track width in meters (REQUIRED)";
     declare_parameter("track_width", 0.0, param);
     double wheel_track = get_parameter("track_width").get_parameter_value().get<double>();
-
-    param.description = "The wheel radius in meters (REQUIRED)";
-    declare_parameter("wheel_radius", 0.0, param);
-    double wheel_radius = get_parameter("wheel_radius").get_parameter_value().get<double>();
-
-    //Check if required parameters were provided
-    bool required_parameters_received = true;
 
     if (wheel_track <= 0) {
       RCLCPP_ERROR_STREAM(get_logger(), "Invalid wheel track provided: " << wheel_track);
       required_parameters_received = false;
     }
 
+    param.description = "The wheel radius in meters (REQUIRED)";
+    declare_parameter("wheel_radius", 0.0, param);
+    double wheel_radius = get_parameter("wheel_radius").get_parameter_value().get<double>();
+
     if (wheel_radius <= 0) {
       RCLCPP_ERROR_STREAM(get_logger(), "Invalid wheel radius provided: " << wheel_radius);
+      required_parameters_received = false;
+    }
+
+    param.description = "Motor command value per rad/sec conversion factor (REQUIRED)";
+    declare_parameter("motor_cmd_per_rad_sec", 0.0, param);
+    motor_cmd_per_rad_sec_ = get_parameter(
+      "motor_cmd_per_rad_sec").get_parameter_value().get<double>();
+
+    if (motor_cmd_per_rad_sec_ <= 0) {
+      RCLCPP_ERROR_STREAM(get_logger(),
+        "Invalid motor command to rad/sec conversion provided: " << motor_cmd_per_rad_sec_);
+      required_parameters_received = false;
+    }
+
+    param.description = "Maximum possible motor command value (REQUIRED)";
+    declare_parameter("motor_cmd_max", 0, param);
+    motor_cmd_max_ = get_parameter(
+      "motor_cmd_max").get_parameter_value().get<int32_t>();
+
+    if (motor_cmd_max_ <= 0) {
+      RCLCPP_ERROR_STREAM(get_logger(),
+        "Invalid maximum motor command provided: " << motor_cmd_max_);
+      required_parameters_received = false;
+    }
+
+    param.description = "Motor encoder ticks per radian conversion factor (REQUIRED)";
+    declare_parameter("encoder_ticks_per_rad", 0.0, param);
+    encoder_ticks_per_rad_ = get_parameter(
+      "encoder_ticks_per_rad").get_parameter_value().get<double>();
+
+    if (encoder_ticks_per_rad_ <= 0) {
+      RCLCPP_ERROR_STREAM(get_logger(),
+        "Invalid encoder ticks to radian conversion provided: " << encoder_ticks_per_rad_);
       required_parameters_received = false;
     }
 
@@ -106,6 +135,8 @@ private:
   rclcpp::Subscription<nuturtlebot_msgs::msg::SensorData>::SharedPtr sub_sensor_data_;
 
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
+  double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
+  int32_t motor_cmd_max_;
   Wheel wheel_pos_last_ {0,0};
   rclcpp::Time sensor_stamp_last_;
   sensor_msgs::msg::JointState joint_states_;
@@ -123,14 +154,40 @@ private:
         msg.linear.y
     });
 
-    //Convert wheel velocities in rad/s to dynamixel ticks per second
-    wheel_vel.left *= TICKS_PER_RAD;
-    wheel_vel.right *= TICKS_PER_RAD;
-
     //generate wheel command message
     nuturtlebot_msgs::msg::WheelCommands wheel_cmd;
-    wheel_cmd.left_velocity = static_cast<int32_t>(wheel_vel.left);
-    wheel_cmd.right_velocity = static_cast<int32_t>(wheel_vel.right);
+    wheel_cmd.left_velocity = static_cast<int32_t>(wheel_vel.left*motor_cmd_per_rad_sec_);
+    wheel_cmd.right_velocity = static_cast<int32_t>(wheel_vel.right*motor_cmd_per_rad_sec_);
+
+    //Clamp velocities
+    //TODO - remove logger statements for efficiency?
+    if (wheel_cmd.left_velocity > motor_cmd_max_) {
+      RCLCPP_WARN_STREAM(get_logger(),
+        "Desired left wheel command (" << wheel_cmd.left_velocity << ") exceeded max, clamping to "
+        << motor_cmd_max_
+      );
+      wheel_cmd.left_velocity = motor_cmd_max_;
+    } else if (wheel_cmd.left_velocity < -motor_cmd_max_) {
+      RCLCPP_WARN_STREAM(get_logger(),
+        "Desired left wheel command (" << wheel_cmd.left_velocity << ") exceeded max, clamping to "
+        << -motor_cmd_max_
+      );
+      wheel_cmd.left_velocity = -motor_cmd_max_;
+    }
+
+    if (wheel_cmd.right_velocity > motor_cmd_max_) {
+      RCLCPP_WARN_STREAM(get_logger(),
+        "Desired right wheel command (" << wheel_cmd.right_velocity << ") exceeded max, clamping to "
+        << motor_cmd_max_
+      );
+      wheel_cmd.right_velocity = motor_cmd_max_;
+    } else if (wheel_cmd.right_velocity < -motor_cmd_max_) {
+      RCLCPP_WARN_STREAM(get_logger(),
+        "Desired right wheel command (" << wheel_cmd.right_velocity << ") exceeded max, clamping to "
+        << -motor_cmd_max_
+      );
+      wheel_cmd.right_velocity = -motor_cmd_max_;
+    }
 
     //publish wheel command message
     pub_wheel_cmd_->publish(wheel_cmd);
@@ -142,8 +199,8 @@ private:
   {
     //Convert received wheel position to radians
     Wheel wheel_pos {
-      static_cast<double>(msg.left_encoder)*RAD_PER_TICKS,
-      static_cast<double>(msg.right_encoder)*RAD_PER_TICKS
+      static_cast<double>(msg.left_encoder)/encoder_ticks_per_rad_,
+      static_cast<double>(msg.right_encoder)/encoder_ticks_per_rad_
     };
 
     double elapsed_time = 
