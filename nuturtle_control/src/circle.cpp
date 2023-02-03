@@ -28,29 +28,38 @@ public:
       std::bind(&Circle::timer_callback, this)
     );
 
-    // Services
+    //Publishers
+    pub_cmd_vel_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel",10);
+
+    //Services
     srv_control_ = create_service<nuturtle_control::srv::Circle>(
       "control",
       std::bind(&Circle::control_callback, this, std::placeholders::_1, std::placeholders::_2)
     );
 
+    //Init cmd_vel twist
+    cmd_vel_.linear.y = 0;
+    cmd_vel_.linear.z = 0;
+    cmd_vel_.angular.x = 0;
+    cmd_vel_.angular.y = 0;
 
     RCLCPP_INFO_STREAM(get_logger(), "circle node started");
   }
 private:
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel_;
   rclcpp::Service<nuturtle_control::srv::Circle>::SharedPtr srv_control_;
 
   double sim_freq_, sim_interval_;
-  double velocity_, radius_;
   bool publish_ = false;
+  geometry_msgs::msg::Twist cmd_vel_;
 
   /// \brief main timer loop for publishing cmd_vel messages
   void timer_callback()
   {
     if (publish_)
     {
-
+      pub_cmd_vel_->publish(cmd_vel_);
     }
   }
 
@@ -62,8 +71,8 @@ private:
     //Get rid of unused warnings
     (void)response;
 
-    velocity_ = request->velocity;
-    radius_ = request->radius;
+    cmd_vel_.angular.z = request->velocity;
+    cmd_vel_.linear.x = request->radius*request->velocity;
 
     //start publishing
     publish_ = true;
