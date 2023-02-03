@@ -74,19 +74,23 @@ namespace turtlelib
 
     void DiffDrive::set_config(DiffDriveConfig new_config) {config_ = new_config;}
 
-    DiffDriveConfig DiffDrive::update_config(const Wheel & new_wheel_pos) {
-        //Calculate change in wheel position
+    Twist2D DiffDrive::get_body_twist(const Wheel & new_wheel_pos) const {
+         //Calculate change in wheel position
         Wheel wheel_delta {
             new_wheel_pos.left - config_.wheel_pos.left,    //left
             new_wheel_pos.right - config_.wheel_pos.right   //right
         };
-
-        //Calculate produced body twist
-        Twist2D body_twist {
+        
+        return Twist2D {
             coeff_fk_w_*(-wheel_delta.left + wheel_delta.right),    //w, doc/Kinematics.pdf Eq 2.6
             coeff_fk_x_*(wheel_delta.left + wheel_delta.right),     //x, doc/Kinematics.pdf Eq 2.7
             0.0                                                     //y, doc/Kinematics.pdf Eq 2.5
         };
+    }
+
+    DiffDriveConfig DiffDrive::update_config(const Wheel & new_wheel_pos) {
+        //Calculate produced body twist
+        Twist2D body_twist = get_body_twist(new_wheel_pos);
 
         //integrate twist and compose it with the current location transformation
         //Twbp = Twb * Tbbp

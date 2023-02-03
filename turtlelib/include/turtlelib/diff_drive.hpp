@@ -105,6 +105,12 @@ namespace turtlelib
         /// \param new_config new config to overwrite with
         void set_config(DiffDriveConfig new_config);
 
+        /// \brief calculate the body twist produced by a change in wheel position in unit time
+        /// \param new_wheel_pos - the new wheel position,
+        /// change from current position is calculated
+        /// \return - the produced body twist
+        Twist2D get_body_twist(const Wheel & new_wheel_pos) const;
+
         /// \brief use forward kinematics to update the configuration of the robot
         // given new wheel positions
         /// \param new_wheel_pos new wheel positions with which to calculate new configuration

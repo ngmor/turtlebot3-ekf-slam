@@ -16,6 +16,7 @@ using turtlelib::DiffDriveConfig;
 using turtlelib::Wheel;
 using turtlelib::Transform2D;
 using turtlelib::Vector2D;
+using turtlelib::Twist2D;
 
 /// \brief Calculates odometry for the turtlebot
 class Odometry : public rclcpp::Node
@@ -176,6 +177,9 @@ private:
     //No point in doing odometry if both wheels have not been detected
     if (wheel_count != 2) {return;}
 
+    //Get body twist
+    Twist2D body_twist = turtlebot_.get_body_twist(wheel_pos);
+
     //Calculate new configuration
     turtlebot_.update_config(wheel_pos);
 
@@ -189,7 +193,9 @@ private:
 
     odom_msg_.header.stamp = msg.header.stamp;
 
-    //TODO - velocity
+    odom_msg_.twist.twist.angular.z = body_twist.w;
+    odom_msg_.twist.twist.linear.x = body_twist.x;
+    odom_msg_.twist.twist.linear.y = body_twist.y;
 
     //Publish odometry message
     pub_odom_->publish(odom_msg_);
