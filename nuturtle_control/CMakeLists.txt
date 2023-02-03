@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -43,7 +44,7 @@ ament_target_dependencies(odometry
 add_executable(circle src/circle.cpp)
 target_link_libraries(circle "${cpp_typesupport_target}")
 ament_target_dependencies(circle
-  rclcpp geometry_msgs
+  rclcpp geometry_msgs std_srvs
 )
 
 install(TARGETS

@@ -1,4 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
+#include "std_srvs/srv/empty.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "nuturtle_control/srv/circle.hpp"
 
@@ -36,6 +37,15 @@ public:
       "control",
       std::bind(&Circle::control_callback, this, std::placeholders::_1, std::placeholders::_2)
     );
+    srv_reverse_ = create_service<std_srvs::srv::Empty>(
+      "reverse",
+      std::bind(&Circle::reverse_callback, this, std::placeholders::_1, std::placeholders::_2)
+    );
+    srv_stop_ = create_service<std_srvs::srv::Empty>(
+      "stop",
+      std::bind(&Circle::stop_callback, this, std::placeholders::_1, std::placeholders::_2)
+    );
+
 
     //Init cmd_vel twist
     cmd_vel_.linear.y = 0;
@@ -49,6 +59,8 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel_;
   rclcpp::Service<nuturtle_control::srv::Circle>::SharedPtr srv_control_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_reverse_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_stop_;
 
   double sim_freq_, sim_interval_;
   bool publish_ = false;
@@ -76,6 +88,42 @@ private:
 
     //start publishing
     publish_ = true;
+  }
+
+  void reverse_callback(
+    const std::shared_ptr<std_srvs::srv::Empty::Request> request,
+    std::shared_ptr<std_srvs::srv::Empty::Response> response
+  )
+  {
+    (void)request;
+    (void)response;
+
+    //reverse circle direction
+    cmd_vel_.angular.z *= -1;
+    cmd_vel_.linear.x *= -1;
+  }
+
+  void stop_callback(
+    const std::shared_ptr<std_srvs::srv::Empty::Request> request,
+    std::shared_ptr<std_srvs::srv::Empty::Response> response
+  )
+  {
+    (void)request;
+    (void)response;
+
+    //stop publishing
+    publish_ = false;
+
+    //Publish a single stop command
+    geometry_msgs::msg::Twist stop_cmd;
+    stop_cmd.linear.x = 0;
+    stop_cmd.linear.y = 0;
+    stop_cmd.linear.z = 0;
+    stop_cmd.angular.x = 0;
+    stop_cmd.angular.y = 0;
+    stop_cmd.angular.z = 0;
+
+    pub_cmd_vel_->publish(stop_cmd);
   }
 };
 
