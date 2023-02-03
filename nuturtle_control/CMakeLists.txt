@@ -22,6 +22,7 @@ ament_export_dependencies(rosidl_default_runtime)
 rosidl_generate_interfaces(
   ${PROJECT_NAME}_srv
   "srv/InitialPose.srv"
+  "srv/Circle.srv"
   LIBRARY_NAME ${PROJECT_NAME}
 )
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
@@ -40,6 +41,7 @@ ament_target_dependencies(odometry
 )
 
 add_executable(circle src/circle.cpp)
+target_link_libraries(circle "${cpp_typesupport_target}")
 ament_target_dependencies(circle
   rclcpp geometry_msgs
 )
