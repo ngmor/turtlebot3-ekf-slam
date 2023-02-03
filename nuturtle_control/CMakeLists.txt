@@ -39,8 +39,13 @@ ament_target_dependencies(odometry
   rclcpp sensor_msgs nav_msgs tf2 tf2_ros tf2_geometry_msgs
 )
 
+add_executable(circle src/circle.cpp)
+ament_target_dependencies(circle
+  rclcpp geometry_msgs
+)
+
 install(TARGETS
-  turtle_control odometry
+  turtle_control odometry circle
   DESTINATION lib/${PROJECT_NAME}
 )
 
