@@ -1,8 +1,13 @@
 #include <stdexcept>
 #include <string>
+#include <array>
 #include "turtlelib/diff_drive.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "tf2_ros/transform_broadcaster.h"
 
 using turtlelib::DiffDrive;
 using turtlelib::Wheel;
@@ -83,6 +88,7 @@ public:
 
 
     //Publishers
+    pub_odom_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
     
     //Subscribers
     sub_joint_states_ = create_subscription<sensor_msgs::msg::JointState>(
@@ -94,15 +100,26 @@ public:
     //Initialize turtlebot with input parameters and at q(0,0,0)
     turtlebot_ = DiffDrive {wheel_track, wheel_radius};
 
+    //Init odom message
+    odom_msg_.header.frame_id = odom_id_;
+    odom_msg_.child_frame_id = body_id_;
+    odom_msg_.pose.pose.position.z = 0;
+    odom_msg_.pose.covariance = std::array<double,36> {36, 0};
+    odom_msg_.twist.twist.linear.z = 0;
+    odom_msg_.twist.twist.angular.x = 0;
+    odom_msg_.twist.twist.angular.y = 0;
+    odom_msg_.twist.covariance = std::array<double,36> {36, 0};
 
 
     RCLCPP_INFO_STREAM(get_logger(), "odometry node started");
   }
 private:
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_joint_states_;
   
   std::string body_id_, odom_id_, wheel_left_joint_, wheel_right_joint_;
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
+  nav_msgs::msg::Odometry odom_msg_;
 
   /// \brief update internal odometry from received joint states
   /// \param msg - joint states
@@ -130,6 +147,23 @@ private:
 
     //Calculate new configuration
     turtlebot_.update_config(wheel_pos);
+
+    // build odometry message
+    odom_msg_.pose.pose.position.x = turtlebot_.config().location.translation().x;
+    odom_msg_.pose.pose.position.y = turtlebot_.config().location.translation().y;
+    
+    tf2::Quaternion q;
+    q.setRPY(0,0, turtlebot_.config().location.rotation());
+    odom_msg_.pose.pose.orientation = tf2::toMsg(q);
+
+    odom_msg_.header.stamp = msg.header.stamp;
+
+    //TODO - velocity
+
+    //Publish odometry message
+    pub_odom_->publish(odom_msg_);
+
+    //TODO - broadcaster
   }
 };
 
