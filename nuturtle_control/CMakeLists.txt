@@ -11,18 +11,23 @@ find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
-find_package(nuturtle_description REQUIRED)
 find_package(turtlelib REQUIRED)
 
 # executables
 add_executable(turtle_control src/turtle_control.cpp)
 target_link_libraries(turtle_control turtlelib::turtlelib)
 ament_target_dependencies(turtle_control
-  rclcpp geometry_msgs sensor_msgs nuturtlebot_msgs nuturtle_description
+  rclcpp geometry_msgs sensor_msgs nuturtlebot_msgs
+)
+
+add_executable(odometry src/odometry.cpp)
+target_link_libraries(odometry turtlelib::turtlelib)
+ament_target_dependencies(odometry
+  rclcpp sensor_msgs
 )
 
 install(TARGETS
-  turtle_control
+  turtle_control odometry
   DESTINATION lib/${PROJECT_NAME}
 )
 
