@@ -9,9 +9,13 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "nuturtle_control/srv/initial_pose.hpp"
 
 using turtlelib::DiffDrive;
+using turtlelib::DiffDriveConfig;
 using turtlelib::Wheel;
+using turtlelib::Transform2D;
+using turtlelib::Vector2D;
 
 /// \brief Calculates odometry for the turtlebot
 class Odometry : public rclcpp::Node
@@ -98,6 +102,17 @@ public:
       std::bind(&Odometry::joint_states_callback, this, std::placeholders::_1)
     );
 
+    //Services
+    srv_initial_pose_ = create_service<nuturtle_control::srv::InitialPose>(
+      "initial_pose",
+      std::bind(
+        &Odometry::initial_pose_callback,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2
+      )
+    );
+
     //Broadcasters
     broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     
@@ -125,6 +140,7 @@ public:
 private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_joint_states_;
+  rclcpp::Service<nuturtle_control::srv::InitialPose>::SharedPtr srv_initial_pose_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster_;
   
   std::string body_id_, odom_id_, wheel_left_joint_, wheel_right_joint_;
@@ -186,6 +202,34 @@ private:
 
     //Broadcast transform
     broadcaster_->sendTransform(odom_tf_);
+  }
+
+  /// \brief set the robot config to the specified config
+  /// \param request - contains a configuration to set
+  /// \param response - empty
+  void initial_pose_callback(
+    const std::shared_ptr<nuturtle_control::srv::InitialPose::Request> request,
+    std::shared_ptr<nuturtle_control::srv::InitialPose::Response> response
+  )
+  {
+    //Example call
+    //ros2 service call /initial_pose nuturtle_control/srv/InitialPose "{x: 0., y: 0., theta: 0.}"
+
+    //Get rid of unused warnings
+    (void)response;
+
+    //Update configuration, but retain current wheel positions
+    turtlebot_.set_config(DiffDriveConfig{
+      Transform2D{
+        Vector2D{
+          request->x,
+          request->y
+        },
+        request->theta
+      },
+      turtlebot_.config().wheel_pos
+    });
+
   }
 };
 

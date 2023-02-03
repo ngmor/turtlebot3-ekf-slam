@@ -101,6 +101,10 @@ namespace turtlelib
         /// \return the current config structure
         DiffDriveConfig config() const;
 
+        /// \brief overwrite the current config with a new config
+        /// \param new_config new config to overwrite with
+        void set_config(DiffDriveConfig new_config);
+
         /// \brief use forward kinematics to update the configuration of the robot
         // given new wheel positions
         /// \param new_wheel_pos new wheel positions with which to calculate new configuration

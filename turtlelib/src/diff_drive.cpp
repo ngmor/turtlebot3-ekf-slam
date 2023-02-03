@@ -72,6 +72,8 @@ namespace turtlelib
 
     DiffDriveConfig DiffDrive::config() const {return config_;}
 
+    void DiffDrive::set_config(DiffDriveConfig new_config) {config_ = new_config;}
+
     DiffDriveConfig DiffDrive::update_config(const Wheel & new_wheel_pos) {
         //Calculate change in wheel position
         Wheel wheel_delta {
