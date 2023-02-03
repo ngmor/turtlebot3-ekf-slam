@@ -1,0 +1,10 @@
+<launch>
+    <arg name="cmd_src" default="teleop"/>
+
+    <node pkg="teleop_twist_keyboard" exec="teleop_twist_keyboard" 
+        output="screen" 
+        launch-prefix="xterm -e"
+        if="$(eval '\'$(var cmd_src)\' == \'teleop\'')"
+    />
+
+</launch>
