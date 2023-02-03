@@ -8,6 +8,7 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/transform_broadcaster.h"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 
 using turtlelib::DiffDrive;
 using turtlelib::Wheel;
@@ -96,6 +97,9 @@ public:
       10,
       std::bind(&Odometry::joint_states_callback, this, std::placeholders::_1)
     );
+
+    //Broadcasters
+    broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     
     //Initialize turtlebot with input parameters and at q(0,0,0)
     turtlebot_ = DiffDrive {wheel_track, wheel_radius};
@@ -110,16 +114,23 @@ public:
     odom_msg_.twist.twist.angular.y = 0;
     odom_msg_.twist.covariance = std::array<double,36> {36, 0};
 
+    //Init odom transform
+    odom_tf_.header.frame_id = odom_id_;
+    odom_tf_.child_frame_id = body_id_;
+    odom_tf_.transform.translation.z = 0;
+
 
     RCLCPP_INFO_STREAM(get_logger(), "odometry node started");
   }
 private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_joint_states_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster_;
   
   std::string body_id_, odom_id_, wheel_left_joint_, wheel_right_joint_;
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
   nav_msgs::msg::Odometry odom_msg_;
+  geometry_msgs::msg::TransformStamped odom_tf_;
 
   /// \brief update internal odometry from received joint states
   /// \param msg - joint states
@@ -133,12 +144,16 @@ private:
     for (unsigned int i = 0; i < msg.name.size(); i++) {
       if (msg.name.at(i) == wheel_left_joint_) {
         wheel_pos.left = msg.position.at(i);
-        wheel_vel.left = msg.velocity.at(i);
         wheel_count++;
+        if (msg.velocity.size() > i) {
+          wheel_vel.left = msg.velocity.at(i);
+        }
       } else if (msg.name.at(i) == wheel_right_joint_) {
         wheel_pos.right = msg.position.at(i);
-        wheel_vel.right = msg.velocity.at(i);
         wheel_count++;
+        if (msg.velocity.size() > i) {
+          wheel_vel.right = msg.velocity.at(i);
+        }
       }
     }
 
@@ -163,7 +178,14 @@ private:
     //Publish odometry message
     pub_odom_->publish(odom_msg_);
 
-    //TODO - broadcaster
+    //Build transform
+    odom_tf_.transform.translation.x = odom_msg_.pose.pose.position.x;
+    odom_tf_.transform.translation.y = odom_msg_.pose.pose.position.y;
+    odom_tf_.transform.rotation = odom_msg_.pose.pose.orientation;
+    odom_tf_.header.stamp = odom_msg_.header.stamp;
+
+    //Broadcast transform
+    broadcaster_->sendTransform(odom_tf_);
   }
 };
 
