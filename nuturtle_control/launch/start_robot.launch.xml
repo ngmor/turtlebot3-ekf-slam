@@ -79,7 +79,9 @@
         <remap from="joint_states" to="blue/joint_states"/>
     </node>
 
-    <!-- TODO add numsr_turtlebot -->
+    <node pkg="numsr_turtlebot" exec="numsr_turtlebot"
+        if="$(eval '\'$(var robot)\' == \'localhost\'')"
+    />
     <!-- ROBOT CONTROL END -->
 
 </launch>
