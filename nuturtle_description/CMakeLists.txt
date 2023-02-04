@@ -7,14 +7,18 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+ament_export_dependencies(rosidl_default_runtime)
 
 # install files
 install(DIRECTORY
   launch urdf config meshes
   DESTINATION share/${PROJECT_NAME}
+)
+rosidl_generate_interfaces(
+  ${PROJECT_NAME}_srv
+  "msg/Configuration.msg"
+  LIBRARY_NAME ${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
