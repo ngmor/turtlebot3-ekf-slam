@@ -74,6 +74,7 @@
 
     <node pkg="nuturtle_control" exec="turtle_control" >
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+        <remap from="joint_states" to="blue/joint_states"/>
     </node>
 
     <!-- TODO add numsr_turtlebot -->
