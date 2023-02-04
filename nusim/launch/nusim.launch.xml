@@ -8,6 +8,7 @@
         args="-d $(find-pkg-share nusim)/config/nusim.rviz"/>
     <node pkg="nusim" exec="nusim">
         <param from="$(find-pkg-share nusim)/config/basic_world.yaml"/>
+        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
     </node>
 
 </launch>

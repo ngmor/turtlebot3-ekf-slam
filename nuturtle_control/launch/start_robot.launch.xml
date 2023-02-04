@@ -30,7 +30,9 @@
     <!-- SIMULATION START -->
     <node pkg="nusim" exec="nusim"
         if="$(eval '\'$(var robot)\' == \'nusim\'')"
-    />
+    >
+        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+    </node>
 
     <!-- Publish identity transform between nusim/world and odom -->
     <node pkg="tf2_ros" exec="static_transform_publisher"
