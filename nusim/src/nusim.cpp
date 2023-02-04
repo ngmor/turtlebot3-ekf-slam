@@ -29,6 +29,7 @@
 #include <vector>
 #include <exception>
 #include <typeinfo>
+#include <algorithm>
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
@@ -186,6 +187,8 @@ public:
     //Publishers
     pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     pub_obstacles_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
+    //TODO - I don't think this should have a prefix, have to check
+    pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data",10);
 
     //Subscribers
     sub_wheel_cmd_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
@@ -226,6 +229,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr pub_timestep_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_obstacles_;
+  rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr pub_sensor_data_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr sub_wheel_cmd_;
 
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_reset_;
@@ -241,22 +245,110 @@ private:
   visualization_msgs::msg::MarkerArray obstacle_markers_;
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
   int32_t motor_cmd_max_;
+  rclcpp::Time current_time_;
 
   /// \brief main simulation timer loop
   void timer_callback()
   {
+    //Use a single time value for all publishing
+    current_time_ = get_clock()->now();
+
     //Publish timestep and increment
     auto timestep_msg = std_msgs::msg::UInt64();
     timestep_msg.data = timestep_++;
     pub_timestep_->publish(timestep_msg);
 
-    //Broadcast current transform of robot
-    auto tf = pose_to_transform(turtlebot_.config().location);
-    tf.header.stamp = get_clock()->now();
-    broadcaster_->sendTransform(tf);
+    //Update wheel positions and publish
+    update_wheel_pos_and_config();
 
     //Publish markers
     publish_obstacles();
+  }
+
+  /// \brief update the robot's wheel positions based on the current
+  /// commanded velocity and update the robot's configuration based
+  /// on the new wheel position
+  void update_wheel_pos_and_config()
+  {
+    //Create new wheel position based on wheel velocity
+    Wheel new_wheel_pos {
+      turtlebot_.config().wheel_pos.left + wheel_vel_.left*sim_interval_,
+      turtlebot_.config().wheel_pos.right + wheel_vel_.right*sim_interval_,
+    };
+
+    //Publish new wheel position
+    nuturtlebot_msgs::msg::SensorData sensor_data;
+    sensor_data.stamp = current_time_;
+    sensor_data.left_encoder = static_cast<int32_t>(new_wheel_pos.left*encoder_ticks_per_rad_);
+    sensor_data.right_encoder = static_cast<int32_t>(new_wheel_pos.right*encoder_ticks_per_rad_);
+
+    pub_sensor_data_->publish(sensor_data);
+
+    //Update configuration based on new wheel position
+    turtlebot_.update_config(new_wheel_pos);
+
+    //Broadcast updated transform of robot
+    auto tf = pose_to_transform(turtlebot_.config().location);
+    tf.header.stamp = current_time_;
+    broadcaster_->sendTransform(tf);
+  }
+
+  /// \brief initialize the obstacle marker array.
+  void init_obstacles()
+  {
+
+    visualization_msgs::msg::Marker marker;
+
+    //Create markers from input lists
+    for (size_t i = 0; i < obstacles_x_.size(); i++) {
+      //Reset marker
+      marker = visualization_msgs::msg::Marker {};
+
+      marker.header.frame_id = WORLD_FRAME;
+      marker.id = i;
+      marker.type = visualization_msgs::msg::Marker::CYLINDER;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      marker.pose.position.x = obstacles_x_.at(i);
+      marker.pose.position.y = obstacles_y_.at(i);
+      marker.pose.position.z = OBSTACLE_HEIGHT / 2;
+      marker.scale.x = obstacles_r_ * 2;
+      marker.scale.y = obstacles_r_ * 2;
+      marker.scale.z = OBSTACLE_HEIGHT;
+      marker.color.r = 1.0;
+      marker.color.g = 0.0;
+      marker.color.b = 0.0;
+      marker.color.a = 1.0;
+
+      //Append to marker array
+      obstacle_markers_.markers.push_back(marker);
+    }
+  }
+
+  /// \brief publish the obstacle marker array
+  void publish_obstacles()
+  {
+
+    //Update timestamps of all markers
+    for (auto & marker : obstacle_markers_.markers) {
+      marker.header.stamp = current_time_;
+    }
+
+    //Publish marker array
+    pub_obstacles_->publish(obstacle_markers_);
+  }
+
+  /// \brief convert and store received wheel commands
+  /// \param msg - received wheel command message
+  void wheel_cmd_callback(const nuturtlebot_msgs::msg::WheelCommands & msg)
+  {
+    //Clamp velocities to max allowed and
+    //store wheel velocities in rad/s
+    wheel_vel_.left = static_cast<double>(
+      std::clamp(msg.left_velocity, -motor_cmd_max_, motor_cmd_max_)
+    )/motor_cmd_per_rad_sec_;
+    wheel_vel_.right = static_cast<double>(
+      std::clamp(msg.right_velocity, -motor_cmd_max_, motor_cmd_max_)
+    )/motor_cmd_per_rad_sec_;
   }
 
   /// \brief reset simulation back to initial parameters. callback for ~/reset service.
@@ -300,60 +392,6 @@ private:
       },
       turtlebot_.config().wheel_pos
     });
-  }
-
-  /// \brief initialize the obstacle marker array.
-  void init_obstacles()
-  {
-
-    visualization_msgs::msg::Marker marker;
-
-    //Create markers from input lists
-    for (size_t i = 0; i < obstacles_x_.size(); i++) {
-      //Reset marker
-      marker = visualization_msgs::msg::Marker {};
-
-      marker.header.frame_id = WORLD_FRAME;
-      marker.id = i;
-      marker.type = visualization_msgs::msg::Marker::CYLINDER;
-      marker.action = visualization_msgs::msg::Marker::ADD;
-      marker.pose.position.x = obstacles_x_.at(i);
-      marker.pose.position.y = obstacles_y_.at(i);
-      marker.pose.position.z = OBSTACLE_HEIGHT / 2;
-      marker.scale.x = obstacles_r_ * 2;
-      marker.scale.y = obstacles_r_ * 2;
-      marker.scale.z = OBSTACLE_HEIGHT;
-      marker.color.r = 1.0;
-      marker.color.g = 0.0;
-      marker.color.b = 0.0;
-      marker.color.a = 1.0;
-
-      //Append to marker array
-      obstacle_markers_.markers.push_back(marker);
-    }
-  }
-
-  /// \brief publish the obstacle marker array
-  void publish_obstacles()
-  {
-    auto time = get_clock()->now();
-
-    //Update timestamps of all markers
-    for (auto & marker : obstacle_markers_.markers) {
-      marker.header.stamp = time;
-    }
-
-    //Publish marker array
-    pub_obstacles_->publish(obstacle_markers_);
-  }
-
-  /// \brief convert and store received wheel commands
-  /// \param msg - received wheel command message
-  void wheel_cmd_callback(const nuturtlebot_msgs::msg::WheelCommands & msg)
-  {
-    //Store wheel velocities in rad/s
-    wheel_vel_.left = static_cast<double>(msg.left_velocity)/motor_cmd_per_rad_sec_;
-    wheel_vel_.right = static_cast<double>(msg.right_velocity)/motor_cmd_per_rad_sec_;
   }
 };
 
