@@ -175,7 +175,15 @@ public:
     declare_parameter("obstacles.r", 0.015, param);
     obstacles_r_ = get_parameter("obstacles.r").get_parameter_value().get<double>();
 
+    param.description =
+      "Length of the arena in the x direction (m)";
+    declare_parameter("x_length", 5.0, param);
+    x_length_ = get_parameter("x_length").get_parameter_value().get<double>();
 
+    param.description =
+      "Length of the arena in the y direction (m)";
+    declare_parameter("y_length", 5.0, param);
+    y_length_ = get_parameter("y_length").get_parameter_value().get<double>();
 
 
     //Abort if any required parameters were not provided
@@ -248,7 +256,7 @@ private:
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
   Wheel wheel_vel_ {0, 0};
   std::vector<double> obstacles_x_, obstacles_y_;
-  double obstacles_r_;
+  double obstacles_r_, x_length_, y_length_;
   visualization_msgs::msg::MarkerArray obstacle_markers_;
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
   int32_t motor_cmd_max_;
@@ -319,9 +327,6 @@ private:
     marker.color.b = 0.0;
     marker.color.a = 1.0;
     marker.points = {};
-
-    //TODO - change to parameters
-    double x_length_ = 2.0, y_length_ = 4.0;
 
     double x_bound = (x_length_ + WALL_WIDTH) / 2.0;
     double y_bound = (y_length_ + WALL_WIDTH) / 2.0;

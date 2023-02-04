@@ -94,11 +94,23 @@ Visualization Manager:
       Mass Properties:
         Inertia: false
         Mass: false
-      Name: RedRobot
+      Name: GroundTruthRobot
       TF Prefix: red
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: GroundTruthObstacles
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /nusim/obstacles
+      Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
@@ -153,7 +165,7 @@ Visualization Manager:
       Mass Properties:
         Inertia: false
         Mass: false
-      Name: BlueRobot
+      Name: EstimatedRobot
       TF Prefix: blue
       Update Interval: 0
       Value: true
@@ -173,6 +185,10 @@ Visualization Manager:
           Value: false
         blue/imu_link:
           Value: false
+        blue/wheel_left_link:
+          Value: true
+        blue/wheel_right_link:
+          Value: true
         nusim/world:
           Value: true
         odom:
@@ -199,7 +215,18 @@ Visualization Manager:
       Tree:
         nusim/world:
           odom:
-            {}
+            blue/base_footprint:
+              blue/base_link:
+                blue/base_scan:
+                  {}
+                blue/caster_back_link:
+                  {}
+                blue/imu_link:
+                  {}
+                blue/wheel_left_link:
+                  {}
+                blue/wheel_right_link:
+                  {}
           red/base_footprint:
             red/base_link:
               red/base_scan:
@@ -287,7 +314,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.8576908111572266
+      Distance: 4.518729209899902
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -302,10 +329,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5197972059249878
+      Pitch: 0.569797158241272
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.950411081314087
+      Yaw: 0.8072546124458313
     Saved: ~
 Window Geometry:
   Displays:
