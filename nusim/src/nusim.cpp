@@ -60,7 +60,6 @@ using turtlelib::DiffDriveConfig;
 using turtlelib::Wheel;
 
 // Constants
-//TODO - define somewhere centrally?
 constexpr std::string_view WORLD_FRAME = "nusim/world";
 constexpr std::string_view ROBOT_GROUND_TRUTH_FRAME = "red/base_footprint";
 constexpr double OBSTACLE_HEIGHT = 0.25;

@@ -1,15 +1,15 @@
 <launch>
     <!-- ARG START -->
     <arg name="cmd_src" default="teleop"
-        description="Source for cmd_vel messages. Options: ['teleop', 'circle', 'none']"
+        description="Source for cmd_vel messages. Valid choices are: ['teleop', 'circle', 'none']"
     />
 
     <arg name="robot" default="nusim"
-        description="Simulation or other options for running robot nodes. Options: ['nusim', 'localhost', 'none']"
+        description="Simulation or other options for running robot nodes. Valid choices are: ['nusim', 'localhost', 'none']"
     />
 
     <arg name="use_rviz" default="true"
-        description="Start RVIZ to visualize robot. Options: ['true', 'false']"
+        description="Start RVIZ to visualize robot. Valid choices are: ['true', 'false']"
     />
     <!-- ARG END -->
 
