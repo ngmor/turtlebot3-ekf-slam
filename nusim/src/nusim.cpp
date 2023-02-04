@@ -448,10 +448,10 @@ private:
     turtlebot_.set_config(DiffDriveConfig{
       Transform2D{
         Vector2D{
-          request->x,
-          request->y
+          request->config.x,
+          request->config.y
         },
-        request->theta
+        request->config.theta
       },
       turtlebot_.config().wheel_pos
     });
