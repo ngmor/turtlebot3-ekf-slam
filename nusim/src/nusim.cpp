@@ -48,6 +48,7 @@ using turtlelib::Vector2D;
 using turtlelib::Transform2D;
 using turtlelib::DiffDrive;
 using turtlelib::DiffDriveConfig;
+using turtlelib::Wheel;
 
 // Constants
 //TODO - define somewhere centrally?
@@ -94,6 +95,39 @@ public:
 
     if (wheel_radius <= 0) {
       RCLCPP_ERROR_STREAM(get_logger(), "Invalid wheel radius provided: " << wheel_radius);
+      required_parameters_received = false;
+    }
+
+    param.description = "Motor command value per rad/sec conversion factor (REQUIRED)";
+    declare_parameter("motor_cmd_per_rad_sec", 0.0, param);
+    motor_cmd_per_rad_sec_ = get_parameter(
+      "motor_cmd_per_rad_sec").get_parameter_value().get<double>();
+
+    if (motor_cmd_per_rad_sec_ <= 0) {
+      RCLCPP_ERROR_STREAM(get_logger(),
+        "Invalid motor command to rad/sec conversion provided: " << motor_cmd_per_rad_sec_);
+      required_parameters_received = false;
+    }
+
+    param.description = "Maximum possible motor command value (REQUIRED)";
+    declare_parameter("motor_cmd_max", 0, param);
+    motor_cmd_max_ = get_parameter(
+      "motor_cmd_max").get_parameter_value().get<int32_t>();
+
+    if (motor_cmd_max_ <= 0) {
+      RCLCPP_ERROR_STREAM(get_logger(),
+        "Invalid maximum motor command provided: " << motor_cmd_max_);
+      required_parameters_received = false;
+    }
+
+    param.description = "Motor encoder ticks per radian conversion factor (REQUIRED)";
+    declare_parameter("encoder_ticks_per_rad", 0.0, param);
+    encoder_ticks_per_rad_ = get_parameter(
+      "encoder_ticks_per_rad").get_parameter_value().get<double>();
+
+    if (encoder_ticks_per_rad_ <= 0) {
+      RCLCPP_ERROR_STREAM(get_logger(),
+        "Invalid encoder ticks to radian conversion provided: " << encoder_ticks_per_rad_);
       required_parameters_received = false;
     }
 
@@ -153,6 +187,13 @@ public:
     pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     pub_obstacles_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
 
+    //Subscribers
+    sub_wheel_cmd_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
+      "wheel_cmd", //TODO - I don't think this should have a prefix, have to check
+      10,
+      std::bind(&NuSim::wheel_cmd_callback, this, std::placeholders::_1)
+    );
+
     // Services
     srv_reset_ = create_service<std_srvs::srv::Empty>(
       "~/reset",
@@ -185,6 +226,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr pub_timestep_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_obstacles_;
+  rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr sub_wheel_cmd_;
 
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_reset_;
   rclcpp::Service<nusim::srv::Teleport>::SharedPtr srv_teleport_;
@@ -193,9 +235,12 @@ private:
   double sim_rate_, sim_interval_;
   uint64_t timestep_ = 0;
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
+  Wheel wheel_vel_ {0, 0};
   std::vector<double> obstacles_x_, obstacles_y_;
   double obstacles_r_;
   visualization_msgs::msg::MarkerArray obstacle_markers_;
+  double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
+  int32_t motor_cmd_max_;
 
   /// \brief main simulation timer loop
   void timer_callback()
@@ -302,6 +347,14 @@ private:
     pub_obstacles_->publish(obstacle_markers_);
   }
 
+  /// \brief convert and store received wheel commands
+  /// \param msg - received wheel command message
+  void wheel_cmd_callback(const nuturtlebot_msgs::msg::WheelCommands & msg)
+  {
+    //Store wheel velocities in rad/s
+    wheel_vel_.left = static_cast<double>(msg.left_velocity)/motor_cmd_per_rad_sec_;
+    wheel_vel_.right = static_cast<double>(msg.right_velocity)/motor_cmd_per_rad_sec_;
+  }
 };
 
 /// \brief format a pose as a TransformStamped message
