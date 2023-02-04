@@ -203,8 +203,11 @@ private:
       static_cast<double>(msg.right_encoder)/encoder_ticks_per_rad_
     };
 
+    rclcpp::Time sensor_stamp_current = msg.stamp;
+
     double elapsed_time = 
-      static_cast<double>(msg.stamp.nanosec - sensor_stamp_last_.nanoseconds()) * 1.0e-9;
+      static_cast<double>(sensor_stamp_current.nanoseconds()
+       - sensor_stamp_last_.nanoseconds()) * 1.0e-9;
 
     //Calculate wheel velocity
     Wheel wheel_vel {0,0};
