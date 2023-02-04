@@ -35,6 +35,7 @@
 #include "std_msgs/msg/u_int64.hpp"
 #include "std_srvs/srv/empty.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "geometry_msgs/msg/point.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "nusim/srv/teleport.hpp"
@@ -56,6 +57,10 @@ using turtlelib::Wheel;
 constexpr std::string_view WORLD_FRAME = "nusim/world";
 constexpr std::string_view ROBOT_GROUND_TRUTH_FRAME = "red/base_footprint";
 constexpr double OBSTACLE_HEIGHT = 0.25;
+constexpr double WALL_HEIGHT = 0.25;
+constexpr double WALL_WIDTH = 0.1;
+constexpr int32_t MARKER_ID_WALL = 0;
+constexpr int32_t MARKER_ID_OFFSET_OBSTACLES = 100;
 
 
 //Function prototypes
@@ -169,6 +174,8 @@ public:
       "Radius of all cylinder obstacles (m). Single value applies to all obstacles.";
     declare_parameter("obstacles.r", 0.015, param);
     obstacles_r_ = get_parameter("obstacles.r").get_parameter_value().get<double>();
+
+
 
 
     //Abort if any required parameters were not provided
@@ -299,13 +306,62 @@ private:
 
     visualization_msgs::msg::Marker marker;
 
+    //Add walls
+    marker.header.frame_id = WORLD_FRAME;
+    marker.id = MARKER_ID_WALL;
+    marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+    marker.scale.x = WALL_WIDTH;
+    marker.scale.y = WALL_WIDTH;
+    marker.scale.z = WALL_HEIGHT;
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+    marker.color.a = 1.0;
+    marker.points = {};
+
+    //TODO - change to parameters
+    double x_length_ = 2.0, y_length_ = 4.0;
+
+    double x_bound = (x_length_ + WALL_WIDTH) / 2.0;
+    double y_bound = (y_length_ + WALL_WIDTH) / 2.0;
+
+    geometry_msgs::msg::Point point;
+    point.z = WALL_HEIGHT/2.;
+
+    //Add top and bottom wall points
+    for (double x = -x_bound; x <= x_bound; x += WALL_WIDTH) {
+      //Bottom wall
+      point.x = x;
+      point.y = -y_bound;
+      marker.points.push_back(point);
+      
+      //Top wall
+      point.y = y_bound;
+      marker.points.push_back(point);
+    }
+
+    //Add left and right wall points
+    for (double y = -y_bound; y <= y_bound; y += WALL_WIDTH) {
+      //Left wall
+      point.x = -x_bound;
+      point.y = y;
+      marker.points.push_back(point);
+      
+      //Right wall
+      point.x = x_bound;
+      marker.points.push_back(point);
+    }
+
+    obstacle_markers_.markers.push_back(marker);
+
     //Create markers from input lists
     for (size_t i = 0; i < obstacles_x_.size(); i++) {
       //Reset marker
       marker = visualization_msgs::msg::Marker {};
 
       marker.header.frame_id = WORLD_FRAME;
-      marker.id = i;
+      marker.id = i + MARKER_ID_OFFSET_OBSTACLES;
       marker.type = visualization_msgs::msg::Marker::CYLINDER;
       marker.action = visualization_msgs::msg::Marker::ADD;
       marker.pose.position.x = obstacles_x_.at(i);
@@ -322,6 +378,8 @@ private:
       //Append to marker array
       obstacle_markers_.markers.push_back(marker);
     }
+
+
   }
 
   /// \brief publish the obstacle marker array
