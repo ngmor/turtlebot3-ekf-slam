@@ -1,3 +1,22 @@
+/// \file
+/// \brief Calculates and publishes odometry from input joint states.
+///
+/// PARAMETERS:
+///     body_id (string): The name of the robot's body frame (REQUIRED)
+///     odom_id (string): The name of the robot's odometry frame
+///     wheel_left (string): The name of the robot's left wheel joint (REQUIRED)
+///     wheel_right (string): The name of the robot's right wheel joint (REQUIRED)
+///     track_width (double): The wheel track width in meters (REQUIRED)
+///     wheel_radius (double): The wheel radius in meters (REQUIRED)
+/// PUBLISHERS:
+///     odom (nav_msgs/msg/Odometry): the calculated odometry from the input joint states
+/// SUBSCRIBERS:
+///     joint_states (sensor_msgs/msg/JointState): the robot's joint states
+/// SERVERS:
+///     initial_pose (nuturtle_control/srv/InitialPose): set the robot config to the specified config
+/// CLIENTS:
+///     none
+
 #include <stdexcept>
 #include <string>
 #include <array>
@@ -26,10 +45,6 @@ public:
   Odometry()
   : Node("odometry")
   {
-    //TODO remove
-    //temporary run command
-    //ros2 run nuturtle_control odometry --ros-args -p body_id:=base_footprint -p wheel_left:=wheel_left_joint -p wheel_right:=wheel_right_joint --params-file install/nuturtle_description/share/nuturtle_description/config/diff_params.yaml
-
     //Parameters
     auto param = rcl_interfaces::msg::ParameterDescriptor{};
 

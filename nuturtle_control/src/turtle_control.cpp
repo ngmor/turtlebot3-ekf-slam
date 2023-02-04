@@ -1,3 +1,23 @@
+/// \file
+/// \brief Converts turtlebot sensor data into joint states and commanded twists into wheel commands.
+///
+/// PARAMETERS:
+///     track_width (double): The wheel track width in meters (REQUIRED)
+///     wheel_radius (double): The wheel radius in meters (REQUIRED)
+///     motor_cmd_per_rad_sec (double): Motor command value per rad/sec conversion factor (REQUIRED)
+///     motor_cmd_max (int32_t): Maximum possible motor command value (REQUIRED)
+///     encoder_ticks_per_rad (double): Motor encoder ticks per radian conversion factor (REQUIRED)
+/// PUBLISHERS:
+///     wheel_cmd (nuturtlebot_msgs/msg/WheelCommands): wheel commands calculated from received cmd_vel twists
+///     joint_states (sensor_msgs/msg/JointState): joint states determined from input sensor data
+/// SUBSCRIBERS:
+///     cmd_vel (geometry_msgs/msg/Twist): commanded twist to convert into wheel commands
+///     sensor_data (nuturtlebot_msgs/msg/SensorData): sensor data from robot
+/// SERVERS:
+///     none
+/// CLIENTS:
+///     none
+
 #include <stdexcept>
 #include "turtlelib/diff_drive.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -20,10 +40,6 @@ public:
   TurtleControl()
   : Node("turtle_control")
   {
-    //TODO remove
-    //temporary run command
-    //ros2 run nuturtle_control turtle_control --ros-args --params-file install/nuturtle_description/share/nuturtle_description/config/diff_params.yaml
-
     //Parameters
     auto param = rcl_interfaces::msg::ParameterDescriptor{};
 

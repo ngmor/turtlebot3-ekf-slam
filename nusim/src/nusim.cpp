@@ -2,6 +2,11 @@
 /// \brief Runs the simulation for the NUTurtle.
 ///
 /// PARAMETERS:
+///     track_width (double): The wheel track width in meters (REQUIRED)
+///     wheel_radius (double): The wheel radius in meters (REQUIRED)
+///     motor_cmd_per_rad_sec (double): Motor command value per rad/sec conversion factor (REQUIRED)
+///     motor_cmd_max (int32_t): Maximum possible motor command value (REQUIRED)
+///     encoder_ticks_per_rad (double): Motor encoder ticks per radian conversion factor (REQUIRED)
 ///     rate (double): The rate the simulation runs at (Hz).
 ///     x0 (double): Initial x position of the robot (m).
 ///     y0 (double): Initial y position of the robot (m).
@@ -9,13 +14,15 @@
 ///     obstacles.x (std::vector<double>): List of x starting positions of obstacles (m). Arbitrary length, but must match length of `y`.
 ///     obstacles.y (std::vector<double>): List of y starting positions of obstacles (m). Arbitray length, but must match length of `x`.
 ///     obstacles.r (double): Radius of all cylinder obstacles (m). Single value applies to all obstacles.
-/// PUBLISHES:
+///     x_length (double): Length of the arena in the x direction (m)
+///     y_length (double): Length of the arena in the y direction (m)
+/// PUBLISHERS:
 ///     ~/timestep (std_msgs/msg/UInt64): current timestep of the simulation
 ///     ~/obstacles (visualization_msgs/msg/MarkerArray): marker array containing cylindrical obstacles in the world.
-/// SUBSCRIBES:
-///     none
+///     sensor_data (nuturtlebot_msgs/msg/SensorData): simulated sensor data
+/// SUBSCRIBERS:
+///     wheel_cmd (nuturtlebot_msgs/msg/WheelCommands): wheel commands from control nodes
 /// SERVERS:
-///     service_name (service_type): description of the service
 ///     ~/reset (std_srvs/srv/Empty): resets the simulation to its starting state
 ///     ~/teleport (nusim/srv/Teleport): teleports the actual turtlebot to a provided location
 /// CLIENTS:
@@ -78,10 +85,6 @@ public:
 
     //Parameters
     auto param = rcl_interfaces::msg::ParameterDescriptor{};
-    param.description = "The rate the simulation runs at (Hz).";
-    declare_parameter("rate", 200.0, param);
-    sim_rate_ = get_parameter("rate").get_parameter_value().get<double>();
-    sim_interval_ = 1.0 / sim_rate_;
 
     //Check if required parameters were provided
     bool required_parameters_received = true;
@@ -139,6 +142,11 @@ public:
         "Invalid encoder ticks to radian conversion provided: " << encoder_ticks_per_rad_);
       required_parameters_received = false;
     }
+
+    param.description = "The rate the simulation runs at (Hz).";
+    declare_parameter("rate", 200.0, param);
+    sim_rate_ = get_parameter("rate").get_parameter_value().get<double>();
+    sim_interval_ = 1.0 / sim_rate_;
 
     Vector2D translation_initial;
 

@@ -1,3 +1,19 @@
+/// \file
+/// \brief Publishes cmd_vel commands to move a differential drive robot in a circle.
+///
+/// PARAMETERS:
+///     frequency (double): The frequency of publishing cmd_vel messages (Hz).
+/// PUBLISHERS:
+///     cmd_vel (geometry_msgs/msg/Twist): command twist for the differential drive robot to follow
+/// SUBSCRIBERS:
+///     none
+/// SERVERS:
+///     control (nuturtle_control/srv/Circle): start publishing cmd_vel commands to follow a circle with given parameters
+///     reverse (std_srvs/srv/Empty): reverse the direction of the currently active circle
+///     stop (std_srvs/srv/Empty): stop publishing cmd_vel commands after publishing a single 0 twist command
+/// CLIENTS:
+///     none
+
 #include "rclcpp/rclcpp.hpp"
 #include "std_srvs/srv/empty.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -11,10 +27,6 @@ public:
   Circle()
   : Node("circle")
   {
-    //TODO remove
-    //temporary run command
-    //ros2 run nuturtle_control turtle_control --ros-args --params-file install/nuturtle_description/share/nuturtle_description/config/diff_params.yaml
-
     //Parameters
     auto param = rcl_interfaces::msg::ParameterDescriptor{};
 
@@ -75,6 +87,9 @@ private:
     }
   }
 
+  /// \brief start publishing cmd_vel commands to follow a circle with given parameters
+  /// \param request - parameters of the circle to be followed
+  /// \param response - empty
   void control_callback(
     const std::shared_ptr<nuturtle_control::srv::Circle::Request> request,
     std::shared_ptr<nuturtle_control::srv::Circle::Response> response
@@ -90,6 +105,9 @@ private:
     publish_ = true;
   }
 
+  /// \brief reverse the direction of the currently active circle
+  /// \param request - empty
+  /// \param response - empty
   void reverse_callback(
     const std::shared_ptr<std_srvs::srv::Empty::Request> request,
     std::shared_ptr<std_srvs::srv::Empty::Response> response
@@ -103,6 +121,9 @@ private:
     cmd_vel_.linear.x *= -1;
   }
 
+  /// \brief stop publishing cmd_vel commands after publishing a single 0 twist command
+  /// \param request - empty
+  /// \param response - empty
   void stop_callback(
     const std::shared_ptr<std_srvs::srv::Empty::Request> request,
     std::shared_ptr<std_srvs::srv::Empty::Response> response
