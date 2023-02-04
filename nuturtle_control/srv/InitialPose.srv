@@ -1,4 +1,2 @@
-float64 x # x position
-float64 y # y position
-float64 theta # rotation TODO refactor to use one config message type
+nuturtle_description/Configuration config # the configuration to set as the initial pose
 ---

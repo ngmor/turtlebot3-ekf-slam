@@ -16,6 +16,7 @@ find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(nuturtle_description REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
 ament_export_dependencies(rosidl_default_runtime)
@@ -25,6 +26,8 @@ rosidl_generate_interfaces(
   "srv/InitialPose.srv"
   "srv/Circle.srv"
   LIBRARY_NAME ${PROJECT_NAME}
+  DEPENDENCIES
+  nuturtle_description
 )
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
 
