@@ -18,7 +18,7 @@ class TurtleControl : public rclcpp::Node
 public:
   /// \brief initialize the node
   TurtleControl()
-  : Node ("turtle_control")
+  : Node("turtle_control")
   {
     //TODO remove
     //temporary run command
@@ -26,7 +26,7 @@ public:
 
     //Parameters
     auto param = rcl_interfaces::msg::ParameterDescriptor{};
-    
+
     //Check if required parameters were provided
     bool required_parameters_received = true;
 
@@ -54,7 +54,8 @@ public:
       "motor_cmd_per_rad_sec").get_parameter_value().get<double>();
 
     if (motor_cmd_per_rad_sec_ <= 0) {
-      RCLCPP_ERROR_STREAM(get_logger(),
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
         "Invalid motor command to rad/sec conversion provided: " << motor_cmd_per_rad_sec_);
       required_parameters_received = false;
     }
@@ -65,7 +66,8 @@ public:
       "motor_cmd_max").get_parameter_value().get<int32_t>();
 
     if (motor_cmd_max_ <= 0) {
-      RCLCPP_ERROR_STREAM(get_logger(),
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
         "Invalid maximum motor command provided: " << motor_cmd_max_);
       required_parameters_received = false;
     }
@@ -76,7 +78,8 @@ public:
       "encoder_ticks_per_rad").get_parameter_value().get<double>();
 
     if (encoder_ticks_per_rad_ <= 0) {
-      RCLCPP_ERROR_STREAM(get_logger(),
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
         "Invalid encoder ticks to radian conversion provided: " << encoder_ticks_per_rad_);
       required_parameters_received = false;
     }
@@ -84,7 +87,7 @@ public:
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
-        "Required parameters were not received or were invalid. Please provide valid parameters."
+              "Required parameters were not received or were invalid. Please provide valid parameters."
       );
     }
 
@@ -128,6 +131,7 @@ public:
 
     RCLCPP_INFO_STREAM(get_logger(), "turtle_control node started");
   }
+
 private:
   rclcpp::Publisher<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr pub_wheel_cmd_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pub_joint_states_;
@@ -137,7 +141,7 @@ private:
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
   int32_t motor_cmd_max_;
-  Wheel wheel_pos_last_ {0,0};
+  Wheel wheel_pos_last_ {0, 0};
   rclcpp::Time sensor_stamp_last_;
   sensor_msgs::msg::JointState joint_states_;
 
@@ -145,46 +149,51 @@ private:
   /// \param msg - received cmd_vel message
   void cmd_vel_callback(const geometry_msgs::msg::Twist & msg)
   {
-    
+
     //Use inverse kinematics to calculate the required wheel velocities for the
     //input twist
-    Wheel wheel_vel = turtlebot_.get_required_wheel_vel(Twist2D{
-        msg.angular.z,
-        msg.linear.x,
-        msg.linear.y
+    Wheel wheel_vel = turtlebot_.get_required_wheel_vel(
+      Twist2D{
+      msg.angular.z,
+      msg.linear.x,
+      msg.linear.y
     });
 
     //generate wheel command message
     nuturtlebot_msgs::msg::WheelCommands wheel_cmd;
-    wheel_cmd.left_velocity = static_cast<int32_t>(wheel_vel.left*motor_cmd_per_rad_sec_);
-    wheel_cmd.right_velocity = static_cast<int32_t>(wheel_vel.right*motor_cmd_per_rad_sec_);
+    wheel_cmd.left_velocity = static_cast<int32_t>(wheel_vel.left * motor_cmd_per_rad_sec_);
+    wheel_cmd.right_velocity = static_cast<int32_t>(wheel_vel.right * motor_cmd_per_rad_sec_);
 
     //Clamp velocities
     //TODO - remove logger statements for efficiency?
     if (wheel_cmd.left_velocity > motor_cmd_max_) {
-      RCLCPP_WARN_STREAM(get_logger(),
+      RCLCPP_WARN_STREAM(
+        get_logger(),
         "Desired left wheel command (" << wheel_cmd.left_velocity << ") exceeded max, clamping to "
-        << motor_cmd_max_
+                                       << motor_cmd_max_
       );
       wheel_cmd.left_velocity = motor_cmd_max_;
     } else if (wheel_cmd.left_velocity < -motor_cmd_max_) {
-      RCLCPP_WARN_STREAM(get_logger(),
+      RCLCPP_WARN_STREAM(
+        get_logger(),
         "Desired left wheel command (" << wheel_cmd.left_velocity << ") exceeded max, clamping to "
-        << -motor_cmd_max_
+                                       << -motor_cmd_max_
       );
       wheel_cmd.left_velocity = -motor_cmd_max_;
     }
 
     if (wheel_cmd.right_velocity > motor_cmd_max_) {
-      RCLCPP_WARN_STREAM(get_logger(),
+      RCLCPP_WARN_STREAM(
+        get_logger(),
         "Desired right wheel command (" << wheel_cmd.right_velocity << ") exceeded max, clamping to "
-        << motor_cmd_max_
+                                        << motor_cmd_max_
       );
       wheel_cmd.right_velocity = motor_cmd_max_;
     } else if (wheel_cmd.right_velocity < -motor_cmd_max_) {
-      RCLCPP_WARN_STREAM(get_logger(),
+      RCLCPP_WARN_STREAM(
+        get_logger(),
         "Desired right wheel command (" << wheel_cmd.right_velocity << ") exceeded max, clamping to "
-        << -motor_cmd_max_
+                                        << -motor_cmd_max_
       );
       wheel_cmd.right_velocity = -motor_cmd_max_;
     }
@@ -199,18 +208,18 @@ private:
   {
     //Convert received wheel position to radians
     Wheel wheel_pos {
-      static_cast<double>(msg.left_encoder)/encoder_ticks_per_rad_,
-      static_cast<double>(msg.right_encoder)/encoder_ticks_per_rad_
+      static_cast<double>(msg.left_encoder) / encoder_ticks_per_rad_,
+      static_cast<double>(msg.right_encoder) / encoder_ticks_per_rad_
     };
 
     rclcpp::Time sensor_stamp_current = msg.stamp;
 
-    double elapsed_time = 
-      static_cast<double>(sensor_stamp_current.nanoseconds()
-       - sensor_stamp_last_.nanoseconds()) * 1.0e-9;
+    double elapsed_time =
+      static_cast<double>(sensor_stamp_current.nanoseconds() -
+      sensor_stamp_last_.nanoseconds()) * 1.0e-9;
 
     //Calculate wheel velocity
-    Wheel wheel_vel {0,0};
+    Wheel wheel_vel {0, 0};
 
     if (!almost_equal(elapsed_time, 0.0)) {
       wheel_vel.left = (wheel_pos.left - wheel_pos_last_.left) / elapsed_time;
@@ -233,7 +242,7 @@ private:
   }
 };
 
-/// \brief Run the node 
+/// \brief Run the node
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);

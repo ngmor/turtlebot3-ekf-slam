@@ -110,7 +110,8 @@ public:
       "motor_cmd_per_rad_sec").get_parameter_value().get<double>();
 
     if (motor_cmd_per_rad_sec_ <= 0) {
-      RCLCPP_ERROR_STREAM(get_logger(),
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
         "Invalid motor command to rad/sec conversion provided: " << motor_cmd_per_rad_sec_);
       required_parameters_received = false;
     }
@@ -121,7 +122,8 @@ public:
       "motor_cmd_max").get_parameter_value().get<int32_t>();
 
     if (motor_cmd_max_ <= 0) {
-      RCLCPP_ERROR_STREAM(get_logger(),
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
         "Invalid maximum motor command provided: " << motor_cmd_max_);
       required_parameters_received = false;
     }
@@ -132,13 +134,14 @@ public:
       "encoder_ticks_per_rad").get_parameter_value().get<double>();
 
     if (encoder_ticks_per_rad_ <= 0) {
-      RCLCPP_ERROR_STREAM(get_logger(),
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
         "Invalid encoder ticks to radian conversion provided: " << encoder_ticks_per_rad_);
       required_parameters_received = false;
     }
 
     Vector2D translation_initial;
-    
+
     param.description = "Initial x position of the robot (m).";
     declare_parameter("x0", 0.0, param);
     translation_initial.x = get_parameter("x0").get_parameter_value().get<double>();
@@ -163,11 +166,12 @@ public:
 
     //If vectors differ in size, exit node
     if (obstacles_x_.size() != obstacles_y_.size()) {
-        RCLCPP_ERROR_STREAM(get_logger(),
-          "Size mismatch between input obstacle coordinate lists (x: " << obstacles_x_.size() <<
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
+        "Size mismatch between input obstacle coordinate lists (x: " << obstacles_x_.size() <<
           " elements, y: " << obstacles_y_.size() << " elements)"
-        );
-        required_parameters_received = false;
+      );
+      required_parameters_received = false;
     }
 
     param.description =
@@ -189,7 +193,7 @@ public:
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
-        "Required parameters were not received or were invalid. Please provide valid parameters."
+              "Required parameters were not received or were invalid. Please provide valid parameters."
       );
     }
 
@@ -203,7 +207,7 @@ public:
     pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     pub_obstacles_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
     //TODO - I don't think this should have a prefix, have to check
-    pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data",10);
+    pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
 
     //Subscribers
     sub_wheel_cmd_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
@@ -287,15 +291,15 @@ private:
   {
     //Create new wheel position based on wheel velocity
     Wheel new_wheel_pos {
-      turtlebot_.config().wheel_pos.left + wheel_vel_.left*sim_interval_,
-      turtlebot_.config().wheel_pos.right + wheel_vel_.right*sim_interval_,
+      turtlebot_.config().wheel_pos.left + wheel_vel_.left * sim_interval_,
+      turtlebot_.config().wheel_pos.right + wheel_vel_.right * sim_interval_,
     };
 
     //Publish new wheel position
     nuturtlebot_msgs::msg::SensorData sensor_data;
     sensor_data.stamp = current_time_;
-    sensor_data.left_encoder = static_cast<int32_t>(new_wheel_pos.left*encoder_ticks_per_rad_);
-    sensor_data.right_encoder = static_cast<int32_t>(new_wheel_pos.right*encoder_ticks_per_rad_);
+    sensor_data.left_encoder = static_cast<int32_t>(new_wheel_pos.left * encoder_ticks_per_rad_);
+    sensor_data.right_encoder = static_cast<int32_t>(new_wheel_pos.right * encoder_ticks_per_rad_);
 
     pub_sensor_data_->publish(sensor_data);
 
@@ -332,7 +336,7 @@ private:
     double y_bound = (y_length_ + WALL_WIDTH) / 2.0;
 
     geometry_msgs::msg::Point point;
-    point.z = WALL_HEIGHT/2.;
+    point.z = WALL_HEIGHT / 2.;
 
     //Add top and bottom wall points
     for (double x = -x_bound; x <= x_bound; x += WALL_WIDTH) {
@@ -340,7 +344,7 @@ private:
       point.x = x;
       point.y = -y_bound;
       marker.points.push_back(point);
-      
+
       //Top wall
       point.y = y_bound;
       marker.points.push_back(point);
@@ -352,7 +356,7 @@ private:
       point.x = -x_bound;
       point.y = y;
       marker.points.push_back(point);
-      
+
       //Right wall
       point.x = x_bound;
       marker.points.push_back(point);
@@ -408,10 +412,10 @@ private:
     //store wheel velocities in rad/s
     wheel_vel_.left = static_cast<double>(
       std::clamp(msg.left_velocity, -motor_cmd_max_, motor_cmd_max_)
-    )/motor_cmd_per_rad_sec_;
+      ) / motor_cmd_per_rad_sec_;
     wheel_vel_.right = static_cast<double>(
       std::clamp(msg.right_velocity, -motor_cmd_max_, motor_cmd_max_)
-    )/motor_cmd_per_rad_sec_;
+      ) / motor_cmd_per_rad_sec_;
   }
 
   /// \brief reset simulation back to initial parameters. callback for ~/reset service.
@@ -445,7 +449,8 @@ private:
     (void)response;
 
     //Teleport current pose
-    turtlebot_.set_config(DiffDriveConfig{
+    turtlebot_.set_config(
+      DiffDriveConfig{
       Transform2D{
         Vector2D{
           request->config.x,

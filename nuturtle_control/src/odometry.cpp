@@ -24,7 +24,7 @@ class Odometry : public rclcpp::Node
 public:
   /// \brief initialize the node
   Odometry()
-  : Node ("odometry")
+  : Node("odometry")
   {
     //TODO remove
     //temporary run command
@@ -32,7 +32,7 @@ public:
 
     //Parameters
     auto param = rcl_interfaces::msg::ParameterDescriptor{};
-    
+
     //Check if required parameters were provided
     bool required_parameters_received = true;
 
@@ -88,14 +88,14 @@ public:
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
-        "Required parameters were not received or were invalid. Please provide valid parameters."
+              "Required parameters were not received or were invalid. Please provide valid parameters."
       );
     }
 
 
     //Publishers
     pub_odom_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
-    
+
     //Subscribers
     sub_joint_states_ = create_subscription<sensor_msgs::msg::JointState>(
       "joint_states",
@@ -116,7 +116,7 @@ public:
 
     //Broadcasters
     broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-    
+
     //Initialize turtlebot with input parameters and at q(0,0,0)
     turtlebot_ = DiffDrive {wheel_track, wheel_radius};
 
@@ -124,11 +124,11 @@ public:
     odom_msg_.header.frame_id = odom_id_;
     odom_msg_.child_frame_id = body_id_;
     odom_msg_.pose.pose.position.z = 0;
-    odom_msg_.pose.covariance = std::array<double,36> {36, 0};
+    odom_msg_.pose.covariance = std::array<double, 36> {36, 0};
     odom_msg_.twist.twist.linear.z = 0;
     odom_msg_.twist.twist.angular.x = 0;
     odom_msg_.twist.twist.angular.y = 0;
-    odom_msg_.twist.covariance = std::array<double,36> {36, 0};
+    odom_msg_.twist.covariance = std::array<double, 36> {36, 0};
 
     //Init odom transform
     odom_tf_.header.frame_id = odom_id_;
@@ -138,12 +138,13 @@ public:
 
     RCLCPP_INFO_STREAM(get_logger(), "odometry node started");
   }
+
 private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_joint_states_;
   rclcpp::Service<nuturtle_control::srv::InitialPose>::SharedPtr srv_initial_pose_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster_;
-  
+
   std::string body_id_, odom_id_, wheel_left_joint_, wheel_right_joint_;
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
   nav_msgs::msg::Odometry odom_msg_;
@@ -186,9 +187,9 @@ private:
     // build odometry message
     odom_msg_.pose.pose.position.x = turtlebot_.config().location.translation().x;
     odom_msg_.pose.pose.position.y = turtlebot_.config().location.translation().y;
-    
+
     tf2::Quaternion q;
-    q.setRPY(0,0, turtlebot_.config().location.rotation());
+    q.setRPY(0, 0, turtlebot_.config().location.rotation());
     odom_msg_.pose.pose.orientation = tf2::toMsg(q);
 
     odom_msg_.header.stamp = msg.header.stamp;
@@ -225,7 +226,8 @@ private:
     (void)response;
 
     //Update configuration, but retain current wheel positions
-    turtlebot_.set_config(DiffDriveConfig{
+    turtlebot_.set_config(
+      DiffDriveConfig{
       Transform2D{
         Vector2D{
           request->config.x,
@@ -239,7 +241,7 @@ private:
   }
 };
 
-/// \brief Run the node 
+/// \brief Run the node
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);

@@ -9,7 +9,7 @@ class Circle : public rclcpp::Node
 public:
   /// \brief initialize the node
   Circle()
-  : Node ("circle")
+  : Node("circle")
   {
     //TODO remove
     //temporary run command
@@ -22,7 +22,7 @@ public:
     declare_parameter("frequency", 100.0, param);
     sim_freq_ = get_parameter("frequency").get_parameter_value().get<double>();
     sim_interval_ = 1.0 / sim_freq_;
-    
+
     //Timers
     timer_ = create_wall_timer(
       static_cast<std::chrono::microseconds>(static_cast<int>(sim_interval_ * 1000000.0)),
@@ -30,7 +30,7 @@ public:
     );
 
     //Publishers
-    pub_cmd_vel_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel",10);
+    pub_cmd_vel_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
     //Services
     srv_control_ = create_service<nuturtle_control::srv::Circle>(
@@ -55,6 +55,7 @@ public:
 
     RCLCPP_INFO_STREAM(get_logger(), "circle node started");
   }
+
 private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel_;
@@ -69,8 +70,7 @@ private:
   /// \brief main timer loop for publishing cmd_vel messages
   void timer_callback()
   {
-    if (publish_)
-    {
+    if (publish_) {
       pub_cmd_vel_->publish(cmd_vel_);
     }
   }
@@ -84,7 +84,7 @@ private:
     (void)response;
 
     cmd_vel_.angular.z = request->velocity;
-    cmd_vel_.linear.x = request->radius*request->velocity;
+    cmd_vel_.linear.x = request->radius * request->velocity;
 
     //start publishing
     publish_ = true;
