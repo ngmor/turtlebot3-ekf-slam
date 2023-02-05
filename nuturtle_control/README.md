@@ -25,6 +25,28 @@ See source code for comments elaborating on the parameters, publishers, subscrib
 * [`odometry`](src/odometry.cpp) - Calculates and publishes odometry from input joint states.
 * [`turtle_control`](src/turtle_control.cpp) - Converts turtlebot sensor data into joint states and commanded twists into wheel commands.
 
+## Demo
+
+```
+header:
+  stamp:
+    sec: 1675558261
+    nanosec: 807721284
+  frame_id: odom
+child_frame_id: blue/base_footprint
+pose:
+  pose:
+    position:
+      x: 0.13724626200957746
+      y: 0.058922429244802246
+      z: 0.0
+    orientation:
+      x: 0.0
+      y: 0.0
+      z: 0.19251318569431836
+      w: 0.9812943866821133
+```
+
 ## Collaboration
 I worked with the following people on this package:
 * Liz Metzger

@@ -139,11 +139,11 @@ public:
     odom_msg_.header.frame_id = odom_id_;
     odom_msg_.child_frame_id = body_id_;
     odom_msg_.pose.pose.position.z = 0;
-    odom_msg_.pose.covariance = std::array<double, 36> {36, 0};
+    odom_msg_.pose.covariance = std::array<double, 36> {};
     odom_msg_.twist.twist.linear.z = 0;
     odom_msg_.twist.twist.angular.x = 0;
     odom_msg_.twist.twist.angular.y = 0;
-    odom_msg_.twist.covariance = std::array<double, 36> {36, 0};
+    odom_msg_.twist.covariance = std::array<double, 36> {};
 
     //Init odom transform
     odom_tf_.header.frame_id = odom_id_;
