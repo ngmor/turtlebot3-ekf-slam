@@ -26,6 +26,11 @@ See source code for comments elaborating on the parameters, publishers, subscrib
 * [`turtle_control`](src/turtle_control.cpp) - Converts turtlebot sensor data into joint states and commanded twists into wheel commands.
 
 ## Demo
+Here is a demo video of driving the robot in circles and then back to its starting point to measure the error in the odometry estimation:
+
+[Task F Demo Video](https://user-images.githubusercontent.com/113186159/216846953-e92cac5b-e0c0-44c2-90e0-a073deefb66f.mp4)
+
+The final odometry values of this demo did have some error, and are reproduced here:
 
 ```
 header:
