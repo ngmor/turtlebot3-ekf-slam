@@ -60,10 +60,10 @@ public:
 
 
     //Init cmd_vel twist
-    cmd_vel_.linear.y = 0;
-    cmd_vel_.linear.z = 0;
-    cmd_vel_.angular.x = 0;
-    cmd_vel_.angular.y = 0;
+    cmd_vel_.linear.y = 0.0;
+    cmd_vel_.linear.z = 0.0;
+    cmd_vel_.angular.x = 0.0;
+    cmd_vel_.angular.y = 0.0;
 
     RCLCPP_INFO_STREAM(get_logger(), "circle node started");
   }
@@ -89,15 +89,11 @@ private:
 
   /// \brief start publishing cmd_vel commands to follow a circle with given parameters
   /// \param request - parameters of the circle to be followed
-  /// \param response - empty
   void control_callback(
     const std::shared_ptr<nuturtle_control::srv::Circle::Request> request,
-    std::shared_ptr<nuturtle_control::srv::Circle::Response> response
+    std::shared_ptr<nuturtle_control::srv::Circle::Response>
   )
   {
-    //Get rid of unused warnings
-    (void)response;
-
     cmd_vel_.angular.z = request->velocity;
     cmd_vel_.linear.x = request->radius * request->velocity;
 
@@ -106,43 +102,33 @@ private:
   }
 
   /// \brief reverse the direction of the currently active circle
-  /// \param request - empty
-  /// \param response - empty
   void reverse_callback(
-    const std::shared_ptr<std_srvs::srv::Empty::Request> request,
-    std::shared_ptr<std_srvs::srv::Empty::Response> response
+    const std::shared_ptr<std_srvs::srv::Empty::Request>,
+    std::shared_ptr<std_srvs::srv::Empty::Response>
   )
   {
-    (void)request;
-    (void)response;
-
     //reverse circle direction
-    cmd_vel_.angular.z *= -1;
-    cmd_vel_.linear.x *= -1;
+    cmd_vel_.angular.z *= -1.0;
+    cmd_vel_.linear.x *= -1.0;
   }
 
   /// \brief stop publishing cmd_vel commands after publishing a single 0 twist command
-  /// \param request - empty
-  /// \param response - empty
   void stop_callback(
-    const std::shared_ptr<std_srvs::srv::Empty::Request> request,
-    std::shared_ptr<std_srvs::srv::Empty::Response> response
+    const std::shared_ptr<std_srvs::srv::Empty::Request>,
+    std::shared_ptr<std_srvs::srv::Empty::Response>
   )
   {
-    (void)request;
-    (void)response;
-
     //stop publishing
     publish_ = false;
 
     //Publish a single stop command
     geometry_msgs::msg::Twist stop_cmd;
-    stop_cmd.linear.x = 0;
-    stop_cmd.linear.y = 0;
-    stop_cmd.linear.z = 0;
-    stop_cmd.angular.x = 0;
-    stop_cmd.angular.y = 0;
-    stop_cmd.angular.z = 0;
+    stop_cmd.linear.x = 0.0;
+    stop_cmd.linear.y = 0.0;
+    stop_cmd.linear.z = 0.0;
+    stop_cmd.angular.x = 0.0;
+    stop_cmd.angular.y = 0.0;
+    stop_cmd.angular.z = 0.0;
 
     pub_cmd_vel_->publish(stop_cmd);
   }

@@ -8,17 +8,17 @@ namespace turtlelib
     double normalize_angle(double rad) {
         //Bound rotation between -pi and pi
         while (rad > PI) {
-            rad -= 2*PI;
+            rad -= 2.0*PI;
         }
         while (rad <= -PI) {
-            rad += 2*PI;
+            rad += 2.0*PI;
         }
 
         return rad;
     }
 
 
-    /* VECTOR2D START */
+    ////////// VECTOR2D START //////////
 
     double Vector2D::magnitude() const {
         return std::sqrt(std::pow(x,2) + std::pow(y,2));
@@ -71,7 +71,7 @@ namespace turtlelib
         //remove leading whitespace
         is >> std::ws;
 
-        char c = is.peek();
+        auto c = is.peek();
 
         if (c == '[') {
             //Remove leading bracket
@@ -92,9 +92,9 @@ namespace turtlelib
     }
 
     Vector2D normalize(const Vector2D & v) {
-        double mag = v.magnitude();
+        const auto mag = v.magnitude();
 
-        return Vector2D {
+        return {
             v.x / mag,
             v.y / mag
         };
@@ -109,11 +109,11 @@ namespace turtlelib
         return std::atan2(start.x*end.y - start.y*end.x, dot(start, end));
     }
 
-    /* VECTOR2D END */
+    ////////// VECTOR2D END //////////
 
 
 
-    /* TWIST2D START */
+    ////////// TWIST2D START //////////
 
     std::ostream & operator<<(std::ostream & os, const Twist2D & V) {
         os << '[' << V.w << ' ' << V.x << ' ' << V.y << ']';
@@ -124,7 +124,7 @@ namespace turtlelib
         //remove leading whitespace
         is >> std::ws;
 
-        char c = is.peek();
+        auto c = is.peek();
 
         if (c == '[') {
             //Remove leading bracket
@@ -144,11 +144,11 @@ namespace turtlelib
         return is;
     }
 
-    /* TWIST2D END */
+    ////////// TWIST2D END //////////
     
     
     
-    /* TRANSFORM2D START */
+    ////////// TRANSFORM2D START //////////
 
     /// Private variables are already initialized as an identity transformation
     Transform2D::Transform2D() {}
@@ -169,14 +169,14 @@ namespace turtlelib
     }
 
     Vector2D Transform2D::operator()(Vector2D v) const {
-        return Vector2D {
+        return {
             v.x*rot_cos_ - v.y*rot_sin_ + trans_.x,
             v.x*rot_sin_ + v.y*rot_cos_ + trans_.y
         };
     }
 
     Twist2D Transform2D::operator()(Twist2D V) const {
-        return Twist2D {
+        return {
             V.w,
             V.w*trans_.y + V.x*rot_cos_ - V.y*rot_sin_,
             -V.w*trans_.x + V.x*rot_sin_ + V.y*rot_cos_
@@ -184,9 +184,9 @@ namespace turtlelib
     }
 
     Transform2D Transform2D::inv() const {
-        return Transform2D {
+        return {
             //translation
-            Vector2D {
+            {
                 -trans_.x*rot_cos_ - trans_.y*rot_sin_,
                 -trans_.y*rot_cos_ + trans_.x*rot_sin_
             },
@@ -199,19 +199,19 @@ namespace turtlelib
         
         //Output translation adds current translation to incoming translation
         //modified by current rotation
-        this->trans_.x += rhs.translation().x*this->rot_cos_
-                        - rhs.translation().y*this->rot_sin_;
-        this->trans_.y += rhs.translation().x*this->rot_sin_
-                        + rhs.translation().y*this->rot_cos_;
+        trans_.x += rhs.translation().x*rot_cos_
+                  - rhs.translation().y*rot_sin_;
+        trans_.y += rhs.translation().x*rot_sin_
+                  + rhs.translation().y*rot_cos_;
         
         //Output rotation just adds the angles together
-        this->rot_ += rhs.rotation();
+        rot_ += rhs.rotation();
 
         //Bound rotation
-        this->rot_ = normalize_angle(this->rot_);
+        rot_ = normalize_angle(rot_);
 
         //Cache trig values
-        this->cache_trig();
+        cache_trig();
 
         return *this;
     }
@@ -238,7 +238,7 @@ namespace turtlelib
         //remove leading whitespace
         is >> std::ws;
 
-        char c = is.peek();
+        auto c = is.peek();
 
         //remove any characters that aren't digits
         while (!(std::isdigit(c) || (c == '-') || (c == '.'))) {
@@ -275,7 +275,7 @@ namespace turtlelib
 
         //Init transform
         tf = Transform2D{
-            Vector2D{x,y},
+            {x,y},
             deg2rad(deg)
         };
 
@@ -284,8 +284,8 @@ namespace turtlelib
 
     Transform2D integrate_twist(Twist2D twist) {
         if (almost_equal(twist.w, 0.0)) {
-            return Transform2D{
-                Vector2D{twist.x, twist.y},
+            return {
+                {twist.x, twist.y},
                 0.0
             };
         } else {
@@ -300,7 +300,7 @@ namespace turtlelib
 
             //Use adjoint between known twists in s and b frames to solve for Tsb
             Transform2D Tsb {
-                Vector2D{
+                {
                     twist.y / twist.w,
                     -twist.x / twist.w
                 },
@@ -315,5 +315,5 @@ namespace turtlelib
         }
     }
 
-    /* TRANSFORM2D END */
+    ////////// TRANSFORM2D END //////////
 }

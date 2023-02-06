@@ -50,7 +50,7 @@ public:
     declare_parameter("track_width", 0.0, param);
     double wheel_track = get_parameter("track_width").get_parameter_value().get<double>();
 
-    if (wheel_track <= 0) {
+    if (wheel_track <= 0.0) {
       RCLCPP_ERROR_STREAM(get_logger(), "Invalid wheel track provided: " << wheel_track);
       required_parameters_received = false;
     }
@@ -59,7 +59,7 @@ public:
     declare_parameter("wheel_radius", 0.0, param);
     double wheel_radius = get_parameter("wheel_radius").get_parameter_value().get<double>();
 
-    if (wheel_radius <= 0) {
+    if (wheel_radius <= 0.0) {
       RCLCPP_ERROR_STREAM(get_logger(), "Invalid wheel radius provided: " << wheel_radius);
       required_parameters_received = false;
     }
@@ -69,7 +69,7 @@ public:
     motor_cmd_per_rad_sec_ = get_parameter(
       "motor_cmd_per_rad_sec").get_parameter_value().get<double>();
 
-    if (motor_cmd_per_rad_sec_ <= 0) {
+    if (motor_cmd_per_rad_sec_ <= 0.0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
         "Invalid motor command to rad/sec conversion provided: " << motor_cmd_per_rad_sec_);
@@ -93,7 +93,7 @@ public:
     encoder_ticks_per_rad_ = get_parameter(
       "encoder_ticks_per_rad").get_parameter_value().get<double>();
 
-    if (encoder_ticks_per_rad_ <= 0) {
+    if (encoder_ticks_per_rad_ <= 0.0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
         "Invalid encoder ticks to radian conversion provided: " << encoder_ticks_per_rad_);
@@ -157,7 +157,7 @@ private:
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
   int32_t motor_cmd_max_;
-  Wheel wheel_pos_last_ {0, 0};
+  Wheel wheel_pos_last_ {0.0, 0.0};
   rclcpp::Time sensor_stamp_last_;
   sensor_msgs::msg::JointState joint_states_;
 
@@ -168,8 +168,7 @@ private:
 
     //Use inverse kinematics to calculate the required wheel velocities for the
     //input twist
-    Wheel wheel_vel = turtlebot_.get_required_wheel_vel(
-      Twist2D{
+    Wheel wheel_vel = turtlebot_.get_required_wheel_vel({
       msg.angular.z,
       msg.linear.x,
       msg.linear.y
@@ -235,7 +234,7 @@ private:
       sensor_stamp_last_.nanoseconds()) * 1.0e-9;
 
     //Calculate wheel velocity
-    Wheel wheel_vel {0, 0};
+    Wheel wheel_vel {0.0, 0.0};
 
     if (!almost_equal(elapsed_time, 0.0)) {
       wheel_vel.left = (wheel_pos.left - wheel_pos_last_.left) / elapsed_time;

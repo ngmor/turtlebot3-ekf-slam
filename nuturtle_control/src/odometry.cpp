@@ -86,7 +86,7 @@ public:
     declare_parameter("track_width", 0.0, param);
     double wheel_track = get_parameter("track_width").get_parameter_value().get<double>();
 
-    if (wheel_track <= 0) {
+    if (wheel_track <= 0.0) {
       RCLCPP_ERROR_STREAM(get_logger(), "Invalid wheel track provided: " << wheel_track);
       required_parameters_received = false;
     }
@@ -95,7 +95,7 @@ public:
     declare_parameter("wheel_radius", 0.0, param);
     double wheel_radius = get_parameter("wheel_radius").get_parameter_value().get<double>();
 
-    if (wheel_radius <= 0) {
+    if (wheel_radius <= 0.0) {
       RCLCPP_ERROR_STREAM(get_logger(), "Invalid wheel radius provided: " << wheel_radius);
       required_parameters_received = false;
     }
@@ -138,17 +138,17 @@ public:
     //Init odom message
     odom_msg_.header.frame_id = odom_id_;
     odom_msg_.child_frame_id = body_id_;
-    odom_msg_.pose.pose.position.z = 0;
+    odom_msg_.pose.pose.position.z = 0.0;
     odom_msg_.pose.covariance = std::array<double, 36> {};
-    odom_msg_.twist.twist.linear.z = 0;
-    odom_msg_.twist.twist.angular.x = 0;
-    odom_msg_.twist.twist.angular.y = 0;
+    odom_msg_.twist.twist.linear.z = 0.0;
+    odom_msg_.twist.twist.angular.x = 0.0;
+    odom_msg_.twist.twist.angular.y = 0.0;
     odom_msg_.twist.covariance = std::array<double, 36> {};
 
     //Init odom transform
     odom_tf_.header.frame_id = odom_id_;
     odom_tf_.child_frame_id = body_id_;
-    odom_tf_.transform.translation.z = 0;
+    odom_tf_.transform.translation.z = 0.0;
 
 
     RCLCPP_INFO_STREAM(get_logger(), "odometry node started");
@@ -204,7 +204,7 @@ private:
     odom_msg_.pose.pose.position.y = turtlebot_.config().location.translation().y;
 
     tf2::Quaternion q;
-    q.setRPY(0, 0, turtlebot_.config().location.rotation());
+    q.setRPY(0.0, 0.0, turtlebot_.config().location.rotation());
     odom_msg_.pose.pose.orientation = tf2::toMsg(q);
 
     odom_msg_.header.stamp = msg.header.stamp;
@@ -228,23 +228,19 @@ private:
 
   /// \brief set the robot config to the specified config
   /// \param request - contains a configuration to set
-  /// \param response - empty
   void initial_pose_callback(
     const std::shared_ptr<nuturtle_control::srv::InitialPose::Request> request,
-    std::shared_ptr<nuturtle_control::srv::InitialPose::Response> response
+    std::shared_ptr<nuturtle_control::srv::InitialPose::Response>
   )
   {
     //Example call
     //ros2 service call /initial_pose nuturtle_control/srv/InitialPose "{x: 0., y: 0., theta: 0.}"
 
-    //Get rid of unused warnings
-    (void)response;
-
     //Update configuration, but retain current wheel positions
     turtlebot_.set_config(
-      DiffDriveConfig{
-      Transform2D{
-        Vector2D{
+    {
+      {
+        {
           request->config.x,
           request->config.y
         },

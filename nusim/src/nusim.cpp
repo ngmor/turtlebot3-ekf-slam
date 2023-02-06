@@ -101,7 +101,7 @@ public:
     declare_parameter("wheel_radius", 0.0, param);
     double wheel_radius = get_parameter("wheel_radius").get_parameter_value().get<double>();
 
-    if (wheel_radius <= 0) {
+    if (wheel_radius <= 0.0) {
       RCLCPP_ERROR_STREAM(get_logger(), "Invalid wheel radius provided: " << wheel_radius);
       required_parameters_received = false;
     }
@@ -111,7 +111,7 @@ public:
     motor_cmd_per_rad_sec_ = get_parameter(
       "motor_cmd_per_rad_sec").get_parameter_value().get<double>();
 
-    if (motor_cmd_per_rad_sec_ <= 0) {
+    if (motor_cmd_per_rad_sec_ <= 0.0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
         "Invalid motor command to rad/sec conversion provided: " << motor_cmd_per_rad_sec_);
@@ -135,7 +135,7 @@ public:
     encoder_ticks_per_rad_ = get_parameter(
       "encoder_ticks_per_rad").get_parameter_value().get<double>();
 
-    if (encoder_ticks_per_rad_ <= 0) {
+    if (encoder_ticks_per_rad_ <= 0.0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
         "Invalid encoder ticks to radian conversion provided: " << encoder_ticks_per_rad_);
@@ -240,7 +240,7 @@ public:
     turtlebot_ = DiffDrive {
       wheel_track,
       wheel_radius,
-      Transform2D{
+      {
         translation_initial,
         rotation_initial
       }
@@ -265,7 +265,7 @@ private:
   double sim_rate_, sim_interval_;
   uint64_t timestep_ = 0;
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
-  Wheel wheel_vel_ {0, 0};
+  Wheel wheel_vel_ {0.0, 0.0};
   std::vector<double> obstacles_x_, obstacles_y_;
   double obstacles_r_, x_length_, y_length_;
   visualization_msgs::msg::MarkerArray obstacle_markers_;
@@ -343,7 +343,7 @@ private:
     double y_bound = (y_length_ + WALL_WIDTH) / 2.0;
 
     geometry_msgs::msg::Point point;
-    point.z = WALL_HEIGHT / 2.;
+    point.z = WALL_HEIGHT / 2.0;
 
     //Add top and bottom wall points
     for (double x = -x_bound; x <= x_bound; x += WALL_WIDTH) {
@@ -382,9 +382,9 @@ private:
       marker.action = visualization_msgs::msg::Marker::ADD;
       marker.pose.position.x = obstacles_x_.at(i);
       marker.pose.position.y = obstacles_y_.at(i);
-      marker.pose.position.z = OBSTACLE_HEIGHT / 2;
-      marker.scale.x = obstacles_r_ * 2;
-      marker.scale.y = obstacles_r_ * 2;
+      marker.pose.position.z = OBSTACLE_HEIGHT / 2.0;
+      marker.scale.x = obstacles_r_ * 2.0;
+      marker.scale.y = obstacles_r_ * 2.0;
       marker.scale.z = OBSTACLE_HEIGHT;
       marker.color.r = 1.0;
       marker.color.g = 0.0;
@@ -426,17 +426,11 @@ private:
   }
 
   /// \brief reset simulation back to initial parameters. callback for ~/reset service.
-  /// \param request - empty
-  /// \param response - empty
   void reset_callback(
-    const std::shared_ptr<std_srvs::srv::Empty::Request> request,
-    std::shared_ptr<std_srvs::srv::Empty::Response> response
+    const std::shared_ptr<std_srvs::srv::Empty::Request>,
+    std::shared_ptr<std_srvs::srv::Empty::Response>
   )
   {
-    //Get rid of unused warnings
-    (void)request;
-    (void)response;
-
     //Reset simulation timestep
     timestep_ = 0;
 
@@ -446,20 +440,16 @@ private:
 
   /// \brief teleport the actual robot to a specified pose. callback for ~/teleport service.
   /// \param request - pose data to which to teleport the robot.
-  /// \param response - empty
   void teleport_callback(
     const std::shared_ptr<nusim::srv::Teleport::Request> request,
-    std::shared_ptr<nusim::srv::Teleport::Response> response
+    std::shared_ptr<nusim::srv::Teleport::Response>
   )
   {
-    //Get rid of unused warnings
-    (void)response;
-
     //Teleport current pose
     turtlebot_.set_config(
       DiffDriveConfig{
-      Transform2D{
-        Vector2D{
+      {
+        {
           request->config.x,
           request->config.y
         },
@@ -484,7 +474,7 @@ geometry_msgs::msg::TransformStamped pose_to_transform(Transform2D pose)
   tf.transform.translation.y = pose.translation().y;
 
   tf2::Quaternion q;
-  q.setRPY(0, 0, pose.rotation());
+  q.setRPY(0.0, 0.0, pose.rotation());
   tf.transform.rotation.x = q.x();
   tf.transform.rotation.y = q.y();
   tf.transform.rotation.z = q.z();

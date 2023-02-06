@@ -23,7 +23,7 @@ namespace turtlelib
     /// if given a compile-time constant as input
     constexpr bool almost_equal(double d1, double d2, double epsilon=1.0e-12)
     {
-        return (std::abs(d1 - d2) < epsilon);
+        return std::abs(d1 - d2) < epsilon;
     }
 
     /// \brief convert degrees to radians
@@ -31,7 +31,7 @@ namespace turtlelib
     /// \returns radians
     constexpr double deg2rad(double deg)
     {
-        return (deg * PI / 180.0);
+        return deg * PI / 180.0;
     }
 
     /// \brief convert radians to degrees
@@ -39,7 +39,7 @@ namespace turtlelib
     /// \returns the angle in degrees
     constexpr double rad2deg(double rad)
     {
-        return (rad * 180.0 / PI);
+        return rad * 180.0 / PI;
     }
 
     /// static_assertions test compile time assumptions.
@@ -63,8 +63,8 @@ namespace turtlelib
     static_assert(almost_equal(rad2deg(deg2rad(352.0)), 352.0), "deg2rad and rad2deg back failed");
 
     /// \brief bound an angle to equivalent angle between (-PI, PI]
-    /// @param rad angle to normalize
-    /// @return normalized angle
+    /// \param rad angle to normalize
+    /// \return normalized angle
     double normalize_angle(double rad);
 
     /// \brief A 2-Dimensional Vector

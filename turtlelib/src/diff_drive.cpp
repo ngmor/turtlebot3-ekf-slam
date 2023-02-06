@@ -4,7 +4,7 @@
 
 namespace turtlelib
 {
-    /* DIFF DRIVE START */
+    ////////// DIFF DRIVE START //////////
 
     void DiffDrive::calc_kinematic_coeff()
     {
@@ -18,8 +18,8 @@ namespace turtlelib
     : DiffDrive(
         wheel_track,
         wheel_radius,
-        Transform2D {},     //start_location
-        Wheel {0,0}         //start_wheel_pos
+        {},                 //start_location
+        {0.0, 0.0}          //start_wheel_pos
     ) {}
 
     DiffDrive::DiffDrive(double wheel_track, double wheel_radius, 
@@ -28,7 +28,7 @@ namespace turtlelib
         wheel_track,
         wheel_radius,
         start_location,
-        Wheel {0,0}         //start_wheel_pos
+        {0.0, 0.0}          //start_wheel_pos
     ) {}
 
     DiffDrive::DiffDrive(double wheel_track, double wheel_radius, 
@@ -36,7 +36,7 @@ namespace turtlelib
     : DiffDrive(
         wheel_track,
         wheel_radius,
-        Transform2D {},     //start_location
+        {},                 //start_location
         start_wheel_pos
     ) {}
 
@@ -55,7 +55,7 @@ namespace turtlelib
       config_{config_init_}
     {
         // Throw exception if robot parameters are not valid
-        if ((wheel_track_ <= 0) || (wheel_radius_ <= 0)) {
+        if ((wheel_track_ <= 0.0) || (wheel_radius_ <= 0.0)) {
             throw std::logic_error(
                  "Invalid differential drive robot dimensions, must be greater than 0:"
                  "\nWheel Track: " + std::to_string(wheel_track) +
@@ -81,7 +81,7 @@ namespace turtlelib
             new_wheel_pos.right - config_.wheel_pos.right   //right
         };
         
-        return Twist2D {
+        return {
             coeff_fk_w_*(-wheel_delta.left + wheel_delta.right),    //w, doc/Kinematics.pdf Eq 2.6
             coeff_fk_x_*(wheel_delta.left + wheel_delta.right),     //x, doc/Kinematics.pdf Eq 2.7
             0.0                                                     //y, doc/Kinematics.pdf Eq 2.5
@@ -113,11 +113,11 @@ namespace turtlelib
             );
         }
 
-        return Wheel {
+        return {
             -coeff_ik_w_*twist.w + coeff_ik_x_*twist.x,     //left, doc/Kinematics.pdf Eq 1.3
             coeff_ik_w_*twist.w + coeff_ik_x_*twist.x       //right, doc/Kinematics.pdf Eq 1.4
         };
     }
 
-    /* DIFF DRIVE END */
+    ////////// DIFF DRIVE END //////////
 }
