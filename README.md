@@ -12,7 +12,7 @@ Other include packages:
 - [`turtlelib`](turtlelib) - a C++ library with classes for 2D kinematics and odometry for differential drive robots.
 
 # Dependencies
-Dependencies for this package are listed in the [`turtle.repos`](turtle.repos) file. To import all dependencies, clone this repository into the `src` directory in your workspace root. Then from the workspace root directory, run the command:
+Dependencies for this package are listed in the [`turtle.repos`](turtle.repos) file. To import all dependencies, clone this repository as `nuturtle` into the `src` directory in your workspace root. Then from the workspace root directory, run the command:
 ```
-vcs import . < src/nuturtle/turtle.repos
+vcs import src < src/nuturtle/turtle.repos
 ```
