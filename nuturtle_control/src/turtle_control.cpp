@@ -168,7 +168,8 @@ private:
 
     //Use inverse kinematics to calculate the required wheel velocities for the
     //input twist
-    Wheel wheel_vel = turtlebot_.get_required_wheel_vel({
+    Wheel wheel_vel = turtlebot_.get_required_wheel_vel(
+    {
       msg.angular.z,
       msg.linear.x,
       msg.linear.y
