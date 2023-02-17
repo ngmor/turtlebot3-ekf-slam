@@ -237,18 +237,13 @@ private:
     //ros2 service call /initial_pose nuturtle_control/srv/InitialPose "{x: 0., y: 0., theta: 0.}"
 
     //Update configuration, but retain current wheel positions
-    turtlebot_.set_config(
-    {
+    turtlebot_.set_location({
       {
-        {
-          request->config.x,
-          request->config.y
-        },
-        request->config.theta
+        request->config.x,
+        request->config.y
       },
-      turtlebot_.config().wheel_pos
+      request->config.theta
     });
-
   }
 };
 

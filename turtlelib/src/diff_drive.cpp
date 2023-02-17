@@ -74,6 +74,10 @@ namespace turtlelib
 
     void DiffDrive::set_config(DiffDriveConfig new_config) {config_ = new_config;}
 
+    void DiffDrive::set_location(Transform2D new_location) {config_.location = new_location;}
+
+    void DiffDrive::set_wheel_pos(Wheel new_wheel_pos) {config_.wheel_pos = new_wheel_pos;}
+
     Twist2D DiffDrive::get_body_twist(const Wheel & new_wheel_pos) const {
          //Calculate change in wheel position
         Wheel wheel_delta {

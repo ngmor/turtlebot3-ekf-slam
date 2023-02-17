@@ -105,6 +105,14 @@ namespace turtlelib
         /// \param new_config new config to overwrite with
         void set_config(DiffDriveConfig new_config);
 
+        /// \brief overwrite the current location with a new location
+        /// \param new_location new location to overwrite with
+        void set_location(Transform2D new_location);
+
+        /// \brief overwrite the current wheel positions with new positions
+        /// \param new_wheel_pos new wheel positions to overwrite with
+        void set_wheel_pos(Wheel new_wheel_pos);
+
         /// \brief calculate the body twist produced by a change in wheel position in unit time
         /// \param new_wheel_pos - the new wheel position,
         /// change from current position is calculated

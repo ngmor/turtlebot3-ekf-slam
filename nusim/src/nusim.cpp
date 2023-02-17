@@ -323,30 +323,43 @@ private:
   void update_wheel_pos_and_config()
   {
 
-    Wheel wheel_sim_vel = wheel_vel_;
+    Wheel wheel_slip_vel = wheel_vel_;
 
     //Inject noise if our slip fraction is not 0
     if (slip_dist_.max() != 0.0) {
-      wheel_sim_vel.left *= (1.0 + slip_dist_(get_random()));
-      wheel_sim_vel.right *= (1.0 + slip_dist_(get_random()));
+      wheel_slip_vel.left *= (1.0 + slip_dist_(get_random()));
+      wheel_slip_vel.right *= (1.0 + slip_dist_(get_random()));
     }
 
-    //Create new wheel position based on wheel velocity
-    Wheel new_wheel_pos {
-      turtlebot_.config().wheel_pos.left + wheel_sim_vel.left * sim_interval_,
-      turtlebot_.config().wheel_pos.right + wheel_sim_vel.right * sim_interval_,
+    //Determine new actual wheel position using actual wheel velocity
+    Wheel new_actual_wheel_pos {
+      turtlebot_.config().wheel_pos.left + wheel_vel_.left * sim_interval_,
+      turtlebot_.config().wheel_pos.right + wheel_vel_.right * sim_interval_,
     };
 
-    //Publish new wheel position
+    //Determine artificial "slipped" wheel position using injected slip noise
+    Wheel new_slip_wheel_pos {
+      turtlebot_.config().wheel_pos.left + wheel_slip_vel.left * sim_interval_,
+      turtlebot_.config().wheel_pos.right + wheel_slip_vel.right * sim_interval_,
+    };
+
+    //Update configuration based on new slipped wheel position
+    turtlebot_.update_config(new_slip_wheel_pos);
+
+    //Replace artificial "slipped" wheel position with actual wheel position
+    //Because slip only actually affects the location of the robot,
+    //not the wheel positions
+    turtlebot_.set_wheel_pos(new_actual_wheel_pos);
+
+    //Publish new actual wheel position
     nuturtlebot_msgs::msg::SensorData sensor_data;
     sensor_data.stamp = current_time_;
-    sensor_data.left_encoder = static_cast<int32_t>(new_wheel_pos.left * encoder_ticks_per_rad_);
-    sensor_data.right_encoder = static_cast<int32_t>(new_wheel_pos.right * encoder_ticks_per_rad_);
+    sensor_data.left_encoder = static_cast<int32_t>(
+      turtlebot_.config().wheel_pos.left * encoder_ticks_per_rad_);
+    sensor_data.right_encoder = static_cast<int32_t>(
+      turtlebot_.config().wheel_pos.right * encoder_ticks_per_rad_);
 
     pub_sensor_data_->publish(sensor_data);
-
-    //Update configuration based on new wheel position
-    turtlebot_.update_config(new_wheel_pos);
 
     //Broadcast updated transform of robot
     auto tf = pose_to_transform(turtlebot_.config().location);
@@ -491,17 +504,13 @@ private:
     std::shared_ptr<nusim::srv::Teleport::Response>
   )
   {
-    //Teleport current pose
-    turtlebot_.set_config(
-      DiffDriveConfig{
-      {
+    //Teleport current pose, retain current wheel positions
+    turtlebot_.set_location({
         {
           request->config.x,
           request->config.y
         },
         request->config.theta
-      },
-      turtlebot_.config().wheel_pos
     });
   }
 };
