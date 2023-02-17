@@ -199,12 +199,18 @@ public:
     y_length_ = get_parameter("y_length").get_parameter_value().get<double>();
 
     param.description = 
-      "Standard deviation for noise on input wheel commands (rad/s).";
+      "Standard deviation for noise on input wheel commands (rad/s). Must be nonnegative.";
     declare_parameter("input_noise", 0.0, param);
-    wheel_vel_dist_ = std::normal_distribution<> {
-      0.0, //mean
-      get_parameter("input_noise").get_parameter_value().get<double>()
-    };
+    auto input_noise = get_parameter("input_noise").get_parameter_value().get<double>();
+
+    if (input_noise < 0.0) {
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
+        "Invalid input noise provided: " << input_noise);
+      required_parameters_received = false;
+    }
+
+    wheel_vel_dist_ = std::normal_distribution<> {0.0, input_noise};
 
     param.description = 
       "Bound of fraction of slip experienced by the wheels during motion (decimal fraction)."
@@ -221,22 +227,46 @@ public:
 
     slip_dist_ = std::uniform_real_distribution <> {-slip_fraction, slip_fraction};
 
+    param.description = 
+      "Standard deviation for noise in obstacle sensing (m). Must be nonnegative.";
+    declare_parameter("basic_sensor_variance", 0.0, param);
+    auto basic_sensor_variance = 
+      get_parameter("basic_sensor_variance").get_parameter_value().get<double>();
+
+    if (basic_sensor_variance < 0.0) {
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
+        "Invalid basic sensor variance provided: " << basic_sensor_variance);
+      required_parameters_received = false;
+    }
+
+    fake_sensor_dist_ = std::normal_distribution<> {0.0, basic_sensor_variance};
+
+    param.description = "Max range for obstacle sensing (m).";
+    declare_parameter("max_range", 1.0, param);
+    max_range_ = get_parameter("max_range").get_parameter_value().get<double>();
+
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
-              "Required parameters were not received or were invalid. Please provide valid parameters."
+        "Required parameters were not received or were invalid. Please provide valid parameters."
       );
     }
 
     //Timers
-    timer_ = create_wall_timer(
+    timer_main_ = create_wall_timer(
       static_cast<std::chrono::microseconds>(static_cast<int>(sim_interval_ * 1000000.0)),
-      std::bind(&NuSim::timer_callback, this)
+      std::bind(&NuSim::timer_main_callback, this)
+    );
+    timer_fake_sensor_ = create_wall_timer(
+      static_cast<std::chrono::milliseconds>(static_cast<int>(1000.0 / 5.0)), //5 Hz
+      std::bind(&NuSim::timer_fake_sensor_callback, this)
     );
 
     //Publishers
     pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     pub_obstacles_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
+    pub_fake_sensor_ = create_publisher<visualization_msgs::msg::MarkerArray>("fake_sensor", 10);
     //TODO - I don't think this should have a prefix, have to check
     pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
 
@@ -276,9 +306,11 @@ public:
   }
 
 private:
-  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr timer_main_;
+  rclcpp::TimerBase::SharedPtr timer_fake_sensor_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr pub_timestep_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_obstacles_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_fake_sensor_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr pub_sensor_data_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr sub_wheel_cmd_;
 
@@ -291,16 +323,16 @@ private:
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
   Wheel wheel_vel_ {0.0, 0.0};
   std::vector<double> obstacles_x_, obstacles_y_;
-  double obstacles_r_, x_length_, y_length_;
-  visualization_msgs::msg::MarkerArray obstacle_markers_;
+  double obstacles_r_, x_length_, y_length_, max_range_;
+  visualization_msgs::msg::MarkerArray detected_obstacles_init_, obstacle_and_wall_markers_;
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
   int32_t motor_cmd_max_;
   rclcpp::Time current_time_;
-  std::normal_distribution<> wheel_vel_dist_;
+  std::normal_distribution<> wheel_vel_dist_, fake_sensor_dist_;
   std::uniform_real_distribution<> slip_dist_;
 
   /// \brief main simulation timer loop
-  void timer_callback()
+  void timer_main_callback()
   {
     //Use a single time value for all publishing
     current_time_ = get_clock()->now();
@@ -314,7 +346,40 @@ private:
     update_wheel_pos_and_config();
 
     //Publish markers
-    publish_obstacles();
+    publish_walls_and_obstacles();
+  }
+
+  void timer_fake_sensor_callback()
+  {
+    //Copy the ground truth locations of the obstacles
+    visualization_msgs::msg::MarkerArray detected_obstacles = detected_obstacles_init_;
+    auto sensor_time = get_clock()->now();
+
+    //Update detections of all markers
+    for (auto & marker : detected_obstacles.markers) {
+      //Update stamp
+      marker.header.stamp = sensor_time;
+
+      //Calculate distance between the obstacle and the robot
+      auto dist = (
+        turtlebot_.config().location.translation() -
+        Vector2D {marker.pose.position.x, marker.pose.position.y}
+      ).magnitude();
+
+      //If the obstacle is outside of sensor range, delete it
+      if (dist > max_range_) {
+        marker.action = visualization_msgs::msg::Marker::DELETE;
+        continue;
+      }
+
+      //TODO add noise
+
+    }
+
+    //Publish marker array
+    //TODO
+    pub_fake_sensor_->publish(detected_obstacles);
+
   }
 
   /// \brief update the robot's wheel positions based on the current
@@ -417,7 +482,7 @@ private:
       marker.points.push_back(point);
     }
 
-    obstacle_markers_.markers.push_back(marker);
+    obstacle_and_wall_markers_.markers.push_back(marker);
 
     //Create markers from input lists
     for (size_t i = 0; i < obstacles_x_.size(); i++) {
@@ -440,23 +505,29 @@ private:
       marker.color.a = 1.0;
 
       //Append to marker array
-      obstacle_markers_.markers.push_back(marker);
+      obstacle_and_wall_markers_.markers.push_back(marker);
+      detected_obstacles_init_.markers.push_back(marker);
+    }
+
+    //Make detected obstacles yellow
+    for (auto & marker : detected_obstacles_init_.markers) {
+      marker.color.g = 1.0;
     }
 
 
   }
 
   /// \brief publish the obstacle marker array
-  void publish_obstacles()
+  void publish_walls_and_obstacles()
   {
 
     //Update timestamps of all markers
-    for (auto & marker : obstacle_markers_.markers) {
+    for (auto & marker : obstacle_and_wall_markers_.markers) {
       marker.header.stamp = current_time_;
     }
 
     //Publish marker array
-    pub_obstacles_->publish(obstacle_markers_);
+    pub_obstacles_->publish(obstacle_and_wall_markers_);
   }
 
   /// \brief convert and store received wheel commands
