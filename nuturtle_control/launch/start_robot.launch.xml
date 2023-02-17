@@ -28,11 +28,21 @@
 
 
     <!-- SIMULATION START -->
+    <node pkg="rviz2" exec="rviz2"
+        args="-d $(find-pkg-share nuturtle_control)/config/config.rviz"
+        if="$(eval '\'$(var robot)\' != \'localhost\' and \'$(var use_rviz)\' == \'true\'')"
+    />
+
     <node pkg="nusim" exec="nusim"
         if="$(eval '\'$(var robot)\' == \'nusim\'')"
     >
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
     </node>
+
+    <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
+        <arg name="use_rviz" value="false"/>
+        <arg name="world_yaml_path" value="" />
+    </include>
 
     <!-- Publish identity transform between nusim/world and odom -->
     <node pkg="tf2_ros" exec="static_transform_publisher"
@@ -42,20 +52,6 @@
         "
         if="$(eval '\'$(var robot)\' != \'localhost\'')"
     />
-
-    <node pkg="rviz2" exec="rviz2"
-        args="-d $(find-pkg-share nuturtle_control)/config/config.rviz"
-        if="$(eval '\'$(var robot)\' != \'localhost\' and \'$(var use_rviz)\' == \'true\'')"
-    />
-
-    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py"
-        if="$(eval '\'$(var robot)\' == \'nusim\'')"
-    >
-        <arg name="color" value="red"/>
-        <arg name="use_rviz" value="false"/>
-        <arg name="use_jsp" value="true" /> <!-- TODO - should this be used? -->
-    </include>
-
     <!-- SIMULATION END -->
 
 
