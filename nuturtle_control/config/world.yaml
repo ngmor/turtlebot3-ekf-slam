@@ -8,4 +8,5 @@
       x: [-0.6, 0.7, 0.5] # m
       y: [-0.8, -0.7, 0.9] # m
       r: 0.038 # m
-    input_noise: 0.1 # rad/s
+    input_noise: 0.05 # rad/s
+    slip_fraction: 0.5

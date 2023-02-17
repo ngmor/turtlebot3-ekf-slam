@@ -200,12 +200,26 @@ public:
 
     param.description = 
       "Standard deviation for noise on input wheel commands (rad/s).";
-    declare_parameter("input_noise", 0.1, param);
+    declare_parameter("input_noise", 0.0, param);
     wheel_vel_dist_ = std::normal_distribution<> {
       0.0, //mean
       get_parameter("input_noise").get_parameter_value().get<double>()
     };
 
+    param.description = 
+      "Bound of fraction of slip experienced by the wheels during motion (decimal fraction)."
+      " Must be nonnegative.";
+    declare_parameter("slip_fraction", 0.0, param);
+    auto slip_fraction = get_parameter("slip_fraction").get_parameter_value().get<double>();
+    
+    if (slip_fraction < 0.0) {
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
+        "Invalid slip fraction provided: " << slip_fraction);
+      required_parameters_received = false;
+    }
+
+    slip_dist_ = std::uniform_real_distribution <> {-slip_fraction, slip_fraction};
 
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
@@ -283,6 +297,7 @@ private:
   int32_t motor_cmd_max_;
   rclcpp::Time current_time_;
   std::normal_distribution<> wheel_vel_dist_;
+  std::uniform_real_distribution<> slip_dist_;
 
   /// \brief main simulation timer loop
   void timer_callback()
@@ -307,10 +322,19 @@ private:
   /// on the new wheel position
   void update_wheel_pos_and_config()
   {
+
+    Wheel wheel_sim_vel = wheel_vel_;
+
+    //Inject noise if our slip fraction is not 0
+    if (slip_dist_.max() != 0.0) {
+      wheel_sim_vel.left *= (1.0 + slip_dist_(get_random()));
+      wheel_sim_vel.right *= (1.0 + slip_dist_(get_random()));
+    }
+
     //Create new wheel position based on wheel velocity
     Wheel new_wheel_pos {
-      turtlebot_.config().wheel_pos.left + wheel_vel_.left * sim_interval_,
-      turtlebot_.config().wheel_pos.right + wheel_vel_.right * sim_interval_,
+      turtlebot_.config().wheel_pos.left + wheel_sim_vel.left * sim_interval_,
+      turtlebot_.config().wheel_pos.right + wheel_sim_vel.right * sim_interval_,
     };
 
     //Publish new wheel position
