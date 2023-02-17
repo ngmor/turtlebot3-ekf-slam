@@ -1,0 +1,11 @@
+/nusim:
+  ros__parameters:
+    rate: 200.0 # hz
+    x0: 0.0 # m
+    y0: 0.0 # m
+    theta0: 0.0 # rad
+    obstacles:
+      x: [-0.6, 0.7, 0.5] # m
+      y: [-0.8, -0.7, 0.9] # m
+      r: 0.038 # m
+    input_noise: 0.1 # rad/s

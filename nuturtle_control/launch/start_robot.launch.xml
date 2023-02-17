@@ -33,15 +33,12 @@
         if="$(eval '\'$(var robot)\' != \'localhost\' and \'$(var use_rviz)\' == \'true\'')"
     />
 
-    <node pkg="nusim" exec="nusim"
+    <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml"
         if="$(eval '\'$(var robot)\' == \'nusim\'')"
     >
-        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-    </node>
-
-    <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
         <arg name="use_rviz" value="false"/>
-        <arg name="world_yaml_path" value="" />
+        <arg name="world_yaml_path" 
+            value="$(find-pkg-share nuturtle_control)/config/world.yaml" />
     </include>
 
     <!-- Publish identity transform between nusim/world and odom -->

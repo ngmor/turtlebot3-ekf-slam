@@ -2,11 +2,11 @@
 /// \brief Runs the simulation for the NUTurtle.
 ///
 /// PARAMETERS:
-///     track_width (double): The wheel track width in meters (REQUIRED)
-///     wheel_radius (double): The wheel radius in meters (REQUIRED)
-///     motor_cmd_per_rad_sec (double): Motor command value per rad/sec conversion factor (REQUIRED)
-///     motor_cmd_max (int32_t): Maximum possible motor command value (REQUIRED)
-///     encoder_ticks_per_rad (double): Motor encoder ticks per radian conversion factor (REQUIRED)
+///     track_width (double): The wheel track width in meters (REQUIRED).
+///     wheel_radius (double): The wheel radius in meters (REQUIRED).
+///     motor_cmd_per_rad_sec (double): Motor command value per rad/sec conversion factor (REQUIRED).
+///     motor_cmd_max (int32_t): Maximum possible motor command value (REQUIRED).
+///     encoder_ticks_per_rad (double): Motor encoder ticks per radian conversion factor (REQUIRED).
 ///     rate (double): The rate the simulation runs at (Hz).
 ///     x0 (double): Initial x position of the robot (m).
 ///     y0 (double): Initial y position of the robot (m).
@@ -14,8 +14,8 @@
 ///     obstacles.x (std::vector<double>): List of x starting positions of obstacles (m). Arbitrary length, but must match length of `y`.
 ///     obstacles.y (std::vector<double>): List of y starting positions of obstacles (m). Arbitray length, but must match length of `x`.
 ///     obstacles.r (double): Radius of all cylinder obstacles (m). Single value applies to all obstacles.
-///     x_length (double): Length of the arena in the x direction (m)
-///     y_length (double): Length of the arena in the y direction (m)
+///     x_length (double): Length of the arena in the x direction (m).
+///     y_length (double): Length of the arena in the y direction (m).
 /// PUBLISHERS:
 ///     ~/timestep (std_msgs/msg/UInt64): current timestep of the simulation
 ///     ~/obstacles (visualization_msgs/msg/MarkerArray): marker array containing cylindrical obstacles in the world.
@@ -35,8 +35,8 @@
 #include <string_view>
 #include <vector>
 #include <exception>
-#include <typeinfo>
 #include <algorithm>
+#include <random>
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
@@ -53,6 +53,7 @@
 #include "turtlelib/diff_drive.hpp"
 
 using namespace std::chrono_literals;
+using turtlelib::almost_equal;
 using turtlelib::Vector2D;
 using turtlelib::Transform2D;
 using turtlelib::DiffDrive;
@@ -71,6 +72,7 @@ constexpr int32_t MARKER_ID_OFFSET_OBSTACLES = 100;
 
 //Function prototypes
 geometry_msgs::msg::TransformStamped pose_to_transform(Transform2D pose);
+std::mt19937 & get_random();
 
 
 /// \brief Runs the simulation for the NUTurtle.
@@ -88,7 +90,7 @@ public:
     //Check if required parameters were provided
     bool required_parameters_received = true;
 
-    param.description = "The wheel track width in meters (REQUIRED)";
+    param.description = "The wheel track width in meters (REQUIRED).";
     declare_parameter("track_width", 0.0, param);
     double wheel_track = get_parameter("track_width").get_parameter_value().get<double>();
 
@@ -97,7 +99,7 @@ public:
       required_parameters_received = false;
     }
 
-    param.description = "The wheel radius in meters (REQUIRED)";
+    param.description = "The wheel radius in meters (REQUIRED).";
     declare_parameter("wheel_radius", 0.0, param);
     double wheel_radius = get_parameter("wheel_radius").get_parameter_value().get<double>();
 
@@ -106,7 +108,7 @@ public:
       required_parameters_received = false;
     }
 
-    param.description = "Motor command value per rad/sec conversion factor (REQUIRED)";
+    param.description = "Motor command value per rad/sec conversion factor (REQUIRED).";
     declare_parameter("motor_cmd_per_rad_sec", 0.0, param);
     motor_cmd_per_rad_sec_ = get_parameter(
       "motor_cmd_per_rad_sec").get_parameter_value().get<double>();
@@ -118,7 +120,7 @@ public:
       required_parameters_received = false;
     }
 
-    param.description = "Maximum possible motor command value (REQUIRED)";
+    param.description = "Maximum possible motor command value (REQUIRED).";
     declare_parameter("motor_cmd_max", 0, param);
     motor_cmd_max_ = get_parameter(
       "motor_cmd_max").get_parameter_value().get<int32_t>();
@@ -130,7 +132,7 @@ public:
       required_parameters_received = false;
     }
 
-    param.description = "Motor encoder ticks per radian conversion factor (REQUIRED)";
+    param.description = "Motor encoder ticks per radian conversion factor (REQUIRED).";
     declare_parameter("encoder_ticks_per_rad", 0.0, param);
     encoder_ticks_per_rad_ = get_parameter(
       "encoder_ticks_per_rad").get_parameter_value().get<double>();
@@ -187,14 +189,22 @@ public:
     obstacles_r_ = get_parameter("obstacles.r").get_parameter_value().get<double>();
 
     param.description =
-      "Length of the arena in the x direction (m)";
+      "Length of the arena in the x direction (m).";
     declare_parameter("x_length", 5.0, param);
     x_length_ = get_parameter("x_length").get_parameter_value().get<double>();
 
     param.description =
-      "Length of the arena in the y direction (m)";
+      "Length of the arena in the y direction (m).";
     declare_parameter("y_length", 5.0, param);
     y_length_ = get_parameter("y_length").get_parameter_value().get<double>();
+
+    param.description = 
+      "Standard deviation for noise on input wheel commands (rad/s).";
+    declare_parameter("input_noise", 0.1, param);
+    wheel_vel_dist_ = std::normal_distribution<> {
+      0.0, //mean
+      get_parameter("input_noise").get_parameter_value().get<double>()
+    };
 
 
     //Abort if any required parameters were not provided
@@ -272,6 +282,7 @@ private:
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
   int32_t motor_cmd_max_;
   rclcpp::Time current_time_;
+  std::normal_distribution<> wheel_vel_dist_;
 
   /// \brief main simulation timer loop
   void timer_callback()
@@ -423,6 +434,17 @@ private:
     wheel_vel_.right = static_cast<double>(
       std::clamp(msg.right_velocity, -motor_cmd_max_, motor_cmd_max_)
       ) / motor_cmd_per_rad_sec_;
+
+    //If wheel command is not 0 and we have nonzero standard deviation, inject input noise
+    if (wheel_vel_dist_.stddev() != 0.0){
+      if (!almost_equal(wheel_vel_.left, 0.0)) {
+        wheel_vel_.left += wheel_vel_dist_(get_random());
+      }
+
+      if (!almost_equal(wheel_vel_.right, 0.0)) {
+        wheel_vel_.right += wheel_vel_dist_(get_random());
+      }
+    }
   }
 
   /// \brief reset simulation back to initial parameters. callback for ~/reset service.
@@ -481,6 +503,16 @@ geometry_msgs::msg::TransformStamped pose_to_transform(Transform2D pose)
   tf.transform.rotation.w = q.w();
 
   return tf;
+}
+
+std::mt19937 & get_random()
+{
+    // static variables inside a function are created once and persist for the remainder of the program
+    static std::random_device rd{}; 
+    static std::mt19937 mt{rd()};
+    // we return a reference to the pseudo-random number genrator object. This is always the
+    // same object every time get_random is called
+    return mt;
 }
 
 /// \brief Run the node
