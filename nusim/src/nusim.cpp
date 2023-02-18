@@ -325,7 +325,7 @@ private:
   std::vector<double> obstacles_x_, obstacles_y_;
   double obstacles_r_, x_length_, y_length_, max_range_;
   visualization_msgs::msg::MarkerArray detected_obstacles_, obstacle_and_wall_markers_;
-  std::vector<Transform2D> obstacle_tfs_;
+  std::vector<Transform2D> obstacle_abs_tfs_, obstacle_rel_tfs_;
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
   int32_t motor_cmd_max_;
   rclcpp::Time current_time_;
@@ -348,45 +348,6 @@ private:
 
     //Publish markers
     publish_walls_and_obstacles();
-  }
-
-  void timer_fake_sensor_callback()
-  {
-    //Copy the ground truth locations of the obstacles
-    visualization_msgs::msg::MarkerArray detected_obstacles = detected_obstacles_;
-    auto sensor_time = get_clock()->now();
-
-    for (std::size_t i = 0; i < obstacle_tfs_.size(); i++ ) {
-      const auto & Tobs = obstacle_tfs_.at(i);
-      auto & marker = detected_obstacles_.markers.at(i);
-
-      //Calculate relative transformation of obstacle to robot
-      const auto Trel = turtlebot_.config().location.inv()*Tobs;
-
-      //Update marker position
-      marker.pose.position.x = Trel.translation().x;
-      marker.pose.position.y = Trel.translation().y;
-
-      //If the obstacle is outside of sensor range, delete it
-      if (Trel.translation().magnitude() > max_range_) {
-        marker.action = visualization_msgs::msg::Marker::DELETE;
-        continue;
-      }
-
-      //Otherwise, add marker back
-      marker.action = visualization_msgs::msg::Marker::ADD;
-
-      //Add sensor noise if there is nonzero standard deviation
-      if (fake_sensor_dist_.stddev() != 0.0) {
-        //TODO is it ok to make them independent like this?
-        marker.pose.position.x += fake_sensor_dist_(get_random());
-        marker.pose.position.y += fake_sensor_dist_(get_random());
-      }
-    }
-
-    //Publish marker array
-    pub_fake_sensor_->publish(detected_obstacles_);
-
   }
 
   /// \brief update the robot's wheel positions based on the current
@@ -423,6 +384,9 @@ private:
     //not the wheel positions
     turtlebot_.set_wheel_pos(new_actual_wheel_pos);
 
+    //Detect and handle collisions
+    collision_detection();
+
     //Publish new actual wheel position
     nuturtlebot_msgs::msg::SensorData sensor_data;
     sensor_data.stamp = current_time_;
@@ -437,6 +401,19 @@ private:
     auto tf = pose_to_transform(turtlebot_.config().location);
     tf.header.stamp = current_time_;
     broadcaster_->sendTransform(tf);
+  }
+
+  /// \brief detect collisions and update robot position accordingly
+  void collision_detection() {
+
+    // Iterate through all obstacles and calculate relative transforms
+    for (std::size_t i = 0; i < obstacle_abs_tfs_.size(); i++ ) {
+      const auto & Tabs = obstacle_abs_tfs_.at(i);
+      auto & Trel = obstacle_rel_tfs_.at(i);
+
+      //Calculate relative transformation of obstacle to robot
+      Trel = turtlebot_.config().location.inv()*Tabs;
+    }
   }
 
   /// \brief initialize the obstacle marker array.
@@ -516,7 +493,7 @@ private:
       detected_obstacles_.markers.push_back(marker);
 
       //Store transform in world frame
-      obstacle_tfs_.push_back({
+      obstacle_abs_tfs_.push_back({
         {
           marker.pose.position.x,
           marker.pose.position.y
@@ -531,7 +508,8 @@ private:
       marker.color.g = 1.0;
     }
 
-
+    //Init relative transforms
+    obstacle_rel_tfs_ = obstacle_abs_tfs_;
   }
 
   /// \brief publish the obstacle marker array
@@ -545,6 +523,44 @@ private:
 
     //Publish marker array
     pub_obstacles_->publish(obstacle_and_wall_markers_);
+  }
+
+    /// \brief publish fake sensor data with noise
+  void timer_fake_sensor_callback()
+  {
+    //Copy the ground truth locations of the obstacles
+    auto sensor_time = get_clock()->now();
+
+    for (std::size_t i = 0; i < obstacle_rel_tfs_.size(); i++ ) {
+      const auto & Trel = obstacle_rel_tfs_.at(i);
+      auto & marker = detected_obstacles_.markers.at(i);
+
+      //Update stamp
+      marker.header.stamp = sensor_time;
+
+      //Update marker position
+      marker.pose.position.x = Trel.translation().x;
+      marker.pose.position.y = Trel.translation().y;
+
+      //If the obstacle is outside of sensor range, delete it
+      if (Trel.translation().magnitude() > max_range_) {
+        marker.action = visualization_msgs::msg::Marker::DELETE;
+        continue;
+      }
+
+      //Otherwise, add marker back
+      marker.action = visualization_msgs::msg::Marker::ADD;
+
+      //Add sensor noise if there is nonzero standard deviation
+      if (fake_sensor_dist_.stddev() != 0.0) {
+        //TODO is it ok to make them independent like this?
+        marker.pose.position.x += fake_sensor_dist_(get_random());
+        marker.pose.position.y += fake_sensor_dist_(get_random());
+      }
+    }
+
+    //Publish marker array
+    pub_fake_sensor_->publish(detected_obstacles_);
   }
 
   /// \brief convert and store received wheel commands
