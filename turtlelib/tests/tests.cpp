@@ -7,8 +7,10 @@
 using turtlelib::Transform2D;
 using turtlelib::Vector2D;
 using turtlelib::Twist2D;
+using turtlelib::Line2D;
 using turtlelib::deg2rad;
 using turtlelib::PI;
+using turtlelib::INF;
 using turtlelib::normalize_angle;
 using turtlelib::dot;
 using turtlelib::angle;
@@ -573,5 +575,97 @@ TEST_CASE("exceptions", "[diffdrive]") { //Nick Morales
         REQUIRE_NOTHROW(robot.get_required_wheel_vel(Twist2D{-0.5, -0.5, 0}));
         REQUIRE_THROWS(robot.get_required_wheel_vel(Twist2D{0.5, 0.5, 0.5}));
         REQUIRE_THROWS(robot.get_required_wheel_vel(Twist2D{-0.5, -0.5, -0.5}));
+    }
+}
+
+TEST_CASE("constructors and getters", "[line]") { //Nick Morales
+    SECTION("regular slope") {
+        Vector2D start {3.0, 1.0};
+        Vector2D end {4.0, 3.5};
+        Line2D line {start, end};
+
+        REQUIRE_THAT(line.start().x, WithinRel(start.x, FLOAT_TOL));
+        REQUIRE_THAT(line.start().y, WithinRel(start.y, FLOAT_TOL));
+        REQUIRE_THAT(line.end().x, WithinRel(end.x, FLOAT_TOL));
+        REQUIRE_THAT(line.end().y, WithinRel(end.y, FLOAT_TOL));
+        REQUIRE_THAT(line.slope(), WithinRel(2.5, FLOAT_TOL));
+        REQUIRE_THAT(line.y_intercept(), WithinRel(-6.5, FLOAT_TOL));
+    }
+
+    SECTION("infinite slope") {
+        Vector2D start {3.0, 1.0};
+        Vector2D end {3.0, 3.5};
+        Line2D line {start, end};
+
+        REQUIRE_THAT(line.start().x, WithinRel(start.x, FLOAT_TOL));
+        REQUIRE_THAT(line.start().y, WithinRel(start.y, FLOAT_TOL));
+        REQUIRE_THAT(line.end().x, WithinRel(end.x, FLOAT_TOL));
+        REQUIRE_THAT(line.end().y, WithinRel(end.y, FLOAT_TOL));
+        REQUIRE_THAT(line.slope(), WithinRel(INF, FLOAT_TOL));
+        REQUIRE_THAT(line.y_intercept(), WithinRel(INF, FLOAT_TOL));
+    }
+
+    SECTION("zero slope") {
+        Vector2D start {3.0, 1.0};
+        Vector2D end {5.0, 1.0};
+        Line2D line {start, end};
+
+        REQUIRE_THAT(line.start().x, WithinRel(start.x, FLOAT_TOL));
+        REQUIRE_THAT(line.start().y, WithinRel(start.y, FLOAT_TOL));
+        REQUIRE_THAT(line.end().x, WithinRel(end.x, FLOAT_TOL));
+        REQUIRE_THAT(line.end().y, WithinRel(end.y, FLOAT_TOL));
+        REQUIRE_THAT(line.slope(), WithinRel(0.0, FLOAT_TOL));
+        REQUIRE_THAT(line.y_intercept(), WithinRel(start.y, FLOAT_TOL));
+    }
+}
+
+TEST_CASE("intersections", "[line]") { //Nick Morales
+    SECTION("intersecting non-parallel line segments") {
+        Line2D line1 {{0.0, 1.0}, {4.0, 3.0}};
+        Line2D line2 {{0.0, 3.0}, {2.0, 0.0}};
+
+        auto [lines_intersect, intersection_point] = find_intersection(line1, line2);
+        
+        REQUIRE(lines_intersect == true);
+        REQUIRE_THAT(intersection_point.x, WithinRel(1.0, FLOAT_TOL));
+        REQUIRE_THAT(intersection_point.y, WithinRel(1.5, FLOAT_TOL));
+    }
+
+    SECTION("non-intersecting non-parallel line segments") {
+        Line2D line1 {{0.0, 1.0}, {4.0, 3.0}};
+        Line2D line2 {{4.0, 0.0}, {4.0, -3.0}};
+
+        auto [lines_intersect, intersection_point] = find_intersection(line1, line2);
+        
+        REQUIRE(lines_intersect == false);
+    }
+
+    SECTION("intersecting parallel line segments") {
+        Line2D line1 {{0.0, 1.0}, {4.0, 3.0}};
+        Line2D line2 {{2.0, 2.0}, {6.0, 4.0}};
+
+        auto [lines_intersect, intersection_point] = find_intersection(line1, line2);
+        
+        REQUIRE(lines_intersect == true);
+        REQUIRE_THAT(intersection_point.x, WithinRel(2.0, FLOAT_TOL));
+        REQUIRE_THAT(intersection_point.y, WithinRel(2.0, FLOAT_TOL));
+    }
+
+    SECTION("non-intersecting parallel line segments 1") {
+        Line2D line1 {{0.0, 1.0}, {4.0, 3.0}};
+        Line2D line2 {{6.0, 4.0}, {8.0, 5.0}};
+
+        auto [lines_intersect, intersection_point] = find_intersection(line1, line2);
+        
+        REQUIRE(lines_intersect == false);
+    }
+
+    SECTION("non-intersecting parallel line segments 2") {
+        Line2D line1 {{0.0, 1.0}, {4.0, 3.0}};
+        Line2D line2 {{2.0, 0.0}, {6.0, 2.0}};
+
+        auto [lines_intersect, intersection_point] = find_intersection(line1, line2);
+        
+        REQUIRE(lines_intersect == false);
     }
 }

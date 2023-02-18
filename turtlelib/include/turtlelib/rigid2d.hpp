@@ -6,11 +6,16 @@
 
 #include<iosfwd> // contains forward definitions for iostream objects
 #include<cmath>
+#include<limits>
+#include<tuple>
 
 namespace turtlelib
 {
     /// \brief PI.  Not in C++ standard until C++20.
     constexpr double PI=3.14159265358979323846;
+
+    /// \brief infinity
+    constexpr double INF=std::numeric_limits<double>::infinity();
 
     /// \brief approximately compare two floating-point numbers using
     ///        an absolute comparison
@@ -290,6 +295,61 @@ namespace turtlelib
     /// \param twist twist to follow
     /// \return transformation from original body frame to frame after following twist
     Transform2D integrate_twist(Twist2D twist);
+
+
+    //TODO documentation
+    //TODO move to new header file?
+    
+    /// \brief a line segment between to points
+    class Line2D
+    {
+    private:
+        /// \brief the line start point, represented as a vector from the origin
+        Vector2D start_;
+        
+        /// \brief the line end point, represented as a vector from the origin
+        Vector2D end_;
+        
+        /// \brief the slope of the line segment
+        double slope_;
+
+        /// \brief the y intercept of the line segment
+        double y_intercept_;
+
+    public:
+        /// \brief init line and calculate slope and y intercept
+        /// \param start - start point, represented as a vector from the origin
+        /// \param end - end point, represented as a vector from the origin
+        Line2D(Vector2D start, Vector2D end);
+        
+        /// \brief getter for start point
+        /// \return start point
+        Vector2D start();
+
+        /// \brief getter for end point
+        /// \return end point
+        Vector2D end();
+
+        /// \brief getter for slope
+        /// \return slope
+        double slope();
+
+        /// \brief getter for the y intercept
+        /// \return y intercept
+        double y_intercept();
+
+        /// \brief find y coordinate of a point on the line. may not be within line segment
+        /// \param x - x coordinate of point
+        /// \return y coordinate of point
+        double calc_y(double x);
+    };
+
+    /// \brief determine if two line segments intersect
+    /// \param line1 - first line segment
+    /// \param line2 - second line segment
+    /// \return a tuple. The first value is boolean indicating if the lines intersect.
+    /// if they do, the second value is a Vector2D indicating their intersection point.
+    std::tuple<bool, Vector2D> find_intersection(Line2D line1, Line2D line2);
 
 }
 

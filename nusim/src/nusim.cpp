@@ -366,6 +366,8 @@ public:
     //Reserve enough size in the ranges vector for all the angle increments
     lidar_scan_.ranges.reserve(static_cast<size_t>(
       std::ceil((lidar_scan_.angle_max - lidar_scan_.angle_min) / lidar_scan_.angle_increment)));
+    //Maximum possible detected items at a certain angle is number of obstacles + 4 walls
+    possible_lidar_ranges_.reserve(obstacles_x_.size() + 4);
 
     init_obstacles();
 
@@ -405,6 +407,7 @@ private:
   std::uniform_real_distribution<> slip_dist_;
   double lidar_resolution_;
   sensor_msgs::msg::LaserScan lidar_scan_;
+  std::vector<double> possible_lidar_ranges_;
 
   /// \brief main simulation timer loop
   void timer_main_callback()
@@ -696,12 +699,21 @@ private:
     //Update stamp to match simulation
     lidar_scan_.header.stamp = current_time_;
 
+    //Clear range list
     lidar_scan_.ranges.clear();
 
     for (auto angle = lidar_scan_.angle_min; angle < lidar_scan_.angle_max;
          angle += lidar_scan_.angle_increment)
     {
-      lidar_scan_.ranges.push_back(2.73);
+      //Clear list of possible ranges
+      possible_lidar_ranges_.clear();
+
+      //Construct laser scan line segment
+
+      //Determine if walls intersect
+
+
+      //lidar_scan_.ranges.push_back(2.73);
 
     }
 
