@@ -63,6 +63,7 @@ using turtlelib::Wheel;
 // Constants
 constexpr std::string_view WORLD_FRAME = "nusim/world";
 constexpr std::string_view ROBOT_GROUND_TRUTH_FRAME = "red/base_footprint";
+constexpr std::string_view LIDAR_GROUND_TRUTH_FRAME = "red/base_scan";
 constexpr double OBSTACLE_HEIGHT = 0.25;
 constexpr double WALL_HEIGHT = 0.25;
 constexpr double WALL_WIDTH = 0.1;
@@ -169,7 +170,7 @@ public:
     collision_radius_ = get_parameter("collision_radius").get_parameter_value().get<double>();
 
     param.description = "Activates a marker to display collision cylinder of the robot.";
-    declare_parameter("display_collision_cylinder", true, param);
+    declare_parameter("display_collision_cylinder", false, param);
     display_collision_cylinder_ = 
       get_parameter("display_collision_cylinder").get_parameter_value().get<bool>();
 
@@ -270,9 +271,9 @@ public:
       static_cast<std::chrono::microseconds>(static_cast<int>(sim_interval_ * 1000000.0)),
       std::bind(&NuSim::timer_main_callback, this)
     );
-    timer_fake_sensor_ = create_wall_timer(
+    timer_sensors_ = create_wall_timer(
       static_cast<std::chrono::milliseconds>(static_cast<int>(1000.0 / 5.0)), //5 Hz
-      std::bind(&NuSim::timer_fake_sensor_callback, this)
+      std::bind(&NuSim::timer_sensors_callback, this)
     );
 
     //Publishers
@@ -323,7 +324,7 @@ public:
 
 private:
   rclcpp::TimerBase::SharedPtr timer_main_;
-  rclcpp::TimerBase::SharedPtr timer_fake_sensor_;
+  rclcpp::TimerBase::SharedPtr timer_sensors_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr pub_timestep_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_obstacles_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_fake_sensor_;
@@ -593,18 +594,23 @@ private:
     }
   }
 
-    /// \brief publish fake sensor data with noise
-  void timer_fake_sensor_callback()
+  /// \brief publish fake sensor and lidar data with noise
+  void timer_sensors_callback()
   {
-    //Copy the ground truth locations of the obstacles
-    auto sensor_time = get_clock()->now();
+    //fake sensor
+    publish_fake_sensor();
 
+    
+  }
+
+  /// \brief publish fake sensor data with noise
+  void publish_fake_sensor() {
     for (std::size_t i = 0; i < obstacle_rel_tfs_.size(); i++ ) {
       const auto & Trel = obstacle_rel_tfs_.at(i);
       auto & marker = detected_obstacles_.markers.at(i);
 
-      //Update stamp
-      marker.header.stamp = sensor_time;
+      //Update stamp, match last simulation timestamp
+      marker.header.stamp = current_time_;
 
       //Update marker position
       marker.pose.position.x = Trel.translation().x;
