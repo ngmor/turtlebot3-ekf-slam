@@ -53,6 +53,7 @@
 #include "turtlelib/diff_drive.hpp"
 
 using namespace std::chrono_literals;
+using turtlelib::PI;
 using turtlelib::almost_equal;
 using turtlelib::Vector2D;
 using turtlelib::Transform2D;
@@ -259,6 +260,45 @@ public:
     declare_parameter("max_range", 1.0, param);
     max_range_ = get_parameter("max_range").get_parameter_value().get<double>();
 
+    param.description = "Min range for lidar scanning (m).";
+    declare_parameter("lidar.range_min", 0.12, param);
+    lidar_range_min_ = get_parameter("lidar.range_min").get_parameter_value().get<double>();
+
+    param.description = "Max range for lidar scanning (m).";
+    declare_parameter("lidar.range_max", 3.5, param);
+    lidar_range_max_ = get_parameter("lidar.range_max").get_parameter_value().get<double>();
+
+    param.description = "Min angle for lidar scanning (rad).";
+    declare_parameter("lidar.angle_min", 0.0, param);
+    lidar_angle_min_ = get_parameter("lidar.angle_min").get_parameter_value().get<double>();
+
+    param.description = "Max angle for lidar scanning (rad).";
+    declare_parameter("lidar.angle_max", 2.0*PI, param);
+    lidar_angle_max_ = get_parameter("lidar.angle_max").get_parameter_value().get<double>();
+
+    param.description = "Angle increment for lidar scanning (rad).";
+    declare_parameter("lidar.angle_incr", PI/180.0, param);
+    lidar_angle_incr_ = get_parameter("lidar.angle_incr").get_parameter_value().get<double>();
+
+    param.description = "Resolution for lidar scan (m).";
+    declare_parameter("lidar.resolution", 0.01, param); //TODO figure out actual turtlebot lidar resolution
+    lidar_resolution_ = get_parameter("lidar.resolution").get_parameter_value().get<double>();
+
+    param.description = 
+      "Standard deviation for noise in lidar scan (m). Must be nonnegative.";
+    declare_parameter("lidar.noise", 0.0, param); //TODO inject noise
+    auto lidar_noise = 
+      get_parameter("lidar.noise").get_parameter_value().get<double>();
+
+    if (lidar_noise < 0.0) {
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
+        "Invalid lidar noise provided: " << lidar_noise);
+      required_parameters_received = false;
+    }
+
+    lidar_dist_ = std::normal_distribution<> {0.0, lidar_noise};
+
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
@@ -350,8 +390,10 @@ private:
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
   int32_t motor_cmd_max_;
   rclcpp::Time current_time_;
-  std::normal_distribution<> wheel_vel_dist_, fake_sensor_dist_;
+  std::normal_distribution<> wheel_vel_dist_, fake_sensor_dist_, lidar_dist_;
   std::uniform_real_distribution<> slip_dist_;
+  double lidar_range_min_, lidar_range_max_, lidar_angle_min_, lidar_angle_max_, lidar_angle_incr_,
+    lidar_resolution_;
 
   /// \brief main simulation timer loop
   void timer_main_callback()
