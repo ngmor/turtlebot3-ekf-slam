@@ -67,6 +67,7 @@ constexpr double OBSTACLE_HEIGHT = 0.25;
 constexpr double WALL_HEIGHT = 0.25;
 constexpr double WALL_WIDTH = 0.1;
 constexpr int32_t MARKER_ID_WALL = 0;
+constexpr int32_t MARKER_ID_COLLISION_CYLINDER = 1;
 constexpr int32_t MARKER_ID_OFFSET_OBSTACLES = 100;
 
 
@@ -161,7 +162,16 @@ public:
 
     param.description = "Initial rotation of the robot (rad).";
     declare_parameter("theta0", 0.0, param);
-    double rotation_initial = get_parameter("theta0").get_parameter_value().get<double>();
+    auto rotation_initial = get_parameter("theta0").get_parameter_value().get<double>();
+
+    param.description = "Collision radius of the robot (m).";
+    declare_parameter("collision_radius", 0.0, param);
+    collision_radius_ = get_parameter("collision_radius").get_parameter_value().get<double>();
+
+    param.description = "Activates a marker to display collision cylinder of the robot.";
+    declare_parameter("display_collision_cylinder", true, param);
+    display_collision_cylinder_ = 
+      get_parameter("display_collision_cylinder").get_parameter_value().get<bool>();
 
     param.description =
       "List of x starting positions of obstacles (m). Arbitrary length, but must match length of y.";
@@ -187,6 +197,8 @@ public:
       "Radius of all cylinder obstacles (m). Single value applies to all obstacles.";
     declare_parameter("obstacles.r", 0.015, param);
     obstacles_r_ = get_parameter("obstacles.r").get_parameter_value().get<double>();
+
+    collision_dist_ = collision_radius_ + obstacles_r_;
 
     param.description =
       "Length of the arena in the x direction (m).";
@@ -267,6 +279,8 @@ public:
     pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     pub_obstacles_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
     pub_fake_sensor_ = create_publisher<visualization_msgs::msg::MarkerArray>("fake_sensor", 10);
+    pub_collision_cylinder_ =
+      create_publisher<visualization_msgs::msg::Marker>("~/collision_cylinder", 10);
     //TODO - I don't think this should have a prefix, have to check
     pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
 
@@ -311,6 +325,7 @@ private:
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr pub_timestep_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_obstacles_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_fake_sensor_;
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_collision_cylinder_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr pub_sensor_data_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr sub_wheel_cmd_;
 
@@ -323,8 +338,10 @@ private:
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
   Wheel wheel_vel_ {0.0, 0.0};
   std::vector<double> obstacles_x_, obstacles_y_;
-  double obstacles_r_, x_length_, y_length_, max_range_;
+  double obstacles_r_, x_length_, y_length_, max_range_, collision_radius_, collision_dist_;
   visualization_msgs::msg::MarkerArray detected_obstacles_, obstacle_and_wall_markers_;
+  bool display_collision_cylinder_;
+  visualization_msgs::msg::Marker collision_cylinder_marker_;
   std::vector<Transform2D> obstacle_abs_tfs_, obstacle_rel_tfs_;
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
   int32_t motor_cmd_max_;
@@ -413,6 +430,13 @@ private:
 
       //Calculate relative transformation of obstacle to robot
       Trel = turtlebot_.config().location.inv()*Tabs;
+    }
+
+    //Check if we are colliding with any obstacle
+    for (const auto & Trel : obstacle_rel_tfs_) {
+      if (Trel.translation().magnitude() < collision_dist_) {
+        RCLCPP_INFO_STREAM(get_logger(), "collision!");
+      }
     }
   }
 
@@ -510,6 +534,23 @@ private:
 
     //Init relative transforms
     obstacle_rel_tfs_ = obstacle_abs_tfs_;
+
+    //Init collision cylinder marker
+    collision_cylinder_marker_.header.frame_id = ROBOT_GROUND_TRUTH_FRAME;
+    collision_cylinder_marker_.id = MARKER_ID_COLLISION_CYLINDER;
+    collision_cylinder_marker_.type = visualization_msgs::msg::Marker::CYLINDER;
+    collision_cylinder_marker_.action = visualization_msgs::msg::Marker::ADD;
+    collision_cylinder_marker_.pose.position.x = 0.0;
+    collision_cylinder_marker_.pose.position.y = 0.0;
+    collision_cylinder_marker_.pose.position.z = OBSTACLE_HEIGHT / 2.0;
+    collision_cylinder_marker_.scale.x = collision_radius_ * 2.0;
+    collision_cylinder_marker_.scale.y = collision_radius_ * 2.0;
+    collision_cylinder_marker_.scale.z = OBSTACLE_HEIGHT;
+    collision_cylinder_marker_.color.r = 1.0;
+    collision_cylinder_marker_.color.g = 0.0;
+    collision_cylinder_marker_.color.b = 0.0;
+    collision_cylinder_marker_.color.a = 0.5;
+    collision_cylinder_marker_.frame_locked = true;
   }
 
   /// \brief publish the obstacle marker array
@@ -523,6 +564,12 @@ private:
 
     //Publish marker array
     pub_obstacles_->publish(obstacle_and_wall_markers_);
+
+    //Publish collision cylinder
+    if (display_collision_cylinder_) {
+      collision_cylinder_marker_.header.stamp = current_time_;
+      pub_collision_cylinder_->publish(collision_cylinder_marker_);
+    }
   }
 
     /// \brief publish fake sensor data with noise
