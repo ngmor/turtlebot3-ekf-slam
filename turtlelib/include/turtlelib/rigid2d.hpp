@@ -296,11 +296,8 @@ namespace turtlelib
     /// \return transformation from original body frame to frame after following twist
     Transform2D integrate_twist(Twist2D twist);
 
-
-    //TODO documentation
-    //TODO move to new header file?
     
-    /// \brief a line segment between to points
+    /// \brief a line segment between two points
     class Line2D
     {
     private:
@@ -321,6 +318,9 @@ namespace turtlelib
 
         /// \brief the maximum x and y values of the line segment
         Vector2D max_;
+
+        /// \brief the vector from the start point to the end point
+        Vector2D vec_;
 
     public:
         /// \brief init line and calculate slope and y intercept
@@ -352,6 +352,10 @@ namespace turtlelib
         /// @return the maximum x and y values
         Vector2D max() const;
 
+        /// \brief getter for the vector from the start point to the end point
+        /// \return vector from the start point to the end point
+        Vector2D vec() const;
+
         /// \brief find y coordinate of a point on the line. may not be within line segment
         /// \param x - x coordinate of point
         /// \return y coordinate of point
@@ -364,6 +368,23 @@ namespace turtlelib
     /// \return a tuple. The first value is boolean indicating if the lines intersect.
     /// if they do, the second value is a Vector2D indicating their intersection point.
     std::tuple<bool, Vector2D> find_intersection(const Line2D & line1, const Line2D & line2);
+
+    /// \brief a circle
+    struct Circle2D
+    {
+        /// \brief the center of the circle, represented as a vector from the origin
+        Vector2D center {0.0, 0.0};
+
+        /// \brief the radius of the circle
+        double radius = 0.0;
+    };
+
+    /// \brief determine if a line segment intersects with a circle
+    /// \param line - line segment
+    /// \param circle - circle
+    /// \return a tuple. The first value is boolean indicating if the line and circle intersect.
+    /// if they do, the second value is a Vector2D indicating their intersection point.
+    std::tuple<bool, Vector2D> find_intersection(const Line2D & line, const Circle2D & circle);
 
 }
 

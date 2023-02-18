@@ -61,6 +61,7 @@ using turtlelib::normalize_angle;
 using turtlelib::Vector2D;
 using turtlelib::Transform2D;
 using turtlelib::Line2D;
+using turtlelib::Circle2D;
 using turtlelib::find_intersection;
 using turtlelib::DiffDrive;
 using turtlelib::DiffDriveConfig;
@@ -412,6 +413,7 @@ private:
   sensor_msgs::msg::LaserScan lidar_scan_;
   std::vector<double> possible_lidar_ranges_;
   std::vector<Line2D> wall_lines_;
+  std::vector<Circle2D> obstacle_circles_;
 
   /// \brief main simulation timer loop
   void timer_main_callback()
@@ -613,6 +615,15 @@ private:
         },
         0.0
       });
+
+      //Store as circles for lidar sim
+      obstacle_circles_.push_back({
+        {
+          marker.pose.position.x,
+          marker.pose.position.y
+        },
+        obstacles_r_
+      });
     }
 
     //Make detected obstacles yellow and change their frame
@@ -756,7 +767,19 @@ private:
         auto [lines_intersect, intersection_point] = find_intersection(scan, wall);
 
         if (lines_intersect) {
-          // RCLCPP_INFO_STREAM(get_logger(), "INTERSECT");
+          //Calculate possible range by finding the magnitude of the vector between the
+          //intersection point and the turtlebot's current location. Append to array
+          possible_lidar_ranges_.push_back(
+            (intersection_point - turtlebot_.config().location.translation()).magnitude()
+          );
+        }
+      }
+
+      //Determine if obstacles intersect
+      for (const auto & obstacle : obstacle_circles_) {
+        auto [line_intersects, intersection_point] = find_intersection(scan, obstacle);
+
+        if (line_intersects) {
           //Calculate possible range by finding the magnitude of the vector between the
           //intersection point and the turtlebot's current location. Append to array
           possible_lidar_ranges_.push_back(

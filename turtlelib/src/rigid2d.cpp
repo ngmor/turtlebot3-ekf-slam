@@ -322,7 +322,8 @@ namespace turtlelib
     Line2D::Line2D(Vector2D start, Vector2D end)
     : start_{start}, end_{end}, 
     min_{std::min(start_.x, end_.x), std::min(start_.y, end_.y)},
-    max_{std::max(start_.x, end_.x), std::max(start_.y, end_.y)}
+    max_{std::max(start_.x, end_.x), std::max(start_.y, end_.y)},
+    vec_{end_ - start_}
     {
         if (almost_equal(start_.x, end_.x)) { //infinite slope
             slope_ = INF;
@@ -349,6 +350,8 @@ namespace turtlelib
     Vector2D Line2D::min() const {return min_;}
 
     Vector2D Line2D::max() const {return max_;}
+
+    Vector2D Line2D::vec() const {return vec_;}
 
     double Line2D::calc_y(double x) const {
         if (slope_ == INF) {
@@ -419,6 +422,16 @@ namespace turtlelib
         }
 
         return {lines_intersect, intersection_point};
+    }
+
+    std::tuple<bool, Vector2D> find_intersection(const Line2D & line, const Circle2D & circle) {
+        bool line_intersects = true;
+        Vector2D intersection_point {0,0};
+
+        //TODO
+        line_intersects = false;
+
+        return {line_intersects, intersection_point};
     }
 
     ////////// LINE2D END //////////
