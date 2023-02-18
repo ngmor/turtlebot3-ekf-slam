@@ -376,7 +376,12 @@ private:
       //Otherwise, add marker back
       marker.action = visualization_msgs::msg::Marker::ADD;
 
-      //TODO add sensor noise
+      //Add sensor noise if there is nonzero standard deviation
+      if (fake_sensor_dist_.stddev() != 0.0) {
+        //TODO is it ok to make them independent like this?
+        marker.pose.position.x += fake_sensor_dist_(get_random());
+        marker.pose.position.y += fake_sensor_dist_(get_random());
+      }
     }
 
     //Publish marker array
