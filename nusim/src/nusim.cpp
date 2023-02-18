@@ -37,6 +37,7 @@
 #include <exception>
 #include <algorithm>
 #include <random>
+#include <cmath>
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
@@ -45,12 +46,13 @@
 #include "geometry_msgs/msg/point.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_ros/transform_broadcaster.h"
-#include "nusim/srv/teleport.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
+#include "sensor_msgs/msg/laser_scan.hpp"
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "turtlelib/diff_drive.hpp"
+#include "nusim/srv/teleport.hpp"
 
 using namespace std::chrono_literals;
 using turtlelib::PI;
@@ -262,23 +264,24 @@ public:
 
     param.description = "Min range for lidar scanning (m).";
     declare_parameter("lidar.range_min", 0.12, param);
-    lidar_range_min_ = get_parameter("lidar.range_min").get_parameter_value().get<double>();
+    lidar_scan_.range_min = get_parameter("lidar.range_min").get_parameter_value().get<double>();
 
     param.description = "Max range for lidar scanning (m).";
     declare_parameter("lidar.range_max", 3.5, param);
-    lidar_range_max_ = get_parameter("lidar.range_max").get_parameter_value().get<double>();
+    lidar_scan_.range_max = get_parameter("lidar.range_max").get_parameter_value().get<double>();
 
     param.description = "Min angle for lidar scanning (rad).";
     declare_parameter("lidar.angle_min", 0.0, param);
-    lidar_angle_min_ = get_parameter("lidar.angle_min").get_parameter_value().get<double>();
+    lidar_scan_.angle_min = get_parameter("lidar.angle_min").get_parameter_value().get<double>();
 
     param.description = "Max angle for lidar scanning (rad).";
     declare_parameter("lidar.angle_max", 2.0*PI, param);
-    lidar_angle_max_ = get_parameter("lidar.angle_max").get_parameter_value().get<double>();
+    lidar_scan_.angle_max = get_parameter("lidar.angle_max").get_parameter_value().get<double>();
 
     param.description = "Angle increment for lidar scanning (rad).";
     declare_parameter("lidar.angle_incr", PI/180.0, param);
-    lidar_angle_incr_ = get_parameter("lidar.angle_incr").get_parameter_value().get<double>();
+    lidar_scan_.angle_increment =
+      get_parameter("lidar.angle_incr").get_parameter_value().get<double>();
 
     param.description = "Resolution for lidar scan (m).";
     declare_parameter("lidar.resolution", 0.01, param); //TODO figure out actual turtlebot lidar resolution
@@ -319,11 +322,12 @@ public:
     //Publishers
     pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     pub_obstacles_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
-    pub_fake_sensor_ = create_publisher<visualization_msgs::msg::MarkerArray>("fake_sensor", 10);
     pub_collision_cylinder_ =
       create_publisher<visualization_msgs::msg::Marker>("~/collision_cylinder", 10);
     //TODO - I don't think this should have a prefix, have to check
     pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
+    pub_fake_sensor_ = create_publisher<visualization_msgs::msg::MarkerArray>("fake_sensor", 10);
+    pub_lidar_scan_ = create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
 
     //Subscribers
     sub_wheel_cmd_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
@@ -357,6 +361,12 @@ public:
 
     turtlebot_last_config_ = turtlebot_.config();
 
+
+    lidar_scan_.header.frame_id = LIDAR_GROUND_TRUTH_FRAME;
+    //Reserve enough size in the ranges vector for all the angle increments
+    lidar_scan_.ranges.reserve(static_cast<size_t>(
+      std::ceil((lidar_scan_.angle_max - lidar_scan_.angle_min) / lidar_scan_.angle_increment)));
+
     init_obstacles();
 
     RCLCPP_INFO_STREAM(get_logger(), "nusim node started");
@@ -367,9 +377,10 @@ private:
   rclcpp::TimerBase::SharedPtr timer_sensors_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr pub_timestep_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_obstacles_;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_fake_sensor_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_collision_cylinder_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr pub_sensor_data_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_fake_sensor_;
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr pub_lidar_scan_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr sub_wheel_cmd_;
 
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_reset_;
@@ -392,8 +403,8 @@ private:
   rclcpp::Time current_time_;
   std::normal_distribution<> wheel_vel_dist_, fake_sensor_dist_, lidar_dist_;
   std::uniform_real_distribution<> slip_dist_;
-  double lidar_range_min_, lidar_range_max_, lidar_angle_min_, lidar_angle_max_, lidar_angle_incr_,
-    lidar_resolution_;
+  double lidar_resolution_;
+  sensor_msgs::msg::LaserScan lidar_scan_;
 
   /// \brief main simulation timer loop
   void timer_main_callback()
@@ -642,7 +653,7 @@ private:
     //fake sensor
     publish_fake_sensor();
 
-    
+    publish_lidar_scan();
   }
 
   /// \brief publish fake sensor data with noise
@@ -677,6 +688,25 @@ private:
 
     //Publish marker array
     pub_fake_sensor_->publish(detected_obstacles_);
+  }
+
+  /// \brief publish lidar sensor data with noise
+  void publish_lidar_scan() {
+
+    //Update stamp to match simulation
+    lidar_scan_.header.stamp = current_time_;
+
+    lidar_scan_.ranges.clear();
+
+    for (auto angle = lidar_scan_.angle_min; angle < lidar_scan_.angle_max;
+         angle += lidar_scan_.angle_increment)
+    {
+      lidar_scan_.ranges.push_back(2.73);
+
+    }
+
+    //Publish message
+    pub_lidar_scan_->publish(lidar_scan_);
   }
 
   /// \brief convert and store received wheel commands
