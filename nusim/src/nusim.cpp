@@ -314,6 +314,8 @@ public:
       }
     };
 
+    turtlebot_last_config_ = turtlebot_.config();
+
     init_obstacles();
 
     RCLCPP_INFO_STREAM(get_logger(), "nusim node started");
@@ -336,6 +338,7 @@ private:
   double sim_rate_, sim_interval_;
   uint64_t timestep_ = 0;
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
+  DiffDriveConfig turtlebot_last_config_;
   Wheel wheel_vel_ {0.0, 0.0};
   std::vector<double> obstacles_x_, obstacles_y_;
   double obstacles_r_, x_length_, y_length_, max_range_, collision_radius_, collision_dist_;
@@ -393,6 +396,10 @@ private:
       turtlebot_.config().wheel_pos.right + wheel_slip_vel.right * sim_interval_,
     };
 
+    //Store last configuration for collision detection
+    turtlebot_last_config_ = turtlebot_.config();
+
+
     //Update configuration based on new slipped wheel position
     turtlebot_.update_config(new_slip_wheel_pos);
 
@@ -433,9 +440,23 @@ private:
     }
 
     //Check if we are colliding with any obstacle
-    for (const auto & Trel : obstacle_rel_tfs_) {
-      if (Trel.translation().magnitude() < collision_dist_) {
-        RCLCPP_INFO_STREAM(get_logger(), "collision!");
+    for (std::size_t i = 0; i < obstacle_rel_tfs_.size(); i++ ) {
+      //If the magnitude of the translation between the obstacle and the robot is less
+      //than the collision distance, a collision has occurred.
+      if (obstacle_rel_tfs_.at(i).translation().magnitude() < collision_dist_) {
+        const auto & Tabs = obstacle_abs_tfs_.at(i);
+
+        //Find vector from obstacle to robot
+        Vector2D v = turtlebot_last_config_.location.translation() - Tabs.translation();
+
+        //New position should be the collision distance away from the obstacle in the direction
+        //of this vector
+        turtlebot_.set_location({
+          Tabs.translation() + normalize(v)*collision_dist_,  //new location
+          turtlebot_last_config_.location.rotation()          //retain rotation
+        });
+
+        break;
       }
     }
   }
