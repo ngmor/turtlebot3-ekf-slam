@@ -316,6 +316,12 @@ namespace turtlelib
         /// \brief the y intercept of the line segment
         double y_intercept_;
 
+        /// \brief the minimum x and y values of the line segment
+        Vector2D min_;
+
+        /// \brief the maximum x and y values of the line segment
+        Vector2D max_;
+
     public:
         /// \brief init line and calculate slope and y intercept
         /// \param start - start point, represented as a vector from the origin
@@ -324,24 +330,32 @@ namespace turtlelib
         
         /// \brief getter for start point
         /// \return start point
-        Vector2D start();
+        Vector2D start() const;
 
         /// \brief getter for end point
         /// \return end point
-        Vector2D end();
+        Vector2D end() const;
 
         /// \brief getter for slope
         /// \return slope
-        double slope();
+        double slope() const;
 
         /// \brief getter for the y intercept
         /// \return y intercept
-        double y_intercept();
+        double y_intercept() const;
+
+        /// @brief getter for the minimum x and y values
+        /// @return the minimum x and y values
+        Vector2D min() const;
+
+        /// @brief getter for the maximum x and y values
+        /// @return the maximum x and y values
+        Vector2D max() const;
 
         /// \brief find y coordinate of a point on the line. may not be within line segment
         /// \param x - x coordinate of point
         /// \return y coordinate of point
-        double calc_y(double x);
+        double calc_y(double x) const;
     };
 
     /// \brief determine if two line segments intersect
@@ -349,7 +363,7 @@ namespace turtlelib
     /// \param line2 - second line segment
     /// \return a tuple. The first value is boolean indicating if the lines intersect.
     /// if they do, the second value is a Vector2D indicating their intersection point.
-    std::tuple<bool, Vector2D> find_intersection(Line2D line1, Line2D line2);
+    std::tuple<bool, Vector2D> find_intersection(const Line2D & line1, const Line2D & line2);
 
 }
 

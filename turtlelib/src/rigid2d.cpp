@@ -320,7 +320,9 @@ namespace turtlelib
     ////////// LINE2D START //////////
 
     Line2D::Line2D(Vector2D start, Vector2D end)
-    : start_{start}, end_{end}
+    : start_{start}, end_{end}, 
+    min_{std::min(start_.x, end_.x), std::min(start_.y, end_.y)},
+    max_{std::max(start_.x, end_.x), std::max(start_.y, end_.y)}
     {
         if (almost_equal(start_.x, end_.x)) { //infinite slope
             slope_ = INF;
@@ -336,15 +338,19 @@ namespace turtlelib
         }
     }
 
-    Vector2D Line2D::start() {return start_;}
+    Vector2D Line2D::start() const {return start_;}
 
-    Vector2D Line2D::end() {return end_;}
+    Vector2D Line2D::end() const {return end_;}
 
-    double Line2D::slope() {return slope_;}
+    double Line2D::slope() const {return slope_;}
 
-    double Line2D::y_intercept() {return y_intercept_;}
+    double Line2D::y_intercept() const {return y_intercept_;}
 
-    double Line2D::calc_y(double x) {
+    Vector2D Line2D::min() const {return min_;}
+
+    Vector2D Line2D::max() const {return max_;}
+
+    double Line2D::calc_y(double x) const {
         if (slope_ == INF) {
             return 0.0; //undefined
         } else {
@@ -352,42 +358,35 @@ namespace turtlelib
         }
     }
 
-    std::tuple<bool, Vector2D> find_intersection(Line2D line1, Line2D line2) {
+    std::tuple<bool, Vector2D> find_intersection(const Line2D & line1, const Line2D & line2) {
         bool lines_intersect = true;
         Vector2D intersection_point {0,0};
-        
+
         if (almost_equal(line1.slope(), line2.slope())) { //parallel lines
             if (line1.slope() == INF) {
                 //parallel vertical lines, must have same x coordinate
                 if (almost_equal(line1.start().x, line2.start().x)) {
-                    if (line1.start().y >= line2.start().y && line1.start().y <= line2.end().y) {
-                        //Start of line 1 is in line 2
-                        intersection_point = line1.start();
-                    } else if (line2.start().y >= line1.start().y && line2.start().y <= line1.end().y) {
-                        //Start of line 2 is in line 1
-                        intersection_point = line2.start();
-                    } else if (line2.end().y >= line1.start().y && line2.end().y <= line1.end().y) {
-                        //End of line 2 is in line 1
-                        intersection_point = line2.end();
+                    if (line2.min().y >= line1.min().y && line2.min().y <= line1.max().y) {
+                        //Min of line 2 is in line1
+                        intersection_point = line2.min();
+                    } else if (line2.max().y >= line1.min().y && line2.max().y <= line1.max().y) {
+                        //Max of line 2 is in line 1
+                        intersection_point = line1.min();
                     } else {
                         lines_intersect = false;
                     }
                 } else {
                     lines_intersect = false;
                 }
-
             } else {
                 //parallel nonvertical lines, must have same y intercept
                 if (almost_equal(line1.y_intercept(), line2.y_intercept())) {
-                    if (line1.start().x >= line2.start().x && line1.start().x <= line2.end().x) {
-                        //Start of line 1 is in line 2
-                        intersection_point = line1.start();
-                    } else if (line2.start().x >= line1.start().x && line2.start().x <= line1.end().x) {
-                        //Start of line 2 is in line 1
-                        intersection_point = line2.start();
-                    } else if (line2.end().x >= line1.start().x && line2.end().x <= line1.end().x) {
-                        //End of line 2 is in line 1
-                        intersection_point = line2.end();
+                    if (line2.min().x >= line1.min().x && line2.min().x <= line1.max().x) {
+                        //Min of line 2 is in line1
+                        intersection_point = {line2.min().x, line2.calc_y(line2.min().x)};
+                    } else if (line2.max().x >= line1.min().x && line2.max().x <= line1.max().x) {
+                        //Max of line 2 is in line 1
+                        intersection_point = {line1.min().x, line1.calc_y(line1.min().x)};
                     } else {
                         lines_intersect = false;
                     }
@@ -395,15 +394,21 @@ namespace turtlelib
                     lines_intersect = false;
                 }
             }
-
         } else { //not parallel lines
             //Find x point of intersection
-            double x = (line1.y_intercept() - line2.y_intercept()) /
-                (line2.slope() - line1.slope());
+            double x;
+            if (line1.slope() == INF) {
+                x = line1.start().x;
+            } else if (line2.slope() == INF) {
+                x = line2.start().x;
+            } else {
+                x = (line1.y_intercept() - line2.y_intercept()) /
+                    (line2.slope() - line1.slope());
+            }
 
             //Intersection occurs if the x coordinate is within both segments
-            if (x >= line1.start().x && x <= line1.end().x &&
-                x >= line2.start().x && x <= line2.end().x)
+            if (x >= line1.min().x && x <= line1.max().x &&
+                x >= line2.min().x && x <= line2.max().x)
             {
                 //Lines intersect, calculate intersection point
                 intersection_point = {x, line1.calc_y(x)};
