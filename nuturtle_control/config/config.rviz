@@ -111,6 +111,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /nusim/obstacles
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: FakeSensorObstacles
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /fake_sensor
+      Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
@@ -267,10 +279,10 @@ Visualization Manager:
         Axes Length: 1
         Axes Radius: 0.10000000149011612
         Color: 255; 25; 0
-        Head Length: 0.05
-        Head Radius: 0.05
-        Shaft Length: 0.3
-        Shaft Radius: 0.025
+        Head Length: 0.05000000074505806
+        Head Radius: 0.05000000074505806
+        Shaft Length: 0.30000001192092896
+        Shaft Radius: 0.02500000037252903
         Value: Arrow
       Topic:
         Depth: 5

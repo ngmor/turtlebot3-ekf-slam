@@ -324,7 +324,8 @@ private:
   Wheel wheel_vel_ {0.0, 0.0};
   std::vector<double> obstacles_x_, obstacles_y_;
   double obstacles_r_, x_length_, y_length_, max_range_;
-  visualization_msgs::msg::MarkerArray detected_obstacles_init_, obstacle_and_wall_markers_;
+  visualization_msgs::msg::MarkerArray detected_obstacles_, obstacle_and_wall_markers_;
+  std::vector<Transform2D> obstacle_tfs_;
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
   int32_t motor_cmd_max_;
   rclcpp::Time current_time_;
@@ -352,33 +353,34 @@ private:
   void timer_fake_sensor_callback()
   {
     //Copy the ground truth locations of the obstacles
-    visualization_msgs::msg::MarkerArray detected_obstacles = detected_obstacles_init_;
+    visualization_msgs::msg::MarkerArray detected_obstacles = detected_obstacles_;
     auto sensor_time = get_clock()->now();
 
-    //Update detections of all markers
-    for (auto & marker : detected_obstacles.markers) {
-      //Update stamp
-      marker.header.stamp = sensor_time;
+    for (std::size_t i = 0; i < obstacle_tfs_.size(); i++ ) {
+      const auto & Tobs = obstacle_tfs_.at(i);
+      auto & marker = detected_obstacles_.markers.at(i);
 
-      //Calculate distance between the obstacle and the robot
-      auto dist = (
-        turtlebot_.config().location.translation() -
-        Vector2D {marker.pose.position.x, marker.pose.position.y}
-      ).magnitude();
+      //Calculate relative transformation of obstacle to robot
+      const auto Trel = turtlebot_.config().location.inv()*Tobs;
+
+      //Update marker position
+      marker.pose.position.x = Trel.translation().x;
+      marker.pose.position.y = Trel.translation().y;
 
       //If the obstacle is outside of sensor range, delete it
-      if (dist > max_range_) {
+      if (Trel.translation().magnitude() > max_range_) {
         marker.action = visualization_msgs::msg::Marker::DELETE;
         continue;
       }
 
-      //TODO add noise
+      //Otherwise, add marker back
+      marker.action = visualization_msgs::msg::Marker::ADD;
 
+      //TODO add sensor noise
     }
 
     //Publish marker array
-    //TODO
-    pub_fake_sensor_->publish(detected_obstacles);
+    pub_fake_sensor_->publish(detected_obstacles_);
 
   }
 
@@ -506,11 +508,21 @@ private:
 
       //Append to marker array
       obstacle_and_wall_markers_.markers.push_back(marker);
-      detected_obstacles_init_.markers.push_back(marker);
+      detected_obstacles_.markers.push_back(marker);
+
+      //Store transform in world frame
+      obstacle_tfs_.push_back({
+        {
+          marker.pose.position.x,
+          marker.pose.position.y
+        },
+        0.0
+      });
     }
 
-    //Make detected obstacles yellow
-    for (auto & marker : detected_obstacles_init_.markers) {
+    //Make detected obstacles yellow and change their frame
+    for (auto & marker : detected_obstacles_.markers) {
+      marker.header.frame_id = ROBOT_GROUND_TRUTH_FRAME;
       marker.color.g = 1.0;
     }
 
