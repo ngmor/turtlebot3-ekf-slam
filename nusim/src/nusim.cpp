@@ -108,11 +108,15 @@ public:
     //Check if required parameters were provided
     bool required_parameters_received = true;
 
+    param.description = "Only display walls, do not perform any simulation.";
+    declare_parameter("draw_only", false, param);
+    draw_only_ = get_parameter("draw_only").get_parameter_value().get<bool>();
+
     param.description = "The wheel track width in meters (REQUIRED).";
     declare_parameter("track_width", 0.0, param);
     double wheel_track = get_parameter("track_width").get_parameter_value().get<double>();
 
-    if (wheel_track <= 0) {
+    if (!draw_only_ && wheel_track <= 0) {
       RCLCPP_ERROR_STREAM(get_logger(), "Invalid wheel track provided: " << wheel_track);
       required_parameters_received = false;
     }
@@ -121,7 +125,7 @@ public:
     declare_parameter("wheel_radius", 0.0, param);
     double wheel_radius = get_parameter("wheel_radius").get_parameter_value().get<double>();
 
-    if (wheel_radius <= 0.0) {
+    if (!draw_only_ && wheel_radius <= 0.0) {
       RCLCPP_ERROR_STREAM(get_logger(), "Invalid wheel radius provided: " << wheel_radius);
       required_parameters_received = false;
     }
@@ -131,7 +135,7 @@ public:
     motor_cmd_per_rad_sec_ = get_parameter(
       "motor_cmd_per_rad_sec").get_parameter_value().get<double>();
 
-    if (motor_cmd_per_rad_sec_ <= 0.0) {
+    if (!draw_only_ && motor_cmd_per_rad_sec_ <= 0.0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
         "Invalid motor command to rad/sec conversion provided: " << motor_cmd_per_rad_sec_);
@@ -143,7 +147,7 @@ public:
     motor_cmd_max_ = get_parameter(
       "motor_cmd_max").get_parameter_value().get<int32_t>();
 
-    if (motor_cmd_max_ <= 0) {
+    if (!draw_only_ && motor_cmd_max_ <= 0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
         "Invalid maximum motor command provided: " << motor_cmd_max_);
@@ -155,7 +159,7 @@ public:
     encoder_ticks_per_rad_ = get_parameter(
       "encoder_ticks_per_rad").get_parameter_value().get<double>();
 
-    if (encoder_ticks_per_rad_ <= 0.0) {
+    if (!draw_only_ && encoder_ticks_per_rad_ <= 0.0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
         "Invalid encoder ticks to radian conversion provided: " << encoder_ticks_per_rad_);
@@ -242,7 +246,7 @@ public:
     declare_parameter("input_noise", 0.0, param);
     auto input_noise = get_parameter("input_noise").get_parameter_value().get<double>();
 
-    if (input_noise < 0.0) {
+    if (!draw_only_ && input_noise < 0.0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
         "Invalid input noise provided: " << input_noise);
@@ -257,7 +261,7 @@ public:
     declare_parameter("slip_fraction", 0.0, param);
     auto slip_fraction = get_parameter("slip_fraction").get_parameter_value().get<double>();
     
-    if (slip_fraction < 0.0) {
+    if (!draw_only_ && slip_fraction < 0.0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
         "Invalid slip fraction provided: " << slip_fraction);
@@ -272,7 +276,7 @@ public:
     auto basic_sensor_variance = 
       get_parameter("basic_sensor_variance").get_parameter_value().get<double>();
 
-    if (basic_sensor_variance < 0.0) {
+    if (!draw_only_ && basic_sensor_variance < 0.0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
         "Invalid basic sensor variance provided: " << basic_sensor_variance);
@@ -316,7 +320,7 @@ public:
     auto lidar_noise = 
       get_parameter("lidar.noise").get_parameter_value().get<double>();
 
-    if (lidar_noise < 0.0) {
+    if (!draw_only_ && lidar_noise < 0.0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
         "Invalid lidar noise provided: " << lidar_noise);
@@ -337,79 +341,97 @@ public:
       static_cast<std::chrono::microseconds>(static_cast<int>(sim_interval_ * 1000000.0)),
       std::bind(&NuSim::timer_main_callback, this)
     );
-    timer_sensors_ = create_wall_timer(
-      static_cast<std::chrono::milliseconds>(static_cast<int>(1000.0 / 5.0)), //5 Hz
-      std::bind(&NuSim::timer_sensors_callback, this)
-    );
-    timer_path_ = create_wall_timer(
-      static_cast<std::chrono::milliseconds>(static_cast<int>(path_interval * 1000.0)),
-      std::bind(&NuSim::timer_path_callback, this)
-    );
+
+    if (!draw_only_) {
+      timer_sensors_ = create_wall_timer(
+        static_cast<std::chrono::milliseconds>(static_cast<int>(1000.0 / 5.0)), //5 Hz
+        std::bind(&NuSim::timer_sensors_callback, this)
+      );
+      timer_path_ = create_wall_timer(
+        static_cast<std::chrono::milliseconds>(static_cast<int>(path_interval * 1000.0)),
+        std::bind(&NuSim::timer_path_callback, this)
+      );
+    }
 
     //Publishers
-    pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     pub_obstacles_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
-    pub_collision_cylinder_ =
-      create_publisher<visualization_msgs::msg::Marker>("~/collision_cylinder", 10);
-    //TODO - I don't think this should have a prefix, have to check
-    pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
-    pub_fake_sensor_ = create_publisher<visualization_msgs::msg::MarkerArray>("fake_sensor", 10);
-    pub_lidar_scan_ = create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
-    pub_path_ = create_publisher<nav_msgs::msg::Path>("~/path", 10);
+    
+    if (!draw_only_) {
+      pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
+      pub_collision_cylinder_ =
+        create_publisher<visualization_msgs::msg::Marker>("~/collision_cylinder", 10);
+      //TODO - I don't think this should have a prefix, have to check
+      pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
+      pub_fake_sensor_ = create_publisher<visualization_msgs::msg::MarkerArray>("fake_sensor", 10);
+      pub_lidar_scan_ = create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
+      pub_path_ = create_publisher<nav_msgs::msg::Path>("~/path", 10);
+    }
 
     //Subscribers
-    sub_wheel_cmd_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
-      "wheel_cmd", //TODO - I don't think this should have a prefix, have to check
-      10,
-      std::bind(&NuSim::wheel_cmd_callback, this, std::placeholders::_1)
-    );
+    if (!draw_only_) {
+      sub_wheel_cmd_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
+        "wheel_cmd", //TODO - I don't think this should have a prefix, have to check
+        10,
+        std::bind(&NuSim::wheel_cmd_callback, this, std::placeholders::_1)
+      );
+    }
 
     //Services
-    srv_reset_ = create_service<std_srvs::srv::Empty>(
-      "~/reset",
-      std::bind(&NuSim::reset_callback, this, std::placeholders::_1, std::placeholders::_2)
-    );
-    srv_teleport_ = create_service<nusim::srv::Teleport>(
-      "~/teleport",
-      std::bind(&NuSim::teleport_callback, this, std::placeholders::_1, std::placeholders::_2)
-    );
+    if (!draw_only_) {
+      srv_reset_ = create_service<std_srvs::srv::Empty>(
+        "~/reset",
+        std::bind(&NuSim::reset_callback, this, std::placeholders::_1, std::placeholders::_2)
+      );
+      srv_teleport_ = create_service<nusim::srv::Teleport>(
+        "~/teleport",
+        std::bind(&NuSim::teleport_callback, this, std::placeholders::_1, std::placeholders::_2)
+      );
+    }
 
     //Broadcasters
-    broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+    if (!draw_only_) {
+      broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+    }
 
     //Initialize other variables
-    turtlebot_ = DiffDrive {
-      wheel_track,
-      wheel_radius,
-      {
-        translation_initial,
-        rotation_initial
-      }
-    };
+    if (!draw_only_) {
+      turtlebot_ = DiffDrive {
+        wheel_track,
+        wheel_radius,
+        {
+          translation_initial,
+          rotation_initial
+        }
+      };
 
-    turtlebot_last_config_ = turtlebot_.config();
+      turtlebot_last_config_ = turtlebot_.config();
 
-    config_tf_msg_.header.frame_id = WORLD_FRAME;
-    config_tf_msg_.child_frame_id = ROBOT_GROUND_TRUTH_FRAME;
-    config_pose_msg_.header.frame_id = WORLD_FRAME;
+      config_tf_msg_.header.frame_id = WORLD_FRAME;
+      config_tf_msg_.child_frame_id = ROBOT_GROUND_TRUTH_FRAME;
+      config_pose_msg_.header.frame_id = WORLD_FRAME;
 
 
-    lidar_scan_.header.frame_id = LIDAR_GROUND_TRUTH_FRAME;
-    //Reserve enough size in the ranges vector for all the angle increments
-    lidar_scan_.ranges.reserve(static_cast<size_t>(
-      std::ceil((lidar_scan_.angle_max - lidar_scan_.angle_min) / lidar_scan_.angle_increment)));
-    //Maximum possible detected items at a certain angle is number of obstacles + 4 walls
-    possible_lidar_ranges_.reserve(obstacles_x_.size() + 4);
+      lidar_scan_.header.frame_id = LIDAR_GROUND_TRUTH_FRAME;
+      //Reserve enough size in the ranges vector for all the angle increments
+      lidar_scan_.ranges.reserve(static_cast<size_t>(
+        std::ceil((lidar_scan_.angle_max - lidar_scan_.angle_min) / lidar_scan_.angle_increment)));
+      //Maximum possible detected items at a certain angle is number of obstacles + 4 walls
+      possible_lidar_ranges_.reserve(obstacles_x_.size() + 4);
 
-    path_.header.frame_id = WORLD_FRAME;
-    
-    config_pose_msg_.pose = tf_to_pose_msg(turtlebot_.config().location);
-    config_pose_msg_.header.stamp = get_clock()->now();
-    path_.poses.push_back(config_pose_msg_);
+      path_.header.frame_id = WORLD_FRAME;
+      
+      config_pose_msg_.pose = tf_to_pose_msg(turtlebot_.config().location);
+      config_pose_msg_.header.stamp = get_clock()->now();
+      path_.poses.push_back(config_pose_msg_);
+    }
 
     init_obstacles();
 
-    RCLCPP_INFO_STREAM(get_logger(), "nusim node started");
+    if (!draw_only_) {
+      RCLCPP_INFO_STREAM(get_logger(), "nusim node started");
+    } else {
+      RCLCPP_INFO_STREAM(get_logger(), "nuwall node started");
+    }
   }
 
 private:
@@ -454,6 +476,7 @@ private:
   nav_msgs::msg::Path path_;
   geometry_msgs::msg::PoseStamped config_pose_msg_;
   size_t path_num_points_;
+  bool draw_only_;
 
   /// \brief main simulation timer loop
   void timer_main_callback()
@@ -461,13 +484,15 @@ private:
     //Use a single time value for all publishing
     current_time_ = get_clock()->now();
 
-    //Publish timestep and increment
-    auto timestep_msg = std_msgs::msg::UInt64();
-    timestep_msg.data = timestep_++;
-    pub_timestep_->publish(timestep_msg);
+    if (!draw_only_) {
+      //Publish timestep and increment
+      auto timestep_msg = std_msgs::msg::UInt64();
+      timestep_msg.data = timestep_++;
+      pub_timestep_->publish(timestep_msg);
 
-    //Update wheel positions and publish
-    update_wheel_pos_and_config();
+      //Update wheel positions and publish
+      update_wheel_pos_and_config();
+    }
 
     //Publish markers
     publish_walls_and_obstacles();

@@ -7,6 +7,10 @@
         description="Path to yaml file for world parameters. Set to empty string to omit."
     />
 
+    <arg name="draw_only" default="false"
+        description="Draw obstacles only, do not simulate. Valid choices are: ['true', 'false']"
+    />
+
     <!-- TODO update README with new arguments for this launch file -->
 
     <node pkg="rviz2" exec="rviz2"
@@ -15,12 +19,25 @@
     />
 
     <!-- Ground Truth -->
-    <node pkg="nusim" exec="nusim">
+    <node pkg="nusim" exec="nusim" name="nusim"
+        if="$(eval '\'$(var draw_only)\' == \'false\'')"
+    >
+        <param name="draw_only" value="$(var draw_only)"/>
         <param from="$(var world_yaml_path)"/>
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
     </node>
 
-    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
+    <node pkg="nusim" exec="nusim" name="nuwall"
+        if="$(eval '\'$(var draw_only)\' == \'true\'')"
+    >
+        <param name="draw_only" value="$(var draw_only)"/>
+        <param from="$(var world_yaml_path)"/>
+        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+    </node>
+
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py"
+        if="$(eval '\'$(var draw_only)\' == \'false\'')"
+    >
         <arg name="color" value="red"/>
         <arg name="use_rviz" value="false"/>
     </include>

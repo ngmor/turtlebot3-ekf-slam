@@ -29,8 +29,13 @@
 
     <!-- SIMULATION START -->
     <node pkg="rviz2" exec="rviz2"
-        args="-d $(find-pkg-share nuturtle_control)/config/config.rviz"
-        if="$(eval '\'$(var robot)\' != \'localhost\' and \'$(var use_rviz)\' == \'true\'')"
+        args="-d $(find-pkg-share nuturtle_control)/config/sim.rviz"
+        if="$(eval '\'$(var robot)\' == \'nusim\' and \'$(var use_rviz)\' == \'true\'')"
+    />
+
+    <node pkg="rviz2" exec="rviz2"
+        args="-d $(find-pkg-share nuturtle_control)/config/real.rviz"
+        if="$(eval '\'$(var robot)\' == \'none\' and \'$(var use_rviz)\' == \'true\'')"
     />
 
     <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml"
@@ -39,6 +44,15 @@
         <arg name="use_rviz" value="false"/>
         <arg name="world_yaml_path" 
             value="$(find-pkg-share nuturtle_control)/config/world.yaml" />
+    </include>
+
+    <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml"
+        if="$(eval '\'$(var robot)\' == \'none\'')"
+    >
+        <arg name="use_rviz" value="false"/>
+        <arg name="world_yaml_path" 
+            value="$(find-pkg-share nuturtle_control)/config/world.yaml" />
+        <arg name="draw_only" value="true"/>
     </include>
 
     <!-- Publish identity transform between nusim/world and odom -->
