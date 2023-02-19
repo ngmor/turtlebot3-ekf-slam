@@ -20,14 +20,15 @@
 #include <stdexcept>
 #include <string>
 #include <array>
-#include "turtlelib/diff_drive.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/transform_broadcaster.h"
-#include "geometry_msgs/msg/transform_stamped.hpp"
+#include "turtlelib/diff_drive.hpp"
+#include "turtlelib_ros/convert.hpp"
 #include "nuturtle_control/srv/initial_pose.hpp"
 
 using turtlelib::DiffDrive;
@@ -36,6 +37,7 @@ using turtlelib::Wheel;
 using turtlelib::Transform2D;
 using turtlelib::Vector2D;
 using turtlelib::Twist2D;
+using turtlelib_ros::tf_to_pose_msg;
 
 /// \brief Calculates odometry for the turtlebot
 class Odometry : public rclcpp::Node
@@ -200,12 +202,7 @@ private:
     turtlebot_.update_config(wheel_pos);
 
     // build odometry message
-    odom_msg_.pose.pose.position.x = turtlebot_.config().location.translation().x;
-    odom_msg_.pose.pose.position.y = turtlebot_.config().location.translation().y;
-
-    tf2::Quaternion q;
-    q.setRPY(0.0, 0.0, turtlebot_.config().location.rotation());
-    odom_msg_.pose.pose.orientation = tf2::toMsg(q);
+    odom_msg_.pose.pose = tf_to_pose_msg(turtlebot_.config().location);
 
     odom_msg_.header.stamp = msg.header.stamp;
 

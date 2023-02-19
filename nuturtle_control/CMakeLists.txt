@@ -19,6 +19,7 @@ find_package(tf2_ros REQUIRED)
 find_package(nuturtle_description REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
+find_package(turtlelib_ros REQUIRED)
 ament_export_dependencies(rosidl_default_runtime)
 
 rosidl_generate_interfaces(
@@ -39,7 +40,9 @@ ament_target_dependencies(turtle_control
 )
 
 add_executable(odometry src/odometry.cpp)
-target_link_libraries(odometry turtlelib::turtlelib "${cpp_typesupport_target}")
+target_link_libraries(odometry
+  turtlelib::turtlelib turtlelib_ros::turtlelib_ros "${cpp_typesupport_target}"
+)
 ament_target_dependencies(odometry
   rclcpp sensor_msgs nav_msgs tf2 tf2_ros tf2_geometry_msgs
 )
