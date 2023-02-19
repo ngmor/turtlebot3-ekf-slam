@@ -168,8 +168,14 @@ public:
     sim_interval_ = 1.0 / sim_rate_;
 
     param.description = "The rate the path is updated at (Hz).";
-    declare_parameter("path_rate", 5.0, param);
-    auto path_interval = 1.0 / get_parameter("path_rate").get_parameter_value().get<double>();
+    declare_parameter("path.rate", 5.0, param);
+    auto path_interval = 1.0 / get_parameter("path.rate").get_parameter_value().get<double>();
+
+    param.description = 
+      "Number of path points retained before deleting. Set to 0 to disable limit.";
+    declare_parameter("path.num_points", 100, param);
+    path_num_points_ = get_parameter(
+      "path.num_points").get_parameter_value().get<size_t>();
 
     Vector2D translation_initial;
 
@@ -319,12 +325,6 @@ public:
 
     lidar_dist_ = std::normal_distribution<> {0.0, lidar_noise};
 
-    param.description = 
-      "Number of path points retained before deleting. Set to 0 to disable limit.";
-    declare_parameter("num_path_points", 100, param);
-    num_path_points_ = get_parameter(
-      "num_path_points").get_parameter_value().get<size_t>();
-
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
@@ -453,7 +453,7 @@ private:
   std::vector<Circle2D> obstacle_circles_;
   nav_msgs::msg::Path path_;
   geometry_msgs::msg::PoseStamped config_pose_msg_;
-  size_t num_path_points_;
+  size_t path_num_points_;
 
   /// \brief main simulation timer loop
   void timer_main_callback()
@@ -875,7 +875,7 @@ private:
       config_pose_msg_.header.stamp = current_time_;
       
       //Remove oldest element if we've reached the max number of path points
-      if (num_path_points_ != 0 && path_.poses.size() >= num_path_points_) {
+      if (path_num_points_ != 0 && path_.poses.size() >= path_num_points_) {
         path_.poses.erase(path_.poses.begin());
       }
       
