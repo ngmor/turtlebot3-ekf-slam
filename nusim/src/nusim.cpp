@@ -71,6 +71,7 @@ using turtlelib::Wheel;
 constexpr std::string_view WORLD_FRAME = "nusim/world";
 constexpr std::string_view ROBOT_GROUND_TRUTH_FRAME = "red/base_footprint";
 constexpr std::string_view LIDAR_GROUND_TRUTH_FRAME = "red/base_scan";
+const Transform2D ROBOT_LIDAR_TF {{-0.032, 0.0}}; //TODO make TF listener?
 constexpr double OBSTACLE_HEIGHT = 0.25;
 constexpr double WALL_HEIGHT = 0.25;
 constexpr double WALL_WIDTH = 0.1;
@@ -732,6 +733,9 @@ private:
     Line2D scan {scan_start, scan_end};
     std::vector<Vector2D> intersection_points;
 
+    //calculate 2D location of lidar frame
+    auto Tlidar = turtlebot_.config().location*ROBOT_LIDAR_TF;
+
     for (auto angle = lidar_scan_.angle_min; angle < lidar_scan_.angle_max;
          angle += lidar_scan_.angle_increment)
     {
@@ -739,25 +743,19 @@ private:
       possible_lidar_ranges_.clear();
 
       //Find angle of scan in world frame
-      world_angle = turtlebot_.config().location.rotation() + angle;
-
-      //Correct for the turtlebot's angle being between -PI and PI and world_angle
-      //being between 0 and 2PI
-      if (turtlebot_.config().location.rotation() < 0) {
-        world_angle += 2.0*PI;
-      }
+      world_angle = Tlidar.rotation() + angle;
 
       //Construct laser scan line segment using trigonometry and the current position of the turtlebot
       //Start point of scan is at min scan range at the world angle away from the robot's position
       scan_start = Vector2D {
-        turtlebot_.config().location.translation().x + lidar_scan_.range_min*std::cos(world_angle),
-        turtlebot_.config().location.translation().y + lidar_scan_.range_min*std::sin(world_angle)
+        Tlidar.translation().x + lidar_scan_.range_min*std::cos(world_angle),
+        Tlidar.translation().y + lidar_scan_.range_min*std::sin(world_angle)
       };
 
       //End point of scan is at max scan range at the world angle away from the robot's position
       scan_end = Vector2D {
-        turtlebot_.config().location.translation().x + lidar_scan_.range_max*std::cos(world_angle),
-        turtlebot_.config().location.translation().y + lidar_scan_.range_max*std::sin(world_angle)
+        Tlidar.translation().x + lidar_scan_.range_max*std::cos(world_angle),
+        Tlidar.translation().y + lidar_scan_.range_max*std::sin(world_angle)
       };
 
       //Construct line segment representing the scan
@@ -771,7 +769,7 @@ private:
           //Calculate possible range by finding the magnitude of the vector between the
           //intersection point and the turtlebot's current location. Append to array
           possible_lidar_ranges_.push_back(
-            (intersection_points.at(0) - turtlebot_.config().location.translation()).magnitude()
+            (intersection_points.at(0) - Tlidar.translation()).magnitude()
           );
         }
       }
@@ -784,7 +782,7 @@ private:
           std::vector<double> point_ranges;
           for (const auto & point : intersection_points) {
             point_ranges.push_back(
-              (point - turtlebot_.config().location.translation()).magnitude()
+              (point - Tlidar.translation()).magnitude()
             );
           }
 
@@ -803,6 +801,8 @@ private:
       }
 
       //TODO add noise
+      //TODO add resolution
+      //TODO fix walls
       lidar_scan_.ranges.push_back(range);
     }
 
