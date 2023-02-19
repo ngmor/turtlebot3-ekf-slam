@@ -738,7 +738,7 @@ private:
     pub_obstacles_->publish(obstacle_and_wall_markers_);
 
     //Publish collision cylinder
-    if (display_collision_cylinder_) {
+    if (!draw_only_ && display_collision_cylinder_) {
       collision_cylinder_marker_.header.stamp = current_time_;
       pub_collision_cylinder_->publish(collision_cylinder_marker_);
     }

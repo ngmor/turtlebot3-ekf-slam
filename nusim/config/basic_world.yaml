@@ -1,4 +1,4 @@
-/nusim:
+/**:
   ros__parameters:
     rate: 200.0 # hz
     x0: -0.6 # m
