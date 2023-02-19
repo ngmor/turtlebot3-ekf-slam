@@ -361,9 +361,8 @@ namespace turtlelib
         }
     }
 
-    std::tuple<bool, Vector2D> find_intersection(const Line2D & line1, const Line2D & line2) {
-        bool lines_intersect = true;
-        Vector2D intersection_point {0,0};
+    std::vector<Vector2D> find_intersection(const Line2D & line1, const Line2D & line2) {
+        std::vector<Vector2D> intersection_points;
 
         if (almost_equal(line1.slope(), line2.slope())) { //parallel lines
             if (line1.slope() == INF) {
@@ -371,30 +370,22 @@ namespace turtlelib
                 if (almost_equal(line1.start().x, line2.start().x)) {
                     if (line2.min().y >= line1.min().y && line2.min().y <= line1.max().y) {
                         //Min of line 2 is in line1
-                        intersection_point = line2.min();
+                        intersection_points.push_back(line2.min());
                     } else if (line2.max().y >= line1.min().y && line2.max().y <= line1.max().y) {
                         //Max of line 2 is in line 1
-                        intersection_point = line1.min();
-                    } else {
-                        lines_intersect = false;
+                        intersection_points.push_back(line1.min());
                     }
-                } else {
-                    lines_intersect = false;
                 }
             } else {
                 //parallel nonvertical lines, must have same y intercept
                 if (almost_equal(line1.y_intercept(), line2.y_intercept())) {
                     if (line2.min().x >= line1.min().x && line2.min().x <= line1.max().x) {
                         //Min of line 2 is in line1
-                        intersection_point = {line2.min().x, line2.calc_y(line2.min().x)};
+                        intersection_points.push_back({line2.min().x, line2.calc_y(line2.min().x)});
                     } else if (line2.max().x >= line1.min().x && line2.max().x <= line1.max().x) {
                         //Max of line 2 is in line 1
-                        intersection_point = {line1.min().x, line1.calc_y(line1.min().x)};
-                    } else {
-                        lines_intersect = false;
+                        intersection_points.push_back({line1.min().x, line1.calc_y(line1.min().x)});
                     }
-                } else {
-                    lines_intersect = false;
                 }
             }
         } else { //not parallel lines
@@ -414,24 +405,32 @@ namespace turtlelib
                 x >= line2.min().x && x <= line2.max().x)
             {
                 //Lines intersect, calculate intersection point
-                intersection_point = {x, line1.calc_y(x)};
-            } else {
-                //Lines do not intersect
-                lines_intersect = false;
+                intersection_points.push_back({x, line1.calc_y(x)});
             }
         }
 
-        return {lines_intersect, intersection_point};
+        return intersection_points;
     }
 
-    std::tuple<bool, Vector2D> find_intersection(const Line2D & line, const Circle2D & circle) {
-        bool line_intersects = true;
-        Vector2D intersection_point {0,0};
+    std::vector<Vector2D> find_intersection(const Line2D & line, const Circle2D & circle) {
+        //Derived from here
+        //https://mathworld.wolfram.com/Circle-LineIntersection.html
+        std::vector<Vector2D> intersection_points;
 
-        //TODO
-        line_intersects = false;
+        //Normalize line to circle being at origin
+        Line2D norm_line {line.start() - circle.center, line.end() - circle.center};
 
-        return {line_intersects, intersection_point};
+        //Calculate magnitude and determinant
+        auto norm_line_mag = norm_line.vec().magnitude();
+        auto det = norm_line.start().x*norm_line.end().y - norm_line.end().x*norm_line.start().y;
+
+        //Calculate discriminant
+        auto disc = std::pow(circle.radius,2)*std::pow(norm_line_mag,2) - std::pow(det,2);
+        
+        // if 
+
+
+        return intersection_points;
     }
 
     ////////// LINE2D END //////////

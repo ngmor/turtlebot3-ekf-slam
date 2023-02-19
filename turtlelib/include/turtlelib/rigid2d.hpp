@@ -7,7 +7,7 @@
 #include<iosfwd> // contains forward definitions for iostream objects
 #include<cmath>
 #include<limits>
-#include<tuple>
+#include<vector>
 
 namespace turtlelib
 {
@@ -365,9 +365,8 @@ namespace turtlelib
     /// \brief determine if two line segments intersect
     /// \param line1 - first line segment
     /// \param line2 - second line segment
-    /// \return a tuple. The first value is boolean indicating if the lines intersect.
-    /// if they do, the second value is a Vector2D indicating their intersection point.
-    std::tuple<bool, Vector2D> find_intersection(const Line2D & line1, const Line2D & line2);
+    /// \return a vector of intersection points as Vector2Ds, if any exist
+    std::vector<Vector2D> find_intersection(const Line2D & line1, const Line2D & line2);
 
     /// \brief a circle
     struct Circle2D
@@ -382,9 +381,8 @@ namespace turtlelib
     /// \brief determine if a line segment intersects with a circle
     /// \param line - line segment
     /// \param circle - circle
-    /// \return a tuple. The first value is boolean indicating if the line and circle intersect.
-    /// if they do, the second value is a Vector2D indicating their intersection point.
-    std::tuple<bool, Vector2D> find_intersection(const Line2D & line, const Circle2D & circle);
+    /// \return a vector of intersection points as Vector2Ds, if any exist
+    std::vector<Vector2D> find_intersection(const Line2D & line, const Circle2D & circle);
 
 }
 

@@ -624,48 +624,48 @@ TEST_CASE("intersections", "[line]") { //Nick Morales
         Line2D line1 {{0.0, 1.0}, {4.0, 3.0}};
         Line2D line2 {{0.0, 3.0}, {2.0, 0.0}};
 
-        auto [lines_intersect, intersection_point] = find_intersection(line1, line2);
+        auto intersection_points = find_intersection(line1, line2);
         
-        REQUIRE(lines_intersect == true);
-        REQUIRE_THAT(intersection_point.x, WithinRel(1.0, FLOAT_TOL));
-        REQUIRE_THAT(intersection_point.y, WithinRel(1.5, FLOAT_TOL));
+        REQUIRE(intersection_points.size() == 1);
+        REQUIRE_THAT(intersection_points.at(0).x, WithinRel(1.0, FLOAT_TOL));
+        REQUIRE_THAT(intersection_points.at(0).y, WithinRel(1.5, FLOAT_TOL));
     }
 
     SECTION("non-intersecting non-parallel line segments") {
         Line2D line1 {{0.0, 1.0}, {4.0, 3.0}};
-        Line2D line2 {{4.0, 0.0}, {4.0, -3.0}};
+        Line2D line2 {{4.0, 0.0}, {5.0, -3.0}};
 
-        auto [lines_intersect, intersection_point] = find_intersection(line1, line2);
+        auto intersection_points = find_intersection(line1, line2);
         
-        REQUIRE(lines_intersect == false);
+        REQUIRE(intersection_points.size() == 0);
     }
 
     SECTION("intersecting parallel line segments") {
         Line2D line1 {{0.0, 1.0}, {4.0, 3.0}};
         Line2D line2 {{2.0, 2.0}, {6.0, 4.0}};
 
-        auto [lines_intersect, intersection_point] = find_intersection(line1, line2);
+        auto intersection_points = find_intersection(line1, line2);
         
-        REQUIRE(lines_intersect == true);
-        REQUIRE_THAT(intersection_point.x, WithinRel(2.0, FLOAT_TOL));
-        REQUIRE_THAT(intersection_point.y, WithinRel(2.0, FLOAT_TOL));
+        REQUIRE(intersection_points.size() == 1);
+        REQUIRE_THAT(intersection_points.at(0).x, WithinRel(2.0, FLOAT_TOL));
+        REQUIRE_THAT(intersection_points.at(0).y, WithinRel(2.0, FLOAT_TOL));
     }
 
     SECTION("non-intersecting parallel line segments 1") {
         Line2D line1 {{0.0, 1.0}, {4.0, 3.0}};
         Line2D line2 {{6.0, 4.0}, {8.0, 5.0}};
 
-        auto [lines_intersect, intersection_point] = find_intersection(line1, line2);
+        auto intersection_points = find_intersection(line1, line2);
         
-        REQUIRE(lines_intersect == false);
+        REQUIRE(intersection_points.size() == 0);
     }
 
     SECTION("non-intersecting parallel line segments 2") {
         Line2D line1 {{0.0, 1.0}, {4.0, 3.0}};
         Line2D line2 {{2.0, 0.0}, {6.0, 2.0}};
 
-        auto [lines_intersect, intersection_point] = find_intersection(line1, line2);
+        auto intersection_points = find_intersection(line1, line2);
         
-        REQUIRE(lines_intersect == false);
+        REQUIRE(intersection_points.size() == 0);
     }
 }

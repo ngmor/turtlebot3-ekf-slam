@@ -730,6 +730,7 @@ private:
     Vector2D scan_start;
     Vector2D scan_end;
     Line2D scan {scan_start, scan_end};
+    std::vector<Vector2D> intersection_points;
 
     for (auto angle = lidar_scan_.angle_min; angle < lidar_scan_.angle_max;
          angle += lidar_scan_.angle_increment)
@@ -764,28 +765,22 @@ private:
 
       //Determine if walls intersect
       for (const auto & wall : wall_lines_) {
-        auto [lines_intersect, intersection_point] = find_intersection(scan, wall);
+        intersection_points = find_intersection(scan, wall);
 
-        if (lines_intersect) {
+        if (intersection_points.size() != 0) { //intersection occurred
           //Calculate possible range by finding the magnitude of the vector between the
           //intersection point and the turtlebot's current location. Append to array
           possible_lidar_ranges_.push_back(
-            (intersection_point - turtlebot_.config().location.translation()).magnitude()
+            (intersection_points.at(0) - turtlebot_.config().location.translation()).magnitude()
           );
         }
       }
 
       //Determine if obstacles intersect
       for (const auto & obstacle : obstacle_circles_) {
-        auto [line_intersects, intersection_point] = find_intersection(scan, obstacle);
+        intersection_points = find_intersection(scan, obstacle);
 
-        if (line_intersects) {
-          //Calculate possible range by finding the magnitude of the vector between the
-          //intersection point and the turtlebot's current location. Append to array
-          possible_lidar_ranges_.push_back(
-            (intersection_point - turtlebot_.config().location.translation()).magnitude()
-          );
-        }
+        
       }
 
       //If there are any possible ranges, find the minimum and use it for
