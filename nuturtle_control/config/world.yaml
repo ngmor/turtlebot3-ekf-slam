@@ -12,3 +12,5 @@
     slip_fraction: 0.25
     basic_sensor_variance: 0.01 # m
     max_range: 1.0 # m
+    lidar:
+      resolution: 0.01 #m

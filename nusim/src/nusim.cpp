@@ -288,8 +288,8 @@ public:
     lidar_scan_.angle_increment =
       get_parameter("lidar.angle_incr").get_parameter_value().get<double>();
 
-    param.description = "Resolution for lidar scan (m).";
-    declare_parameter("lidar.resolution", 0.01, param); //TODO figure out actual turtlebot lidar resolution
+    param.description = "Resolution for lidar scan (m). Set to 0 for perfect resolution.";
+    declare_parameter("lidar.resolution", 0.0, param); //TODO figure out actual turtlebot lidar resolution
     lidar_resolution_ = get_parameter("lidar.resolution").get_parameter_value().get<double>();
 
     param.description = 
@@ -809,7 +809,12 @@ private:
 
       //TODO add noise
       //TODO add resolution
-      //TODO fix walls
+
+      //Round to nearest resolution mark
+      if (lidar_resolution_ > 0.0) {
+        range = std::round(range / lidar_resolution_) * lidar_resolution_;
+      }
+
       lidar_scan_.ranges.push_back(range);
     }
 
