@@ -43,10 +43,11 @@
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
 #include "std_srvs/srv/empty.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/transform.hpp"
 #include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/transform.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/transform_broadcaster.h"
@@ -386,6 +387,7 @@ public:
 
     config_tf_msg_.header.frame_id = WORLD_FRAME;
     config_tf_msg_.child_frame_id = ROBOT_GROUND_TRUTH_FRAME;
+    config_pose_msg_.header.frame_id = WORLD_FRAME;
 
 
     lidar_scan_.header.frame_id = LIDAR_GROUND_TRUTH_FRAME;
@@ -396,7 +398,10 @@ public:
     possible_lidar_ranges_.reserve(obstacles_x_.size() + 4);
 
     path_.header.frame_id = WORLD_FRAME;
-    // path_.poses.push_back() //TODO
+    
+    config_pose_msg_.pose = tf_to_pose_msg(turtlebot_.config().location);
+    config_pose_msg_.header.stamp = get_clock()->now();
+    path_.poses.push_back(config_pose_msg_);
 
     init_obstacles();
 
@@ -443,6 +448,7 @@ private:
   std::vector<Line2D> wall_lines_;
   std::vector<Circle2D> obstacle_circles_;
   nav_msgs::msg::Path path_;
+  geometry_msgs::msg::PoseStamped config_pose_msg_;
 
   /// \brief main simulation timer loop
   void timer_main_callback()
@@ -859,7 +865,12 @@ private:
 
     //Only add a new pose to the path if the turtlebot has moved
     if (!almost_equal(last_published_tf, turtlebot_.config().location)) {
-      //TODO
+      
+      config_pose_msg_.pose = tf_to_pose_msg(turtlebot_.config().location);
+      config_pose_msg_.header.stamp = current_time_;
+      path_.poses.push_back(config_pose_msg_);
+      
+      //TODO - max number of points in path
 
       last_published_tf = turtlebot_.config().location;
     }
@@ -868,7 +879,7 @@ private:
     path_.header.stamp = current_time_;
 
     //Publish path
-    //TODO
+    pub_path_->publish(path_);
   }
 
   /// \brief convert and store received wheel commands
