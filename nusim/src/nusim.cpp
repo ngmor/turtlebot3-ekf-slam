@@ -780,7 +780,17 @@ private:
       for (const auto & obstacle : obstacle_circles_) {
         intersection_points = find_intersection(scan, obstacle);
 
-        
+        if (intersection_points.size() != 0) { //intersection occurred
+          std::vector<double> point_ranges;
+          for (const auto & point : intersection_points) {
+            point_ranges.push_back(
+              (point - turtlebot_.config().location.translation()).magnitude()
+            );
+          }
+
+          //Add minimum range to possible lidar ranges
+          possible_lidar_ranges_.push_back(*std::min_element(point_ranges.begin(), point_ranges.end()));
+        }
       }
 
       //If there are any possible ranges, find the minimum and use it for
@@ -792,6 +802,7 @@ private:
         range = 0.0;
       }
 
+      //TODO add noise
       lidar_scan_.ranges.push_back(range);
     }
 
