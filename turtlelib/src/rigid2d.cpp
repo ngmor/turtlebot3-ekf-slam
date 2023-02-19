@@ -421,14 +421,39 @@ namespace turtlelib
         Line2D norm_line {line.start() - circle.center, line.end() - circle.center};
 
         //Calculate magnitude and determinant
-        auto norm_line_mag = norm_line.vec().magnitude();
+        auto norm_line_mag_squared = std::pow(norm_line.vec().magnitude(), 2);
         auto det = norm_line.start().x*norm_line.end().y - norm_line.end().x*norm_line.start().y;
 
         //Calculate discriminant
-        auto disc = std::pow(circle.radius,2)*std::pow(norm_line_mag,2) - std::pow(det,2);
+        auto disc = std::pow(circle.radius,2)*norm_line_mag_squared - std::pow(det,2);
         
-        // if 
+        //Discriminant greater than 0 indicates possible intersection
+        if (disc >= 0.0) {
+            std::vector<Vector2D> possible_points;
+            //calculate possible intersection points
+            possible_points.push_back({
+                (det*norm_line.vec().y + sgn<double>(norm_line.vec().y)*norm_line.vec().x*std::sqrt(disc)) / norm_line_mag_squared,
+                (-det*norm_line.vec().x + std::abs(norm_line.vec().y)*std::sqrt(disc)) / norm_line_mag_squared
+            });
 
+            possible_points.push_back({
+                (det*norm_line.vec().y - sgn<double>(norm_line.vec().y)*norm_line.vec().x*std::sqrt(disc)) / norm_line_mag_squared,
+                (-det*norm_line.vec().x - std::abs(norm_line.vec().y)*std::sqrt(disc)) / norm_line_mag_squared
+            });
+
+            //Check if these points are actually within the normalized line segment
+            //If so, add them to the output vector
+            for (const auto & point : possible_points) {
+                if (point.x >= norm_line.min().x && point.x <= norm_line.max().x) {
+                    intersection_points.push_back(point);
+                }
+            }
+        }
+
+        //Return intersection points to original coordinate system
+        for (auto & point : intersection_points) {
+            point += circle.center;
+        }
 
         return intersection_points;
     }

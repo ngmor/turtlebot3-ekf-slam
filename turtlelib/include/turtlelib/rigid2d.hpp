@@ -46,6 +46,15 @@ namespace turtlelib
     {
         return rad * 180.0 / PI;
     }
+    
+    /// @brief determine the sign of an input value
+    /// @tparam T - type of input variable
+    /// @param val - value to check type of
+    /// @return -1 for negative, 0 for 0, 1 for positive
+    /// https://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
+    template <typename T> int sgn(T val) {
+        return (T(0) < val) - (val < T(0));
+    }
 
     /// static_assertions test compile time assumptions.
     /// You should write at least one more test for each function
