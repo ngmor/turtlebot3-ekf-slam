@@ -807,8 +807,10 @@ private:
         range = 0.0;
       }
 
-      //TODO add noise
-      //TODO add resolution
+      //Add sensor noise if there is nonzero standard deviation
+      if (lidar_dist_.stddev() != 0.0) {
+        range += lidar_dist_(get_random());
+      }
 
       //Round to nearest resolution mark
       if (lidar_resolution_ > 0.0) {
