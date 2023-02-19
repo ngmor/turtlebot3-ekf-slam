@@ -21,6 +21,7 @@ find_package(nav_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(nuturtle_description REQUIRED)
 find_package(turtlelib REQUIRED)
+find_package(turtlelib_ros REQUIRED)
 ament_export_dependencies(rosidl_default_runtime)
 
 rosidl_generate_interfaces(
@@ -38,7 +39,9 @@ ament_target_dependencies(nusim
   rclcpp std_msgs std_srvs geometry_msgs tf2 tf2_geometry_msgs tf2_ros visualization_msgs
   sensor_msgs nav_msgs nuturtlebot_msgs
 )
-target_link_libraries(nusim turtlelib::turtlelib "${cpp_typesupport_target}")
+target_link_libraries(nusim
+  turtlelib::turtlelib turtlelib_ros::turtlelib_ros "${cpp_typesupport_target}"
+)
 
 install(TARGETS
   nusim

@@ -58,6 +58,7 @@
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "turtlelib/diff_drive.hpp"
+#include "turtlelib_ros/convert.hpp"
 #include "nusim/srv/teleport.hpp"
 
 using namespace std::chrono_literals;
@@ -72,6 +73,8 @@ using turtlelib::find_intersection;
 using turtlelib::DiffDrive;
 using turtlelib::DiffDriveConfig;
 using turtlelib::Wheel;
+using turtlelib_ros::tf_to_tf_msg;
+using turtlelib_ros::tf_to_pose_msg;
 
 // Constants
 constexpr std::string_view WORLD_FRAME = "nusim/world";
@@ -87,11 +90,6 @@ constexpr int32_t MARKER_ID_OFFSET_OBSTACLES = 100;
 
 
 //Function prototypes
-//TODO put in separate library?
-geometry_msgs::msg::Transform tf_to_tf_msg(const Transform2D & tf);
-geometry_msgs::msg::Pose tf_to_pose_msg(const Transform2D & tf);
-geometry_msgs::msg::Transform pose_msg_to_tf_msg(const geometry_msgs::msg::Pose & pose_msg);
-geometry_msgs::msg::Pose tf_msg_to_pose_msg(const geometry_msgs::msg::Transform & tf_msg);
 std::mt19937 & get_random();
 
 
@@ -949,63 +947,6 @@ private:
   }
 };
 
-
-/// \brief convert a Transform2D into a ROS geometry_msgs::msg::Transform
-/// \param tf - the Transform2D to convert
-/// \return the resulting geometry_msgs::msg::Transform
-geometry_msgs::msg::Transform tf_to_tf_msg(const Transform2D & tf)
-{
-  geometry_msgs::msg::Transform msg;
-
-  msg.translation.x = tf.translation().x;
-  msg.translation.y = tf.translation().y;
-
-  tf2::Quaternion q;
-  q.setRPY(0.0, 0.0, tf.rotation());
-  msg.rotation = tf2::toMsg(q);
-
-  return msg;
-}
-
-/// \brief convert a Transform2D into a ROS geometry_msgs::msg::Pose
-/// \param tf - the Transform2D to convert
-/// \return the resulting geometry_msgs::msg::Pose
-geometry_msgs::msg::Pose tf_to_pose_msg(const Transform2D & tf)
-{
-  auto tf_msg = tf_to_tf_msg(tf);
-
-  return tf_msg_to_pose_msg(tf_msg);
-}
-
-/// \brief convert a geometry_msgs::msg::Pose to a geometry_msgs::msg::Transform
-/// \param pose_msg - the geometry_msgs::msg::Pose to convert
-/// \return the resulting geometry_msgs::msg::Transform
-geometry_msgs::msg::Transform pose_msg_to_tf_msg(const geometry_msgs::msg::Pose & pose_msg)
-{
-  geometry_msgs::msg::Transform tf_msg;
-
-  tf_msg.translation.x = pose_msg.position.x;
-  tf_msg.translation.y = pose_msg.position.y;
-  tf_msg.translation.z = pose_msg.position.z;
-  tf_msg.rotation = pose_msg.orientation;
-
-  return tf_msg;
-}
-
-/// \brief convert a geometry_msgs::msg::Transform to a geometry_msgs::msg::Pose
-/// \param tf_msg - the geometry_msgs::msg::Transform to convert
-/// \return the resulting geometry_msgs::msg::Pose
-geometry_msgs::msg::Pose tf_msg_to_pose_msg(const geometry_msgs::msg::Transform & tf_msg)
-{
-  geometry_msgs::msg::Pose pose_msg;
-
-  pose_msg.position.x = tf_msg.translation.x;
-  pose_msg.position.y = tf_msg.translation.y;
-  pose_msg.position.z = tf_msg.translation.z;
-  pose_msg.orientation = tf_msg.rotation;
-
-  return pose_msg;
-}
 
 /// \brief set up and return a reference to a psuedo-random number generator object
 /// \return the reference to the psuedo-random number generator object
