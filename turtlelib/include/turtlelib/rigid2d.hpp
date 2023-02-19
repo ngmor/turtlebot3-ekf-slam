@@ -163,6 +163,13 @@ namespace turtlelib
     /// HINT: this function can be written in under 20 lines and uses only std::peek(), std::get(), istream::operator>>() and a little logic
     std::istream & operator>>(std::istream & is, Vector2D & v);
 
+    /// @brief approximately compare two Vector2Ds for equivalence
+    /// @param v1 - first vector
+    /// @param v2 - second vector
+    /// \param epsilon - absolute threshold required for equality
+    /// @return true if both x and y components are are within the epsilon threshold of eachother
+    bool almost_equal(const Vector2D & v1, const Vector2D & v2, double epsilon=1.0e-12);
+
     /// \brief normalize a 2 dimensional vector
     /// \param v - the vector to normalize
     Vector2D normalize(const Vector2D & v);
@@ -298,6 +305,14 @@ namespace turtlelib
     /// \return the composition of the two transforms
     /// HINT: This function should be implemented in terms of *=
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
+
+    /// @brief approximately compare two Transform2Ds for equivalence
+    /// @param T1 - first transform
+    /// @param T2 - second transform
+    /// \param epsilon - absolute threshold required for equality
+    /// @return true if both translation and rotational components are within the epsilon threshold
+    /// of eachother
+    bool almost_equal(const Transform2D & T1, const Transform2D & T2, double epsilon=1.0e-12);
 
     /// \brief compute the transformation corresponding to a rigid body following
     /// a constant twist (in its original body frame) for one time unit

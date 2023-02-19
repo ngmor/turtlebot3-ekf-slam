@@ -49,6 +49,7 @@
 #include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "nav_msgs/msg/path.hpp"
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "turtlelib/diff_drive.hpp"
@@ -158,6 +159,10 @@ public:
     declare_parameter("rate", 200.0, param);
     sim_rate_ = get_parameter("rate").get_parameter_value().get<double>();
     sim_interval_ = 1.0 / sim_rate_;
+
+    param.description = "The rate the path is updated at (Hz).";
+    declare_parameter("path_rate", 5.0, param);
+    auto path_interval = 1.0 / get_parameter("path_rate").get_parameter_value().get<double>();
 
     Vector2D translation_initial;
 
@@ -323,6 +328,10 @@ public:
       static_cast<std::chrono::milliseconds>(static_cast<int>(1000.0 / 5.0)), //5 Hz
       std::bind(&NuSim::timer_sensors_callback, this)
     );
+    timer_path_ = create_wall_timer(
+      static_cast<std::chrono::milliseconds>(static_cast<int>(path_interval * 1000.0)),
+      std::bind(&NuSim::timer_path_callback, this)
+    );
 
     //Publishers
     pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
@@ -333,6 +342,7 @@ public:
     pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
     pub_fake_sensor_ = create_publisher<visualization_msgs::msg::MarkerArray>("fake_sensor", 10);
     pub_lidar_scan_ = create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
+    pub_path_ = create_publisher<nav_msgs::msg::Path>("~/path", 10);
 
     //Subscribers
     sub_wheel_cmd_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
@@ -382,12 +392,14 @@ public:
 private:
   rclcpp::TimerBase::SharedPtr timer_main_;
   rclcpp::TimerBase::SharedPtr timer_sensors_;
+  rclcpp::TimerBase::SharedPtr timer_path_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr pub_timestep_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_obstacles_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_collision_cylinder_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr pub_sensor_data_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_fake_sensor_;
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr pub_lidar_scan_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr sub_wheel_cmd_;
 
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_reset_;
@@ -823,6 +835,11 @@ private:
 
     //Publish message
     pub_lidar_scan_->publish(lidar_scan_);
+  }
+
+  /// \brief publish ground truth path
+  void timer_path_callback() {
+    
   }
 
   /// \brief convert and store received wheel commands

@@ -147,6 +147,19 @@ TEST_CASE("scaling vectors", "[vector]") { //Nick Morales
     }
 }
 
+TEST_CASE("vector equivalence", "[vector]") { //Nick Morales
+    Vector2D V1 {-3.30, -4.65};
+    Vector2D V2 {-3.30, -4.65};
+    Vector2D V3 {-1.26, -4.65};
+    Vector2D V4 {-3.30, -4.45};
+    Vector2D V5 {-1.26, 2.70};
+
+    REQUIRE(almost_equal(V1, V2));
+    REQUIRE(!almost_equal(V1, V3));
+    REQUIRE(!almost_equal(V1, V4));
+    REQUIRE(!almost_equal(V1, V5));
+}
+
 TEST_CASE("vector dot product", "[vector]") { //Nick Morales
     double x1 = 4.04, y1 = 4.68;
     Vector2D V1 {x1,y1};
@@ -358,6 +371,21 @@ TEST_CASE("input stream", "[transform]") { //Nick Morales
         REQUIRE_THAT(T.translation().y, WithinRel(-2.23, FLOAT_TOL));
         REQUIRE_THAT(T.rotation(), WithinRel(deg2rad(142), FLOAT_TOL));
     }
+}
+
+TEST_CASE("transform equivalence", "[transform]") { //Nick Morales
+    Transform2D T1 {{-4.81, 2.36}, -2.83};
+    Transform2D T2 {{-4.81, 2.36}, -2.83};
+    Transform2D T3 {{2.47, 2.36}, -2.83};
+    Transform2D T4 {{-4.81, -1.03}, -2.83};
+    Transform2D T5 {{-4.81, 2.36}, 1.09};
+    Transform2D T6 {{0.00, -2.43}, 4.05};
+
+    REQUIRE(almost_equal(T1, T2));
+    REQUIRE(!almost_equal(T1, T3));
+    REQUIRE(!almost_equal(T1, T4));
+    REQUIRE(!almost_equal(T1, T5));
+    REQUIRE(!almost_equal(T1, T6));
 }
 
 TEST_CASE("integrate a twist", "[transform]") { //Nick Morales

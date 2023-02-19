@@ -91,6 +91,10 @@ namespace turtlelib
         return is;
     }
 
+    bool almost_equal(const Vector2D & v1, const Vector2D & v2, double epsilon) {
+        return almost_equal(v1.x, v2.x, epsilon) && almost_equal(v1.y, v2.y, epsilon);
+    }
+
     Vector2D normalize(const Vector2D & v) {
         const auto mag = v.magnitude();
 
@@ -280,6 +284,11 @@ namespace turtlelib
         };
 
         return is;
+    }
+
+    bool almost_equal(const Transform2D & T1, const Transform2D & T2, double epsilon) {
+        return almost_equal(T1.translation(), T2.translation(), epsilon) &&
+               almost_equal(T1.rotation(), T2.rotation(), epsilon);
     }
 
     Transform2D integrate_twist(Twist2D twist) {

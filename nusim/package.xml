@@ -19,6 +19,7 @@
   <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>nuturtle_description</depend>
   <depend>nuturtlebot_msgs</depend>
   <depend>turtlelib</depend>

@@ -16,6 +16,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(nuturtle_description REQUIRED)
 find_package(turtlelib REQUIRED)
@@ -33,7 +34,8 @@ rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl
 # executables
 add_executable(nusim src/nusim.cpp)
 ament_target_dependencies(nusim
-  rclcpp std_msgs std_srvs geometry_msgs tf2 tf2_ros visualization_msgs sensor_msgs nuturtlebot_msgs
+  rclcpp std_msgs std_srvs geometry_msgs tf2 tf2_ros visualization_msgs sensor_msgs nav_msgs
+  nuturtlebot_msgs
 )
 target_link_libraries(nusim turtlelib::turtlelib "${cpp_typesupport_target}")
 
