@@ -27,6 +27,7 @@
 ///     ~/teleport (nusim/srv/Teleport): teleports the actual turtlebot to a provided location
 /// CLIENTS:
 ///     none
+// TODO update above
 
 #include <chrono>
 #include <functional>
@@ -44,7 +45,10 @@
 #include "std_srvs/srv/empty.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/point.hpp"
+#include "geometry_msgs/msg/transform.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 #include "tf2/LinearMath/Quaternion.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 #include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -82,7 +86,11 @@ constexpr int32_t MARKER_ID_OFFSET_OBSTACLES = 100;
 
 
 //Function prototypes
-geometry_msgs::msg::TransformStamped pose_to_transform(Transform2D pose);
+//TODO put in separate library?
+geometry_msgs::msg::Transform tf_to_tf_msg(const Transform2D & tf);
+geometry_msgs::msg::Pose tf_to_pose_msg(const Transform2D & tf);
+geometry_msgs::msg::Transform pose_msg_to_tf_msg(const geometry_msgs::msg::Pose & pose_msg);
+geometry_msgs::msg::Pose tf_msg_to_pose_msg(const geometry_msgs::msg::Transform & tf_msg);
 std::mt19937 & get_random();
 
 
@@ -351,7 +359,7 @@ public:
       std::bind(&NuSim::wheel_cmd_callback, this, std::placeholders::_1)
     );
 
-    // Services
+    //Services
     srv_reset_ = create_service<std_srvs::srv::Empty>(
       "~/reset",
       std::bind(&NuSim::reset_callback, this, std::placeholders::_1, std::placeholders::_2)
@@ -364,7 +372,7 @@ public:
     //Broadcasters
     broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-    //Other variables
+    //Initialize other variables
     turtlebot_ = DiffDrive {
       wheel_track,
       wheel_radius,
@@ -376,6 +384,9 @@ public:
 
     turtlebot_last_config_ = turtlebot_.config();
 
+    config_tf_msg_.header.frame_id = WORLD_FRAME;
+    config_tf_msg_.child_frame_id = ROBOT_GROUND_TRUTH_FRAME;
+
 
     lidar_scan_.header.frame_id = LIDAR_GROUND_TRUTH_FRAME;
     //Reserve enough size in the ranges vector for all the angle increments
@@ -383,6 +394,9 @@ public:
       std::ceil((lidar_scan_.angle_max - lidar_scan_.angle_min) / lidar_scan_.angle_increment)));
     //Maximum possible detected items at a certain angle is number of obstacles + 4 walls
     possible_lidar_ranges_.reserve(obstacles_x_.size() + 4);
+
+    path_.header.frame_id = WORLD_FRAME;
+    // path_.poses.push_back() //TODO
 
     init_obstacles();
 
@@ -410,6 +424,7 @@ private:
   uint64_t timestep_ = 0;
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
   DiffDriveConfig turtlebot_last_config_;
+  geometry_msgs::msg::TransformStamped config_tf_msg_;
   Wheel wheel_vel_ {0.0, 0.0};
   std::vector<double> obstacles_x_, obstacles_y_;
   double obstacles_r_, x_length_, y_length_, max_range_, collision_radius_, collision_dist_;
@@ -427,6 +442,7 @@ private:
   std::vector<double> possible_lidar_ranges_;
   std::vector<Line2D> wall_lines_;
   std::vector<Circle2D> obstacle_circles_;
+  nav_msgs::msg::Path path_;
 
   /// \brief main simulation timer loop
   void timer_main_callback()
@@ -498,9 +514,9 @@ private:
     pub_sensor_data_->publish(sensor_data);
 
     //Broadcast updated transform of robot
-    auto tf = pose_to_transform(turtlebot_.config().location);
-    tf.header.stamp = current_time_;
-    broadcaster_->sendTransform(tf);
+    config_tf_msg_.transform = tf_to_tf_msg(turtlebot_.config().location);
+    config_tf_msg_.header.stamp = current_time_;
+    broadcaster_->sendTransform(config_tf_msg_);
   }
 
   /// \brief detect collisions and update robot position accordingly
@@ -839,7 +855,20 @@ private:
 
   /// \brief publish ground truth path
   void timer_path_callback() {
-    
+    static Transform2D last_published_tf = turtlebot_.config().location;
+
+    //Only add a new pose to the path if the turtlebot has moved
+    if (!almost_equal(last_published_tf, turtlebot_.config().location)) {
+      //TODO
+
+      last_published_tf = turtlebot_.config().location;
+    }
+
+    //Update stamp
+    path_.header.stamp = current_time_;
+
+    //Publish path
+    //TODO
   }
 
   /// \brief convert and store received wheel commands
@@ -898,35 +927,72 @@ private:
   }
 };
 
-/// \brief format a pose as a TransformStamped message
-/// \param pose - pose to turn into a transform
-/// \return - TransformStamped message for the pose, with no timestamp
-geometry_msgs::msg::TransformStamped pose_to_transform(Transform2D pose)
+
+/// \brief convert a Transform2D into a ROS geometry_msgs::msg::Transform
+/// \param tf - the Transform2D to convert
+/// \return the resulting geometry_msgs::msg::Transform
+geometry_msgs::msg::Transform tf_to_tf_msg(const Transform2D & tf)
 {
-  geometry_msgs::msg::TransformStamped tf;
+  geometry_msgs::msg::Transform msg;
 
-  tf.header.frame_id = WORLD_FRAME;
-  tf.child_frame_id = ROBOT_GROUND_TRUTH_FRAME;
-
-  tf.transform.translation.x = pose.translation().x;
-  tf.transform.translation.y = pose.translation().y;
+  msg.translation.x = tf.translation().x;
+  msg.translation.y = tf.translation().y;
 
   tf2::Quaternion q;
-  q.setRPY(0.0, 0.0, pose.rotation());
-  tf.transform.rotation.x = q.x();
-  tf.transform.rotation.y = q.y();
-  tf.transform.rotation.z = q.z();
-  tf.transform.rotation.w = q.w();
+  q.setRPY(0.0, 0.0, tf.rotation());
+  msg.rotation = tf2::toMsg(q);
 
-  return tf;
+  return msg;
 }
 
+/// \brief convert a Transform2D into a ROS geometry_msgs::msg::Pose
+/// \param tf - the Transform2D to convert
+/// \return the resulting geometry_msgs::msg::Pose
+geometry_msgs::msg::Pose tf_to_pose_msg(const Transform2D & tf)
+{
+  auto tf_msg = tf_to_tf_msg(tf);
+
+  return tf_msg_to_pose_msg(tf_msg);
+}
+
+/// \brief convert a geometry_msgs::msg::Pose to a geometry_msgs::msg::Transform
+/// \param pose_msg - the geometry_msgs::msg::Pose to convert
+/// \return the resulting geometry_msgs::msg::Transform
+geometry_msgs::msg::Transform pose_msg_to_tf_msg(const geometry_msgs::msg::Pose & pose_msg)
+{
+  geometry_msgs::msg::Transform tf_msg;
+
+  tf_msg.translation.x = pose_msg.position.x;
+  tf_msg.translation.y = pose_msg.position.y;
+  tf_msg.translation.z = pose_msg.position.z;
+  tf_msg.rotation = pose_msg.orientation;
+
+  return tf_msg;
+}
+
+/// \brief convert a geometry_msgs::msg::Transform to a geometry_msgs::msg::Pose
+/// \param tf_msg - the geometry_msgs::msg::Transform to convert
+/// \return the resulting geometry_msgs::msg::Pose
+geometry_msgs::msg::Pose tf_msg_to_pose_msg(const geometry_msgs::msg::Transform & tf_msg)
+{
+  geometry_msgs::msg::Pose pose_msg;
+
+  pose_msg.position.x = tf_msg.translation.x;
+  pose_msg.position.y = tf_msg.translation.y;
+  pose_msg.position.z = tf_msg.translation.z;
+  pose_msg.orientation = tf_msg.rotation;
+
+  return pose_msg;
+}
+
+/// \brief set up and return a reference to a psuedo-random number generator object
+/// \return the reference to the psuedo-random number generator object
 std::mt19937 & get_random()
 {
     // static variables inside a function are created once and persist for the remainder of the program
     static std::random_device rd{}; 
     static std::mt19937 mt{rd()};
-    // we return a reference to the pseudo-random number genrator object. This is always the
+    // we return a reference to the pseudo-random number generator object. This is always the
     // same object every time get_random is called
     return mt;
 }
