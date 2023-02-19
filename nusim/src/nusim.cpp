@@ -545,8 +545,8 @@ private:
     marker.color.a = 1.0;
     marker.points = {};
 
-    double x_bound = (x_length_ + WALL_WIDTH) / 2.0;
-    double y_bound = (y_length_ + WALL_WIDTH) / 2.0;
+    auto x_bound = (x_length_ + WALL_WIDTH) / 2.0;
+    auto y_bound = (y_length_ + WALL_WIDTH) / 2.0;
 
     geometry_msgs::msg::Point point;
     point.z = WALL_HEIGHT / 2.0;
@@ -576,11 +576,18 @@ private:
     }
 
     //Init wall lines
+    auto x_half_length = x_length_ / 2.0;
+    auto y_half_length = y_length_ / 2.0;
+
     wall_lines_.reserve(4);
-    wall_lines_.push_back({{-x_bound, -y_bound}, {x_bound, -y_bound}}); //bottom wall
-    wall_lines_.push_back({{-x_bound, y_bound}, {x_bound, y_bound}});   //top wall
-    wall_lines_.push_back({{-x_bound, -y_bound}, {-x_bound, y_bound}}); //left wall
-    wall_lines_.push_back({{x_bound, -y_bound}, {x_bound, y_bound}});   //right wall
+    //bottom wall
+    wall_lines_.push_back({{-x_half_length, -y_half_length},{x_half_length, -y_half_length}});
+    //top wall
+    wall_lines_.push_back({{-x_half_length, y_half_length}, {x_half_length, y_half_length}});
+    //left wall
+    wall_lines_.push_back({{-x_half_length, -y_half_length}, {-x_half_length, y_half_length}});
+    //right wall
+    wall_lines_.push_back({{x_half_length, -y_half_length}, {x_half_length, y_half_length}});
 
     obstacle_and_wall_markers_.markers.push_back(marker);
 
