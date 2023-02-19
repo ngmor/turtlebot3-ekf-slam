@@ -89,6 +89,14 @@
     <node pkg="numsr_turtlebot" exec="numsr_turtlebot"
         if="$(eval '\'$(var robot)\' == \'localhost\'')"
     />
+
+    <node pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher"
+        name="hlds_laser_publisher" output="screen"
+        if="$(eval '\'$(var robot)\' == \'localhost\'')"
+    >
+        <param name="port" value="/dev/ttyUSB0"/>
+        <param name="frame_id" value="blue/base_scan"/>
+    </node>
     <!-- ROBOT CONTROL END -->
 
 </launch>
