@@ -321,6 +321,12 @@ public:
 
     lidar_dist_ = std::normal_distribution<> {0.0, lidar_noise};
 
+    param.description = 
+      "Number of path points retained before deleting. Set to 0 to disable limit.";
+    declare_parameter("num_path_points", 100, param);
+    num_path_points_ = get_parameter(
+      "num_path_points").get_parameter_value().get<size_t>();
+
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
@@ -449,6 +455,7 @@ private:
   std::vector<Circle2D> obstacle_circles_;
   nav_msgs::msg::Path path_;
   geometry_msgs::msg::PoseStamped config_pose_msg_;
+  size_t num_path_points_;
 
   /// \brief main simulation timer loop
   void timer_main_callback()
@@ -868,9 +875,13 @@ private:
       
       config_pose_msg_.pose = tf_to_pose_msg(turtlebot_.config().location);
       config_pose_msg_.header.stamp = current_time_;
-      path_.poses.push_back(config_pose_msg_);
       
-      //TODO - max number of points in path
+      //Remove oldest element if we've reached the max number of path points
+      if (num_path_points_ != 0 && path_.poses.size() >= num_path_points_) {
+        path_.poses.erase(path_.poses.begin());
+      }
+      
+      path_.poses.push_back(config_pose_msg_);
 
       last_published_tf = turtlebot_.config().location;
     }
