@@ -9,8 +9,11 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs)
+find_package(tf2_ros REQUIRED)
 find_package(turtlelib)
 find_package(turtlelib_ros)
 find_package(Armadillo)
@@ -22,7 +25,7 @@ target_link_libraries(nuslam
   turtlelib::turtlelib turtlelib_ros::turtlelib_ros ${ARMADILLO_LIBRARIES}
 )
 ament_target_dependencies(nuslam
-  rclcpp geometry_msgs tf2 tf2_geometry_msgs
+  rclcpp geometry_msgs sensor_msgs nav_msgs tf2 tf2_ros tf2_geometry_msgs
 )
 
 # install files
