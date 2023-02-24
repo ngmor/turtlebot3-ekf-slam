@@ -365,7 +365,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /odom
+        Value: /blue/odom
       Value: true
     - Alpha: 1
       Buffer Length: 1
@@ -377,7 +377,7 @@ Visualization Manager:
       Length: 0.30000001192092896
       Line Style: Lines
       Line Width: 0.029999999329447746
-      Name: Path
+      Name: OdometryPath
       Offset:
         X: 0
         Y: 0
@@ -393,7 +393,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /path
+        Value: /blue/path
       Value: true
   Enabled: true
   Global Options:

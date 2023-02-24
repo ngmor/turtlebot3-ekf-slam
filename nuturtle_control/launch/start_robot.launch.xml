@@ -59,7 +59,7 @@
     <node pkg="tf2_ros" exec="static_transform_publisher"
         args="
         --frame-id nusim/world
-        --child-frame-id odom
+        --child-frame-id blue/odom
         "
         if="$(eval '\'$(var robot)\' != \'localhost\'')"
     />
@@ -76,9 +76,12 @@
     <node pkg="nuturtle_control" exec="odometry" >
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
         <param name="body_id" value="blue/base_footprint"/>
+        <param name="odom_id" value="blue/odom"/>
         <param name="wheel_left" value="wheel_left_joint"/>
         <param name="wheel_right" value="wheel_right_joint"/>
         <remap from="joint_states" to="blue/joint_states"/>
+        <remap from="odom" to="blue/odom"/>
+        <remap from="path" to="blue/path"/>
     </node>
 
     <node pkg="nuturtle_control" exec="turtle_control" >
