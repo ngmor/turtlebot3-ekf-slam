@@ -78,13 +78,19 @@ def generate_launch_description():
                     ),
                 'frame_prefix':
                     LaunchConfiguration('tf_prefix'),
-            }]
+            }],
+            remappings=[
+                ('joint_states', '/joint_states')
+            ]
         ),
         Node(
             package='joint_state_publisher',
             executable='joint_state_publisher',
             namespace=LaunchConfiguration('color'),
             condition=IfCondition(LaunchConfiguration('use_jsp')),
+            remappings=[
+                ('joint_states', '/joint_states')
+            ]
         ),
         Node(
             package='rviz2',

@@ -11,6 +11,10 @@
         description="Draw obstacles only, do not simulate. Valid choices are: ['true', 'false']"
     />
 
+    <arg name="use_jsp" default="true"
+        description="Selects whether or not to launch the joint state publisher. Valid choices are: ['true', 'false']"
+    />
+
     <!-- TODO update README with new arguments for this launch file -->
 
     <node pkg="rviz2" exec="rviz2"
@@ -40,6 +44,7 @@
     >
         <arg name="color" value="red"/>
         <arg name="use_rviz" value="false"/>
+        <arg name="use_jsp" value="$(var use_jsp)"/>
     </include>
 
 </launch>

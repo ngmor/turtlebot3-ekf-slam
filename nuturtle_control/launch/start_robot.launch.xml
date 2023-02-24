@@ -42,6 +42,7 @@
         if="$(eval '\'$(var robot)\' == \'nusim\'')"
     >
         <arg name="use_rviz" value="false"/>
+        <arg name="use_jsp" value="false"/>
         <arg name="world_yaml_path" 
             value="$(find-pkg-share nuturtle_control)/config/world.yaml" />
     </include>
@@ -50,6 +51,7 @@
         if="$(eval '\'$(var robot)\' == \'none\'')"
     >
         <arg name="use_rviz" value="false"/>
+        <arg name="use_jsp" value="false"/>
         <arg name="world_yaml_path" 
             value="$(find-pkg-share nuturtle_control)/config/world.yaml" />
         <arg name="draw_only" value="true"/>
@@ -79,14 +81,12 @@
         <param name="odom_id" value="blue/odom"/>
         <param name="wheel_left" value="wheel_left_joint"/>
         <param name="wheel_right" value="wheel_right_joint"/>
-        <remap from="joint_states" to="blue/joint_states"/>
         <remap from="odom" to="blue/odom"/>
         <remap from="path" to="blue/path"/>
     </node>
 
     <node pkg="nuturtle_control" exec="turtle_control" >
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-        <remap from="joint_states" to="blue/joint_states"/>
     </node>
 
     <node pkg="numsr_turtlebot" exec="numsr_turtlebot"

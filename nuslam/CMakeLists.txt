@@ -28,9 +28,15 @@ ament_target_dependencies(nuslam
   rclcpp geometry_msgs sensor_msgs nav_msgs tf2 tf2_ros tf2_geometry_msgs
 )
 
+# install targets
+install(TARGETS
+  nuslam
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 # install files
 install(DIRECTORY
-  launch
+  launch config
   DESTINATION share/${PROJECT_NAME}
 )
 
