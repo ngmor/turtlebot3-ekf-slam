@@ -8,6 +8,9 @@ This repository consists of several ROS packages
 - [`nuturtle_control`](nuturtle_control) - contains nodes for interfacing with and controlling the NUTurtle. **A demo video for this package (Task F) is embedded in this package's README.**
 - [`nuturtle_description`](nuturtle_description) - contains URDF and configuration parameters for the NUTurtle.
 
+TODO - update
+
+
 Other include packages:
 - [`turtlelib`](turtlelib) - a C++ library with classes for 2D kinematics and odometry for differential drive robots.
 

@@ -39,7 +39,7 @@ using arma::fill::zeros;
 
 //Constants
 constexpr std::string_view MAP_FRAME = "map";
-constexpr int MAX_LANDMARKS = 3; //TODO increase size
+constexpr int MAX_LANDMARKS = 20; //TODO increase size
 constexpr int STATE_SIZE = 2*MAX_LANDMARKS + 3;
 constexpr double VERY_LARGE_NUMBER = 1e10;
 
