@@ -4,6 +4,7 @@
 #include <armadillo>
 #include <cmath>
 #include <tuple>
+#include <vector>
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -13,6 +14,7 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/transform_broadcaster.h"
+#include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib_ros/convert.hpp"
@@ -38,6 +40,9 @@ using arma::fill::zeros;
 constexpr int MAX_LANDMARKS = 3; //TODO increase size
 constexpr int STATE_SIZE = 2*MAX_LANDMARKS + 3;
 constexpr double VERY_LARGE_NUMBER = 1e10;
+
+//Function prototypes
+std::tuple<double, double> relative_to_range_bearing(double x, double y);
 
 class NuSlam : public rclcpp::Node
 {
@@ -204,6 +209,7 @@ private:
   vec slam_last_state_ {STATE_SIZE, zeros}; //Init robot state guess to (0,0,0)
   mat slam_last_covariance_ {STATE_SIZE, STATE_SIZE, zeros}; //epsilon_t-1
   mat slam_process_noise_ {STATE_SIZE, STATE_SIZE, zeros}; //Q_bar
+  std::vector<bool> slam_landmark_seen_ = std::vector<bool>(MAX_LANDMARKS, false);
 
   /// \brief publish odometry estimate path
   void timer_path_callback() {
@@ -306,19 +312,52 @@ private:
 
     //KALMAN FILTER PREDICTION
     //Calculate state prediction
-    vec state_prediction_init = slam_last_state_;
-    state_prediction_init(0) = normalize_angle(state_prediction_init(0) + delta_odom.rotation());
-    state_prediction_init(1) += delta_odom.translation().x;
-    state_prediction_init(2) += delta_odom.translation().y;
+    vec state_prediction = slam_last_state_;
+    state_prediction(0) = normalize_angle(state_prediction(0) + delta_odom.rotation());
+    state_prediction(1) += delta_odom.translation().x;
+    state_prediction(2) += delta_odom.translation().y;
 
     //Calculate covariance prediction
     mat covariance_prediction_init = A*slam_last_covariance_*A.t() + slam_process_noise_;
 
 
+    //KALMAN FILTER CORRECTION
+    //iterate through sensor measurements
+    for (size_t i = 0; i < msg.markers.size(); i++) {
+      const auto & marker = msg.markers.at(i);
+
+      //Ignore any markers that are marked to "DELETE", they are out of range
+      if (marker.action == visualization_msgs::msg::Marker::DELETE) {
+        continue;
+      }
+
+      //Get range bearing measurement out of marker
+      auto [range, bearing] = relative_to_range_bearing(marker.pose.position.x, marker.pose.position.y);
+
+      if (!slam_landmark_seen_.at(i)) {
+        slam_landmark_seen_.at(i) = true;
+
+        //Initialize landmark measurement
+        state_prediction(3 + 2*i) = state_prediction(1) + range*cos(bearing + state_prediction(0));
+        state_prediction(3 + 2*i + 1) = state_prediction(2) + range*sin(bearing + state_prediction(0));
+      }
+
+    }
+
+    RCLCPP_INFO_STREAM(get_logger(), state_prediction);
+
     //Update last config
     slam_last_odom_location_ = turtlebot_.config().location;
   }
 };
+
+std::tuple<double, double> relative_to_range_bearing(double x, double y)
+{
+  return {
+    std::sqrt(std::pow(x,2) + std::pow(y,2)),
+    std::atan2(y,x)
+  };
+}
 
 /// \brief Run the node
 int main(int argc, char * argv[])
