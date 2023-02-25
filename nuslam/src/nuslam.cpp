@@ -313,12 +313,18 @@ private:
     //KALMAN FILTER PREDICTION
     //Calculate state prediction
     vec state_prediction = slam_last_state_;
-    state_prediction(0) = normalize_angle(state_prediction(0) + delta_odom.rotation());
-    state_prediction(1) += delta_odom.translation().x;
-    state_prediction(2) += delta_odom.translation().y;
+
+    //Temporary references for readability
+    auto & state_prediction_theta = state_prediction(0);
+    auto & state_prediction_x = state_prediction(1);
+    auto & state_prediction_y = state_prediction(2);
+
+    state_prediction_theta = normalize_angle(state_prediction(0) + delta_odom.rotation());
+    state_prediction_x += delta_odom.translation().x;
+    state_prediction_y += delta_odom.translation().y;
 
     //Calculate covariance prediction
-    mat covariance_prediction_init = A*slam_last_covariance_*A.t() + slam_process_noise_;
+    mat covariance_prediction = A*slam_last_covariance_*A.t() + slam_process_noise_;
 
 
     //KALMAN FILTER CORRECTION
@@ -331,6 +337,10 @@ private:
         continue;
       }
 
+      //Temporary references for readability
+      auto & state_prediction_m_x = state_prediction(3 + 2*i);
+      auto & state_prediction_m_y = state_prediction(3 + 2*i + 1);
+
       //Get range bearing measurement out of marker
       auto [range, bearing] = relative_to_range_bearing(marker.pose.position.x, marker.pose.position.y);
 
@@ -338,13 +348,35 @@ private:
         slam_landmark_seen_.at(i) = true;
 
         //Initialize landmark measurement
-        state_prediction(3 + 2*i) = state_prediction(1) + range*cos(bearing + state_prediction(0));
-        state_prediction(3 + 2*i + 1) = state_prediction(2) + range*sin(bearing + state_prediction(0));
+        state_prediction_m_x = state_prediction_x + range*cos(bearing + state_prediction_theta);
+        state_prediction_m_y = state_prediction_y + range*sin(bearing + state_prediction_theta);
       }
 
-    }
+      //Compute quantities for later use
+      auto del_x = state_prediction_m_x - state_prediction_x;
+      auto del_y = state_prediction_m_y - state_prediction_y;
+      auto d = std::pow(del_x, 2) + std::pow(del_y, 2);
+      auto sqrt_d = std::sqrt(d);
 
-    RCLCPP_INFO_STREAM(get_logger(), state_prediction);
+      //Construct Hi matrix
+      mat Hi {2, STATE_SIZE, zeros};
+      Hi(1,0) = -1.0;
+      Hi(0,1) = -del_x / sqrt_d;
+      Hi(1,1) = del_y / d;
+      Hi(0,2) = -del_y / sqrt_d;
+      Hi(1,2) = -del_x / d;
+      Hi(0,3 + 2*i) = del_x / sqrt_d;
+      Hi(1,3 + 2*i) = -del_y / d;
+      Hi(0,3 + 2*i + 1) = del_y / sqrt_d;
+      Hi(1,3 + 2*i + 1) = del_x / sqrt_d;
+
+      //Compute the theoretical landmark measurement given the current state estimate
+      vec meas_theo {sqrt_d, std::atan2(del_y, del_x)};
+
+      //Construct actual landmark measurement vector
+      vec meas_act {range, bearing};
+
+    }
 
     //Update last config
     slam_last_odom_location_ = turtlebot_.config().location;
