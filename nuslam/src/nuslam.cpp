@@ -3,6 +3,7 @@
 #include <array>
 #include <armadillo>
 #include <cmath>
+#include <tuple>
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -23,14 +24,17 @@ using turtlelib::Transform2D;
 using turtlelib::Vector2D;
 using turtlelib::Twist2D;
 using turtlelib::almost_equal;
+using turtlelib::normalize_angle;
 using turtlelib_ros::tf_to_pose_msg;
 
 using std::sin;
 using std::cos;
 using arma::mat;
+using arma::vec;
 using arma::eye;
 using arma::fill::zeros;
 
+//Constants
 constexpr int MAX_LANDMARKS = 3; //TODO increase size
 constexpr int STATE_SIZE = 2*MAX_LANDMARKS + 3;
 constexpr double VERY_LARGE_NUMBER = 1e10;
@@ -166,6 +170,17 @@ public:
 
     //SLAM
     slam_last_odom_location_ = turtlebot_.config().location;
+    
+    //Leave initial robot covariance estimate as 0s
+    //update object covariance estimates as very large numbers (infinity)
+    for (int i = 3; i < STATE_SIZE; i++) {
+      slam_last_covariance_(i,i) = VERY_LARGE_NUMBER;
+    }
+
+    //TODO - tune these arbitrary values
+    slam_process_noise_(0,0) = 1.0;
+    slam_process_noise_(1,1) = 1.0;
+    slam_process_noise_(2,2) = 1.0;
 
 
     RCLCPP_INFO_STREAM(get_logger(), "nuslam node started");
@@ -186,7 +201,9 @@ private:
   geometry_msgs::msg::PoseStamped config_pose_msg_;
   size_t path_num_points_;
   Transform2D slam_last_odom_location_;
-  Transform2D slam_last_location_; //Init robot state guess to (0,0,0)
+  vec slam_last_state_ {STATE_SIZE, zeros}; //Init robot state guess to (0,0,0)
+  mat slam_last_covariance_ {STATE_SIZE, STATE_SIZE, zeros}; //epsilon_t-1
+  mat slam_process_noise_ {STATE_SIZE, STATE_SIZE, zeros}; //Q_bar
 
   /// \brief publish odometry estimate path
   void timer_path_callback() {
@@ -275,23 +292,27 @@ private:
   /// \param msg 
   void fake_sensor_callback(const visualization_msgs::msg::MarkerArray & msg)
   {
-    //Calculate change in location from odometry
+    //Constructor of Transform2D automatically normalizes angles
     Transform2D delta_odom {
       turtlebot_.config().location.translation() - slam_last_odom_location_.translation(),
       turtlebot_.config().location.rotation() - slam_last_odom_location_.rotation()
     };
 
-    //Calculate state prediction
-    Transform2D location_prediction {
-      slam_last_location_.translation() + delta_odom.translation(),
-      slam_last_location_.rotation() + delta_odom.rotation()
-    };
 
     //Construct A matrix
     mat A = eye<mat>(STATE_SIZE, STATE_SIZE);
     A(1,0) += -delta_odom.translation().y;
     A(2,0) += delta_odom.translation().x;
 
+    //KALMAN FILTER PREDICTION
+    //Calculate state prediction
+    vec state_prediction_init = slam_last_state_;
+    state_prediction_init(0) = normalize_angle(state_prediction_init(0) + delta_odom.rotation());
+    state_prediction_init(1) += delta_odom.translation().x;
+    state_prediction_init(2) += delta_odom.translation().y;
+
+    //Calculate covariance prediction
+    mat covariance_prediction_init = A*slam_last_covariance_*A.t() + slam_process_noise_;
 
 
     //Update last config
