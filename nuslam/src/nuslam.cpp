@@ -207,7 +207,6 @@ public:
     slam_process_noise_(1,1) = kalman_process_noise_x;
     slam_process_noise_(2,2) = kalman_process_noise_y;
 
-    //TODO - tune these arbitrary values
     //R matrix
     for (int i = 0; i < 2*MAX_LANDMARKS; i++) {
       slam_sensor_noise_(i,i) = kalman_sensor_noise;

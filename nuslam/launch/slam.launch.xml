@@ -1,17 +1,38 @@
 <launch>
-    <!-- TODO add arguments and conditional launching -->
+    <!-- ARG START -->
+    <arg name="cmd_src" default="teleop"
+        description="Source for cmd_vel messages. Valid choices are: ['teleop', 'circle', 'none']"
+    />
+
+    <arg name="robot" default="nusim"
+        description="Simulation or other options for running robot nodes. Valid choices are: ['nusim', 'localhost', 'none']"
+    />
+
+    <arg name="use_rviz" default="true"
+        description="Start RVIZ to visualize robot. Valid choices are: ['true', 'false']"
+    />
+    <!-- ARG END -->
+
+    <!-- TODO add conditional launching -->
 
     <node pkg="rviz2" exec="rviz2"
         args="-d $(find-pkg-share nuslam)/config/sim.rviz"
+        if="$(eval '\'$(var robot)\' == \'nusim\' and \'$(var use_rviz)\' == \'true\'')"
     />
-    <!-- TODO pass in arguments -->
+
+    <node pkg="rviz2" exec="rviz2"
+        args="-d $(find-pkg-share nuslam)/config/real.rviz"
+        if="$(eval '\'$(var robot)\' == \'none\' and \'$(var use_rviz)\' == \'true\'')"
+    />
+    <!-- TODO fix real.rviz -->
 
     <include file="$(find-pkg-share nuturtle_control)/launch/start_robot.launch.xml">
+        <arg name="cmd_src" value="$(var cmd_src)"/>
+        <arg name="robot" value="$(var robot)"/>
         <arg name="use_rviz" value="false"/>
-        <!-- TODO pass in arguments -->
     </include>
 
-    <!-- Publish identity transform between nusim/world and odom -->
+    <!-- Publish identity transform between nusim/world and map -->
     <node pkg="tf2_ros" exec="static_transform_publisher"
         args="
         --frame-id nusim/world
