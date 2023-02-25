@@ -183,9 +183,16 @@ public:
     }
 
     //TODO - tune these arbitrary values
+    //Q_bar matrix
     slam_process_noise_(0,0) = 1.0;
     slam_process_noise_(1,1) = 1.0;
     slam_process_noise_(2,2) = 1.0;
+
+    //TODO - tune these arbitrary values
+    //R matrix
+    for (int i = 0; i < 2*MAX_LANDMARKS; i++) {
+      slam_sensor_noise_(i,i) = 1.0;
+    }
 
 
     RCLCPP_INFO_STREAM(get_logger(), "nuslam node started");
@@ -209,6 +216,7 @@ private:
   vec slam_last_state_ {STATE_SIZE, zeros}; //Init robot state guess to (0,0,0)
   mat slam_last_covariance_ {STATE_SIZE, STATE_SIZE, zeros}; //epsilon_t-1
   mat slam_process_noise_ {STATE_SIZE, STATE_SIZE, zeros}; //Q_bar
+  mat slam_sensor_noise_ {2*MAX_LANDMARKS, 2*MAX_LANDMARKS, zeros}; //R
   std::vector<bool> slam_landmark_seen_ = std::vector<bool>(MAX_LANDMARKS, false);
 
   /// \brief publish odometry estimate path
@@ -304,9 +312,11 @@ private:
       turtlebot_.config().location.rotation() - slam_last_odom_location_.rotation()
     };
 
+    //Construct identity matrix of the state size
+    mat I = eye<mat>(STATE_SIZE, STATE_SIZE);
 
     //Construct A matrix
-    mat A = eye<mat>(STATE_SIZE, STATE_SIZE);
+    mat A = I;
     A(1,0) += -delta_odom.translation().y;
     A(2,0) += delta_odom.translation().x;
 
@@ -319,7 +329,7 @@ private:
     auto & state_prediction_x = state_prediction(1);
     auto & state_prediction_y = state_prediction(2);
 
-    state_prediction_theta = normalize_angle(state_prediction(0) + delta_odom.rotation());
+    state_prediction_theta = normalize_angle(state_prediction_theta + delta_odom.rotation());
     state_prediction_x += delta_odom.translation().x;
     state_prediction_y += delta_odom.translation().y;
 
@@ -329,6 +339,7 @@ private:
 
     //KALMAN FILTER CORRECTION
     //iterate through sensor measurements
+    
     for (size_t i = 0; i < msg.markers.size(); i++) {
       const auto & marker = msg.markers.at(i);
 
@@ -370,16 +381,38 @@ private:
       Hi(0,3 + 2*i + 1) = del_y / sqrt_d;
       Hi(1,3 + 2*i + 1) = del_x / sqrt_d;
 
+      //Get transpose
+      mat Hi_t = Hi.t();
+
       //Compute the theoretical landmark measurement given the current state estimate
       vec meas_theo {sqrt_d, std::atan2(del_y, del_x)};
 
       //Construct actual landmark measurement vector
       vec meas_act {range, bearing};
 
-    }
+      //Calculate Kalman gain for this landmark
+      mat Ki = covariance_prediction * Hi_t * (Hi*covariance_prediction*Hi_t + slam_sensor_noise_.submat(2*i, 2*i, 2*i + 1, 2*i + 1)).i();
 
-    //Update last config
+      //Update the state prediction
+      state_prediction += Ki*(meas_act - meas_theo);
+
+      //Normalize angle again
+      state_prediction_theta = normalize_angle(state_prediction_theta);
+
+      //Update the covariance prediction
+      covariance_prediction *= I - Ki*Hi;
+    }
+    
+    //Save last odom config
     slam_last_odom_location_ = turtlebot_.config().location;
+
+    //Save last state prediction
+    slam_last_state_ = state_prediction;
+
+    //Save last covariance prediction;
+    slam_last_covariance_ = covariance_prediction;
+
+    RCLCPP_INFO_STREAM(get_logger(), slam_last_state_(0) << ", " << slam_last_state_(1) << ", " << slam_last_state_(2));
   }
 };
 
