@@ -117,6 +117,24 @@ public:
     path_num_points_ = get_parameter(
       "path.num_points").get_parameter_value().get<size_t>();
 
+    param.description = "Kalman filter process noise for theta coordinate.";
+    declare_parameter("kalman.process_noise.theta", 0.001, param);
+    auto kalman_process_noise_theta = get_parameter(
+      "kalman.process_noise.theta").get_parameter_value().get<double>();
+    param.description = "Kalman filter process noise for x coordinate.";
+    declare_parameter("kalman.process_noise.x", 0.001, param);
+    auto kalman_process_noise_x = get_parameter(
+      "kalman.process_noise.x").get_parameter_value().get<double>();
+    param.description = "Kalman filter process noise for y coordinate.";
+    declare_parameter("kalman.process_noise.y", 0.001, param);
+    auto kalman_process_noise_y = get_parameter(
+      "kalman.process_noise.y").get_parameter_value().get<double>();
+
+    param.description = "Kalman filter sensor noise.";
+    declare_parameter("kalman.sensor_noise", 0.1, param);
+    auto kalman_sensor_noise = get_parameter(
+      "kalman.sensor_noise").get_parameter_value().get<double>();
+
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
@@ -184,16 +202,15 @@ public:
       slam_last_covariance_(i,i) = VERY_LARGE_NUMBER;
     }
 
-    //TODO - tune these arbitrary values
     //Q_bar matrix
-    slam_process_noise_(0,0) = 0.001;
-    slam_process_noise_(1,1) = 0.001;
-    slam_process_noise_(2,2) = 0.001;
+    slam_process_noise_(0,0) = kalman_process_noise_theta;
+    slam_process_noise_(1,1) = kalman_process_noise_x;
+    slam_process_noise_(2,2) = kalman_process_noise_y;
 
     //TODO - tune these arbitrary values
     //R matrix
     for (int i = 0; i < 2*MAX_LANDMARKS; i++) {
-      slam_sensor_noise_(i,i) = 0.1;
+      slam_sensor_noise_(i,i) = kalman_sensor_noise;
     }
 
     //SLAM TFs
@@ -308,8 +325,8 @@ private:
     broadcaster_->sendTransform(odom_tf_);
   }
 
-  /// \brief TODO
-  /// \param msg 
+  /// \brief Subscribe to fake sensor and compute extended Kalman filter SLAM based on measurements
+  /// \param msg - contains markers which represent the fake sensor measurements
   void fake_sensor_callback(const visualization_msgs::msg::MarkerArray & msg)
   {
     //Constructor of Transform2D automatically normalizes angles
