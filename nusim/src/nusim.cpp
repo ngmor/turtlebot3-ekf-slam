@@ -204,6 +204,11 @@ public:
     display_collision_cylinder_ = 
       get_parameter("display_collision_cylinder").get_parameter_value().get<bool>();
 
+    param.description = "Allow rotation when colliding with an obstacle.";
+    declare_parameter("allow_collision_rotation", true, param);
+    allow_collision_rotation_ =
+      get_parameter("allow_collision_rotation").get_parameter_value().get<bool>();
+
     param.description =
       "List of x starting positions of obstacles (m). Arbitrary length, but must match length of y.";
     declare_parameter("obstacles.x", std::vector<double> {}, param);
@@ -460,7 +465,7 @@ private:
   std::vector<double> obstacles_x_, obstacles_y_;
   double obstacles_r_, x_length_, y_length_, max_range_, collision_radius_, collision_dist_;
   visualization_msgs::msg::MarkerArray detected_obstacles_, obstacle_and_wall_markers_;
-  bool display_collision_cylinder_;
+  bool display_collision_cylinder_, allow_collision_rotation_;
   visualization_msgs::msg::Marker collision_cylinder_marker_;
   std::vector<Transform2D> obstacle_abs_tfs_, obstacle_rel_tfs_;
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
@@ -579,10 +584,17 @@ private:
 
         //New position should be the collision distance away from the obstacle in the direction
         //of this vector
-        turtlebot_.set_location({
-          Tabs.translation() + normalize(v)*collision_dist_,  //new location
-          turtlebot_last_config_.location.rotation()          //retain rotation
-        });
+        if (allow_collision_rotation_) {
+          turtlebot_.set_location({
+            Tabs.translation() + normalize(v)*collision_dist_,  //new location
+            turtlebot_.config().location.rotation()             //new rotation
+          });
+        } else {
+          turtlebot_.set_location({
+            Tabs.translation() + normalize(v)*collision_dist_,  //new location
+            turtlebot_last_config_.location.rotation()          //retain rotation
+          });
+        }
 
         break;
       }

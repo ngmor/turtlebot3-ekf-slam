@@ -162,7 +162,7 @@ namespace turtlelib
     Transform2D::Transform2D(double rot): Transform2D(Vector2D {0.0, 0.0}, rot) {}
 
     Transform2D::Transform2D(Vector2D trans, double rot)
-    : trans_{trans}, rot_{rot}//rot_{normalize_angle(rot)}
+    : trans_{trans}, rot_{normalize_angle(rot)}
     {
         cache_trig();
     }
@@ -212,7 +212,7 @@ namespace turtlelib
         rot_ += rhs.rotation();
 
         //Bound rotation
-        // rot_ = normalize_angle(rot_);
+        rot_ = normalize_angle(rot_);
 
         //Cache trig values
         cache_trig();

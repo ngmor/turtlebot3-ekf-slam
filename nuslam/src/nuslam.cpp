@@ -186,14 +186,14 @@ public:
 
     //TODO - tune these arbitrary values
     //Q_bar matrix
-    slam_process_noise_(0,0) = 1.0;
-    slam_process_noise_(1,1) = 1.0;
-    slam_process_noise_(2,2) = 1.0;
+    slam_process_noise_(0,0) = 0.001;
+    slam_process_noise_(1,1) = 0.001;
+    slam_process_noise_(2,2) = 0.001;
 
     //TODO - tune these arbitrary values
     //R matrix
     for (int i = 0; i < 2*MAX_LANDMARKS; i++) {
-      slam_sensor_noise_(i,i) = 1.0;
+      slam_sensor_noise_(i,i) = 0.1;
     }
 
     //SLAM TFs
@@ -315,7 +315,7 @@ private:
     //Constructor of Transform2D automatically normalizes angles
     Transform2D delta_odom {
       turtlebot_.config().location.translation() - slam_last_odom_location_.translation(),
-      normalize_angle(turtlebot_.config().location.rotation() - slam_last_odom_location_.rotation())
+      turtlebot_.config().location.rotation() - slam_last_odom_location_.rotation()
     };
 
     //Construct identity matrix of the state size
@@ -396,11 +396,6 @@ private:
       //Construct actual landmark measurement vector
       vec meas_act {range, bearing};
 
-      // if (i == 0) {
-      // RCLCPP_INFO_STREAM(get_logger(), "ACT: " << meas_act.t());
-      // RCLCPP_INFO_STREAM(get_logger(), "THEO: " << meas_theo.t());
-      // }
-
       //Calculate Kalman gain for this landmark
       mat Ki = covariance_prediction * Hi_t * (Hi*covariance_prediction*Hi_t + slam_sensor_noise_.submat(2*i, 2*i, 2*i + 1, 2*i + 1)).i();
 
@@ -434,9 +429,6 @@ private:
 
     //Broadcast transform
     broadcaster_->sendTransform(map_odom_tf_);
-
-
-    RCLCPP_INFO_STREAM(get_logger(), slam_last_state_(0) << ", " << slam_last_state_(1) << ", " << slam_last_state_(2));
   }
 };
 
