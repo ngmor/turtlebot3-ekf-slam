@@ -315,7 +315,7 @@ private:
     //Constructor of Transform2D automatically normalizes angles
     Transform2D delta_odom {
       turtlebot_.config().location.translation() - slam_last_odom_location_.translation(),
-      turtlebot_.config().location.rotation() - slam_last_odom_location_.rotation()
+      normalize_angle(turtlebot_.config().location.rotation() - slam_last_odom_location_.rotation())
     };
 
     //Construct identity matrix of the state size
@@ -391,7 +391,7 @@ private:
       mat Hi_t = Hi.t();
 
       //Compute the theoretical landmark measurement given the current state estimate
-      vec meas_theo {sqrt_d, std::atan2(del_y, del_x) - state_prediction_theta};
+      vec meas_theo {sqrt_d, normalize_angle(std::atan2(del_y, del_x) - state_prediction_theta)};
 
       //Construct actual landmark measurement vector
       vec meas_act {range, bearing};
