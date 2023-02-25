@@ -2,6 +2,7 @@
 #include <string>
 #include <array>
 #include <armadillo>
+#include <cmath>
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -11,6 +12,7 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/transform_broadcaster.h"
+#include "visualization_msgs/msg/marker_array.hpp"
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib_ros/convert.hpp"
 
@@ -20,7 +22,18 @@ using turtlelib::Wheel;
 using turtlelib::Transform2D;
 using turtlelib::Vector2D;
 using turtlelib::Twist2D;
+using turtlelib::almost_equal;
 using turtlelib_ros::tf_to_pose_msg;
+
+using std::sin;
+using std::cos;
+using arma::mat;
+using arma::eye;
+using arma::fill::zeros;
+
+constexpr int MAX_LANDMARKS = 3; //TODO increase size
+constexpr int STATE_SIZE = 2*MAX_LANDMARKS + 3;
+constexpr double VERY_LARGE_NUMBER = 1e10;
 
 class NuSlam : public rclcpp::Node
 {
@@ -116,6 +129,11 @@ public:
       10,
       std::bind(&NuSlam::joint_states_callback, this, std::placeholders::_1)
     );
+    sub_fake_sensor_ = create_subscription<visualization_msgs::msg::MarkerArray>(
+      "fake_sensor",
+      10,
+      std::bind(&NuSlam::fake_sensor_callback, this, std::placeholders::_1)
+    );
 
     //Broadcasters
     broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -146,7 +164,8 @@ public:
     config_pose_msg_.header.stamp = get_clock()->now();
     path_.poses.push_back(config_pose_msg_);
 
-
+    //SLAM
+    slam_last_odom_location_ = turtlebot_.config().location;
 
 
     RCLCPP_INFO_STREAM(get_logger(), "nuslam node started");
@@ -154,8 +173,9 @@ public:
 private:
   rclcpp::TimerBase::SharedPtr timer_path_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
-  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_joint_states_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path_;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_joint_states_;
+  rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr sub_fake_sensor_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster_;
 
   std::string body_id_, odom_id_, wheel_left_joint_, wheel_right_joint_;
@@ -165,6 +185,8 @@ private:
   nav_msgs::msg::Path path_;
   geometry_msgs::msg::PoseStamped config_pose_msg_;
   size_t path_num_points_;
+  Transform2D slam_last_odom_location_;
+  Transform2D slam_last_location_; //Init robot state guess to (0,0,0)
 
   /// \brief publish odometry estimate path
   void timer_path_callback() {
@@ -247,6 +269,33 @@ private:
 
     //Broadcast transform
     broadcaster_->sendTransform(odom_tf_);
+  }
+
+  /// \brief TODO
+  /// \param msg 
+  void fake_sensor_callback(const visualization_msgs::msg::MarkerArray & msg)
+  {
+    //Calculate change in location from odometry
+    Transform2D delta_odom {
+      turtlebot_.config().location.translation() - slam_last_odom_location_.translation(),
+      turtlebot_.config().location.rotation() - slam_last_odom_location_.rotation()
+    };
+
+    //Calculate state prediction
+    Transform2D location_prediction {
+      slam_last_location_.translation() + delta_odom.translation(),
+      slam_last_location_.rotation() + delta_odom.rotation()
+    };
+
+    //Construct A matrix
+    mat A = eye<mat>(STATE_SIZE, STATE_SIZE);
+    A(1,0) += -delta_odom.translation().y;
+    A(2,0) += delta_odom.translation().x;
+
+
+
+    //Update last config
+    slam_last_odom_location_ = turtlebot_.config().location;
   }
 };
 
