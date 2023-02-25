@@ -28,6 +28,7 @@ using turtlelib::Twist2D;
 using turtlelib::almost_equal;
 using turtlelib::normalize_angle;
 using turtlelib_ros::tf_to_pose_msg;
+using turtlelib_ros::tf_to_tf_msg;
 
 using std::sin;
 using std::cos;
@@ -37,6 +38,7 @@ using arma::eye;
 using arma::fill::zeros;
 
 //Constants
+constexpr std::string_view MAP_FRAME = "map";
 constexpr int MAX_LANDMARKS = 3; //TODO increase size
 constexpr int STATE_SIZE = 2*MAX_LANDMARKS + 3;
 constexpr double VERY_LARGE_NUMBER = 1e10;
@@ -194,6 +196,10 @@ public:
       slam_sensor_noise_(i,i) = 1.0;
     }
 
+    //SLAM TFs
+    map_odom_tf_.header.frame_id = MAP_FRAME;
+    map_odom_tf_.child_frame_id = odom_id_;
+    map_odom_tf_.transform.translation.z = 0.0;
 
     RCLCPP_INFO_STREAM(get_logger(), "nuslam node started");
   }
@@ -208,7 +214,7 @@ private:
   std::string body_id_, odom_id_, wheel_left_joint_, wheel_right_joint_;
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
   nav_msgs::msg::Odometry odom_msg_;
-  geometry_msgs::msg::TransformStamped odom_tf_;
+  geometry_msgs::msg::TransformStamped odom_tf_, map_odom_tf_;
   nav_msgs::msg::Path path_;
   geometry_msgs::msg::PoseStamped config_pose_msg_;
   size_t path_num_points_;
@@ -385,10 +391,15 @@ private:
       mat Hi_t = Hi.t();
 
       //Compute the theoretical landmark measurement given the current state estimate
-      vec meas_theo {sqrt_d, std::atan2(del_y, del_x)};
+      vec meas_theo {sqrt_d, std::atan2(del_y, del_x) - state_prediction_theta};
 
       //Construct actual landmark measurement vector
       vec meas_act {range, bearing};
+
+      // if (i == 0) {
+      // RCLCPP_INFO_STREAM(get_logger(), "ACT: " << meas_act.t());
+      // RCLCPP_INFO_STREAM(get_logger(), "THEO: " << meas_theo.t());
+      // }
 
       //Calculate Kalman gain for this landmark
       mat Ki = covariance_prediction * Hi_t * (Hi*covariance_prediction*Hi_t + slam_sensor_noise_.submat(2*i, 2*i, 2*i + 1, 2*i + 1)).i();
@@ -400,7 +411,7 @@ private:
       state_prediction_theta = normalize_angle(state_prediction_theta);
 
       //Update the covariance prediction
-      covariance_prediction *= I - Ki*Hi;
+      covariance_prediction = (I - Ki*Hi)*covariance_prediction;
     }
     
     //Save last odom config
@@ -411,6 +422,19 @@ private:
 
     //Save last covariance prediction;
     slam_last_covariance_ = covariance_prediction;
+
+    //Determine the map to odometry transformation
+    Transform2D Tmr {{state_prediction_x, state_prediction_y}, state_prediction_theta};
+
+    auto Tmo = Tmr*turtlebot_.config().location.inv();
+
+    //Build transform
+    map_odom_tf_.transform = tf_to_tf_msg(Tmo);
+    map_odom_tf_.header.stamp = get_clock()->now();
+
+    //Broadcast transform
+    broadcaster_->sendTransform(map_odom_tf_);
+
 
     RCLCPP_INFO_STREAM(get_logger(), slam_last_state_(0) << ", " << slam_last_state_(1) << ", " << slam_last_state_(2));
   }
