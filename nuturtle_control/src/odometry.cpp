@@ -8,8 +8,11 @@
 ///     wheel_right (string): The name of the robot's right wheel joint (REQUIRED)
 ///     track_width (double): The wheel track width in meters (REQUIRED)
 ///     wheel_radius (double): The wheel radius in meters (REQUIRED)
+///     path.rate (double): The rate the path is updated at (Hz).
+///     path.num_points (int): Number of path points retained before deleting. Set to 0 to disable limit.
 /// PUBLISHERS:
 ///     odom (nav_msgs/msg/Odometry): the calculated odometry from the input joint states
+///     path (nav_msgs/msg/Path): the path data determined from the odometry calculations
 /// SUBSCRIBERS:
 ///     joint_states (sensor_msgs/msg/JointState): the robot's joint states
 /// SERVERS:
