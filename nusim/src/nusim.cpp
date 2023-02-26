@@ -175,7 +175,7 @@ public:
     declare_parameter("path.rate", 5.0, param);
     auto path_interval = 1.0 / get_parameter("path.rate").get_parameter_value().get<double>();
 
-    param.description = 
+    param.description =
       "Number of path points retained before deleting. Set to 0 to disable limit.";
     declare_parameter("path.num_points", 100, param);
     path_num_points_ = get_parameter(
@@ -201,7 +201,7 @@ public:
 
     param.description = "Activates a marker to display collision cylinder of the robot.";
     declare_parameter("display_collision_cylinder", false, param);
-    display_collision_cylinder_ = 
+    display_collision_cylinder_ =
       get_parameter("display_collision_cylinder").get_parameter_value().get<bool>();
 
     param.description = "Allow rotation when colliding with an obstacle.";
@@ -246,7 +246,7 @@ public:
     declare_parameter("y_length", 5.0, param);
     y_length_ = get_parameter("y_length").get_parameter_value().get<double>();
 
-    param.description = 
+    param.description =
       "Standard deviation for noise on input wheel commands (rad/s). Must be nonnegative.";
     declare_parameter("input_noise", 0.0, param);
     auto input_noise = get_parameter("input_noise").get_parameter_value().get<double>();
@@ -260,12 +260,12 @@ public:
 
     wheel_vel_dist_ = std::normal_distribution<> {0.0, input_noise};
 
-    param.description = 
+    param.description =
       "Bound of fraction of slip experienced by the wheels during motion (decimal fraction)."
       " Must be nonnegative.";
     declare_parameter("slip_fraction", 0.0, param);
     auto slip_fraction = get_parameter("slip_fraction").get_parameter_value().get<double>();
-    
+
     if (!draw_only_ && slip_fraction < 0.0) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
@@ -273,12 +273,12 @@ public:
       required_parameters_received = false;
     }
 
-    slip_dist_ = std::uniform_real_distribution <> {-slip_fraction, slip_fraction};
+    slip_dist_ = std::uniform_real_distribution<> {-slip_fraction, slip_fraction};
 
-    param.description = 
+    param.description =
       "Standard deviation for noise in obstacle sensing (m). Must be nonnegative.";
     declare_parameter("basic_sensor_variance", 0.0, param);
-    auto basic_sensor_variance = 
+    auto basic_sensor_variance =
       get_parameter("basic_sensor_variance").get_parameter_value().get<double>();
 
     if (!draw_only_ && basic_sensor_variance < 0.0) {
@@ -307,11 +307,11 @@ public:
     lidar_scan_.angle_min = get_parameter("lidar.angle_min").get_parameter_value().get<double>();
 
     param.description = "Max angle for lidar scanning (rad).";
-    declare_parameter("lidar.angle_max", 2.0*PI, param);
+    declare_parameter("lidar.angle_max", 2.0 * PI, param);
     lidar_scan_.angle_max = get_parameter("lidar.angle_max").get_parameter_value().get<double>();
 
     param.description = "Angle increment for lidar scanning (rad).";
-    declare_parameter("lidar.angle_incr", PI/180.0, param);
+    declare_parameter("lidar.angle_incr", PI / 180.0, param);
     lidar_scan_.angle_increment =
       get_parameter("lidar.angle_incr").get_parameter_value().get<double>();
 
@@ -319,10 +319,10 @@ public:
     declare_parameter("lidar.resolution", 0.0, param); //TODO figure out actual turtlebot lidar resolution
     lidar_resolution_ = get_parameter("lidar.resolution").get_parameter_value().get<double>();
 
-    param.description = 
+    param.description =
       "Standard deviation for noise in lidar scan (m). Must be nonnegative.";
     declare_parameter("lidar.noise", 0.0, param); //TODO inject noise
-    auto lidar_noise = 
+    auto lidar_noise =
       get_parameter("lidar.noise").get_parameter_value().get<double>();
 
     if (!draw_only_ && lidar_noise < 0.0) {
@@ -337,7 +337,7 @@ public:
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
-        "Required parameters were not received or were invalid. Please provide valid parameters."
+              "Required parameters were not received or were invalid. Please provide valid parameters."
       );
     }
 
@@ -360,7 +360,7 @@ public:
 
     //Publishers
     pub_obstacles_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
-    
+
     if (!draw_only_) {
       pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
       pub_collision_cylinder_ =
@@ -418,13 +418,16 @@ public:
 
       lidar_scan_.header.frame_id = LIDAR_GROUND_TRUTH_FRAME;
       //Reserve enough size in the ranges vector for all the angle increments
-      lidar_scan_.ranges.reserve(static_cast<size_t>(
-        std::ceil((lidar_scan_.angle_max - lidar_scan_.angle_min) / lidar_scan_.angle_increment)));
+      lidar_scan_.ranges.reserve(
+        static_cast<size_t>(
+          std::ceil(
+            (lidar_scan_.angle_max - lidar_scan_.angle_min) /
+            lidar_scan_.angle_increment)));
       //Maximum possible detected items at a certain angle is number of obstacles + 4 walls
       possible_lidar_ranges_.reserve(obstacles_x_.size() + 4);
 
       path_.header.frame_id = WORLD_FRAME;
-      
+
       config_pose_msg_.pose = tf_to_pose_msg(turtlebot_.config().location);
       config_pose_msg_.header.stamp = get_clock()->now();
       path_.poses.push_back(config_pose_msg_);
@@ -561,19 +564,20 @@ private:
   }
 
   /// \brief detect collisions and update robot position accordingly
-  void collision_detection() {
+  void collision_detection()
+  {
 
     // Iterate through all obstacles and calculate relative transforms
-    for (std::size_t i = 0; i < obstacle_abs_tfs_.size(); i++ ) {
+    for (std::size_t i = 0; i < obstacle_abs_tfs_.size(); i++) {
       const auto & Tabs = obstacle_abs_tfs_.at(i);
       auto & Trel = obstacle_rel_tfs_.at(i);
 
       //Calculate relative transformation of obstacle to robot
-      Trel = turtlebot_.config().location.inv()*Tabs;
+      Trel = turtlebot_.config().location.inv() * Tabs;
     }
 
     //Check if we are colliding with any obstacle
-    for (std::size_t i = 0; i < obstacle_rel_tfs_.size(); i++ ) {
+    for (std::size_t i = 0; i < obstacle_rel_tfs_.size(); i++) {
       //If the magnitude of the translation between the obstacle and the robot is less
       //than the collision distance, a collision has occurred.
       if (obstacle_rel_tfs_.at(i).translation().magnitude() < collision_dist_) {
@@ -585,13 +589,15 @@ private:
         //New position should be the collision distance away from the obstacle in the direction
         //of this vector
         if (allow_collision_rotation_) {
-          turtlebot_.set_location({
-            Tabs.translation() + normalize(v)*collision_dist_,  //new location
+          turtlebot_.set_location(
+          {
+            Tabs.translation() + normalize(v) * collision_dist_,  //new location
             turtlebot_.config().location.rotation()             //new rotation
           });
         } else {
-          turtlebot_.set_location({
-            Tabs.translation() + normalize(v)*collision_dist_,  //new location
+          turtlebot_.set_location(
+          {
+            Tabs.translation() + normalize(v) * collision_dist_,  //new location
             turtlebot_last_config_.location.rotation()          //retain rotation
           });
         }
@@ -657,7 +663,7 @@ private:
 
     wall_lines_.reserve(4);
     //bottom wall
-    wall_lines_.push_back({{-x_half_length, -y_half_length},{x_half_length, -y_half_length}});
+    wall_lines_.push_back({{-x_half_length, -y_half_length}, {x_half_length, -y_half_length}});
     //top wall
     wall_lines_.push_back({{-x_half_length, y_half_length}, {x_half_length, y_half_length}});
     //left wall
@@ -692,7 +698,8 @@ private:
       detected_obstacles_.markers.push_back(marker);
 
       //Store transform in world frame
-      obstacle_abs_tfs_.push_back({
+      obstacle_abs_tfs_.push_back(
+      {
         {
           marker.pose.position.x,
           marker.pose.position.y
@@ -701,7 +708,8 @@ private:
       });
 
       //Store as circles for lidar sim
-      obstacle_circles_.push_back({
+      obstacle_circles_.push_back(
+      {
         {
           marker.pose.position.x,
           marker.pose.position.y
@@ -766,8 +774,9 @@ private:
   }
 
   /// \brief publish fake sensor data with noise
-  void publish_fake_sensor() {
-    for (std::size_t i = 0; i < obstacle_rel_tfs_.size(); i++ ) {
+  void publish_fake_sensor()
+  {
+    for (std::size_t i = 0; i < obstacle_rel_tfs_.size(); i++) {
       const auto & Trel = obstacle_rel_tfs_.at(i);
       auto & marker = detected_obstacles_.markers.at(i);
 
@@ -800,7 +809,8 @@ private:
   }
 
   /// \brief publish lidar sensor data with noise
-  void publish_lidar_scan() {
+  void publish_lidar_scan()
+  {
 
     //Update stamp to match simulation
     lidar_scan_.header.stamp = current_time_;
@@ -817,10 +827,10 @@ private:
     std::vector<Vector2D> intersection_points;
 
     //calculate 2D location of lidar frame
-    auto Tlidar = turtlebot_.config().location*ROBOT_LIDAR_TF;
+    auto Tlidar = turtlebot_.config().location * ROBOT_LIDAR_TF;
 
     for (auto angle = lidar_scan_.angle_min; angle < lidar_scan_.angle_max;
-         angle += lidar_scan_.angle_increment)
+      angle += lidar_scan_.angle_increment)
     {
       //Clear list of possible ranges
       possible_lidar_ranges_.clear();
@@ -831,14 +841,14 @@ private:
       //Construct laser scan line segment using trigonometry and the current position of the turtlebot
       //Start point of scan is at min scan range at the world angle away from the robot's position
       scan_start = Vector2D {
-        Tlidar.translation().x + lidar_scan_.range_min*std::cos(world_angle),
-        Tlidar.translation().y + lidar_scan_.range_min*std::sin(world_angle)
+        Tlidar.translation().x + lidar_scan_.range_min * std::cos(world_angle),
+        Tlidar.translation().y + lidar_scan_.range_min * std::sin(world_angle)
       };
 
       //End point of scan is at max scan range at the world angle away from the robot's position
       scan_end = Vector2D {
-        Tlidar.translation().x + lidar_scan_.range_max*std::cos(world_angle),
-        Tlidar.translation().y + lidar_scan_.range_max*std::sin(world_angle)
+        Tlidar.translation().x + lidar_scan_.range_max * std::cos(world_angle),
+        Tlidar.translation().y + lidar_scan_.range_max * std::sin(world_angle)
       };
 
       //Construct line segment representing the scan
@@ -870,7 +880,10 @@ private:
           }
 
           //Add minimum range to possible lidar ranges
-          possible_lidar_ranges_.push_back(*std::min_element(point_ranges.begin(), point_ranges.end()));
+          possible_lidar_ranges_.push_back(
+            *std::min_element(
+              point_ranges.begin(),
+              point_ranges.end()));
         }
       }
 
@@ -902,20 +915,21 @@ private:
   }
 
   /// \brief publish ground truth path
-  void timer_path_callback() {
+  void timer_path_callback()
+  {
     static Transform2D last_published_tf = turtlebot_.config().location;
 
     //Only add a new pose to the path if the turtlebot has moved
     if (!almost_equal(last_published_tf, turtlebot_.config().location)) {
-      
+
       config_pose_msg_.pose = tf_to_pose_msg(turtlebot_.config().location);
       config_pose_msg_.header.stamp = current_time_;
-      
+
       //Remove oldest element if we've reached the max number of path points
       if (path_num_points_ != 0 && path_.poses.size() >= path_num_points_) {
         path_.poses.erase(path_.poses.begin());
       }
-      
+
       path_.poses.push_back(config_pose_msg_);
 
       last_published_tf = turtlebot_.config().location;
@@ -942,7 +956,7 @@ private:
       ) / motor_cmd_per_rad_sec_;
 
     //If wheel command is not 0 and we have nonzero standard deviation, inject input noise
-    if (wheel_vel_dist_.stddev() != 0.0){
+    if (wheel_vel_dist_.stddev() != 0.0) {
       if (!almost_equal(wheel_vel_.left, 0.0)) {
         wheel_vel_.left += wheel_vel_dist_(get_random());
       }
@@ -974,12 +988,13 @@ private:
   )
   {
     //Teleport current pose, retain current wheel positions
-    turtlebot_.set_location({
-        {
-          request->config.x,
-          request->config.y
-        },
-        request->config.theta
+    turtlebot_.set_location(
+    {
+      {
+        request->config.x,
+        request->config.y
+      },
+      request->config.theta
     });
   }
 };
@@ -989,12 +1004,12 @@ private:
 /// \return the reference to the psuedo-random number generator object
 std::mt19937 & get_random()
 {
-    // static variables inside a function are created once and persist for the remainder of the program
-    static std::random_device rd{}; 
-    static std::mt19937 mt{rd()};
-    // we return a reference to the pseudo-random number generator object. This is always the
-    // same object every time get_random is called
-    return mt;
+  // static variables inside a function are created once and persist for the remainder of the program
+  static std::random_device rd{};
+  static std::mt19937 mt{rd()};
+  // we return a reference to the pseudo-random number generator object. This is always the
+  // same object every time get_random is called
+  return mt;
 }
 
 /// \brief Run the node

@@ -108,7 +108,7 @@ public:
     declare_parameter("path.rate", 5.0, param);
     auto path_interval = 1.0 / get_parameter("path.rate").get_parameter_value().get<double>();
 
-    param.description = 
+    param.description =
       "Number of path points retained before deleting. Set to 0 to disable limit.";
     declare_parameter("path.num_points", 100, param);
     path_num_points_ = get_parameter(
@@ -117,7 +117,7 @@ public:
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
-        "Required parameters were not received or were invalid. Please provide valid parameters."
+              "Required parameters were not received or were invalid. Please provide valid parameters."
       );
     }
 
@@ -173,12 +173,10 @@ public:
     //Init config pose message and path message
     config_pose_msg_.header.frame_id = odom_id_;
     path_.header.frame_id = odom_id_;
-    
+
     config_pose_msg_.pose = tf_to_pose_msg(turtlebot_.config().location);
     config_pose_msg_.header.stamp = get_clock()->now();
     path_.poses.push_back(config_pose_msg_);
-
-
 
 
     RCLCPP_INFO_STREAM(get_logger(), "odometry node started");
@@ -199,23 +197,24 @@ private:
   nav_msgs::msg::Path path_;
   geometry_msgs::msg::PoseStamped config_pose_msg_;
   size_t path_num_points_;
-  
+
 
   /// \brief publish odometry estimate path
-  void timer_path_callback() {
+  void timer_path_callback()
+  {
     static Transform2D last_published_tf = turtlebot_.config().location;
 
     //Only add a new pose to the path if the turtlebot has moved
     if (!almost_equal(last_published_tf, turtlebot_.config().location)) {
-      
+
       config_pose_msg_.pose = odom_msg_.pose.pose;
       config_pose_msg_.header.stamp = odom_msg_.header.stamp;
-      
+
       //Remove oldest element if we've reached the max number of path points
       if (path_num_points_ != 0 && path_.poses.size() >= path_num_points_) {
         path_.poses.erase(path_.poses.begin());
       }
-      
+
       path_.poses.push_back(config_pose_msg_);
 
       last_published_tf = turtlebot_.config().location;
@@ -295,7 +294,8 @@ private:
     //ros2 service call /initial_pose nuturtle_control/srv/InitialPose "{x: 0., y: 0., theta: 0.}"
 
     //Update configuration, but retain current wheel positions
-    turtlebot_.set_location({
+    turtlebot_.set_location(
+    {
       {
         request->config.x,
         request->config.y

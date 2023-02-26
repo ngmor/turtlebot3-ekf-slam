@@ -40,7 +40,7 @@ using arma::fill::zeros;
 //Constants
 constexpr std::string_view MAP_FRAME = "map";
 constexpr int MAX_LANDMARKS = 20; //TODO increase size
-constexpr int STATE_SIZE = 2*MAX_LANDMARKS + 3;
+constexpr int STATE_SIZE = 2 * MAX_LANDMARKS + 3;
 constexpr double VERY_LARGE_NUMBER = 1e10;
 constexpr double LANDMARK_HEIGHT = 0.25;
 constexpr double LANDMARK_RADIUS = 0.038;
@@ -110,7 +110,7 @@ public:
       required_parameters_received = false;
     }
 
-    param.description = 
+    param.description =
       "Number of path points retained before deleting. Set to 0 to disable limit.";
     declare_parameter("path.num_points", 100, param);
     path_num_points_ = get_parameter(
@@ -137,14 +137,15 @@ public:
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
-        "Required parameters were not received or were invalid. Please provide valid parameters."
+              "Required parameters were not received or were invalid. Please provide valid parameters."
       );
     }
 
     //Publishers
     pub_odom_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
     pub_path_ = create_publisher<nav_msgs::msg::Path>("path", 10);
-    pub_estimated_landmarks_ = create_publisher<visualization_msgs::msg::MarkerArray>("estimated_landmarks", 10);
+    pub_estimated_landmarks_ = create_publisher<visualization_msgs::msg::MarkerArray>(
+      "estimated_landmarks", 10);
 
     //Subscribers
     sub_joint_states_ = create_subscription<sensor_msgs::msg::JointState>(
@@ -184,21 +185,21 @@ public:
 
     //SLAM
     slam_last_odom_location_ = turtlebot_.config().location;
-    
+
     //Leave initial robot covariance estimate as 0s
     //update object covariance estimates as very large numbers (infinity)
     for (int i = 3; i < STATE_SIZE; i++) {
-      slam_last_covariance_(i,i) = VERY_LARGE_NUMBER;
+      slam_last_covariance_(i, i) = VERY_LARGE_NUMBER;
     }
 
     //Q_bar matrix
-    slam_process_noise_(0,0) = kalman_process_noise_theta;
-    slam_process_noise_(1,1) = kalman_process_noise_x;
-    slam_process_noise_(2,2) = kalman_process_noise_y;
+    slam_process_noise_(0, 0) = kalman_process_noise_theta;
+    slam_process_noise_(1, 1) = kalman_process_noise_x;
+    slam_process_noise_(2, 2) = kalman_process_noise_y;
 
     //R matrix
-    for (int i = 0; i < 2*MAX_LANDMARKS; i++) {
-      slam_sensor_noise_(i,i) = kalman_sensor_noise;
+    for (int i = 0; i < 2 * MAX_LANDMARKS; i++) {
+      slam_sensor_noise_(i, i) = kalman_sensor_noise;
     }
 
     //SLAM TFs
@@ -221,13 +222,14 @@ public:
 
     //Path from SLAM
     path_.header.frame_id = MAP_FRAME;
-    
+
     config_pose_msg_.pose = tf_to_pose_msg(turtlebot_.config().location);
     config_pose_msg_.header.stamp = get_clock()->now();
     path_.poses.push_back(config_pose_msg_);
 
     RCLCPP_INFO_STREAM(get_logger(), "nuslam node started");
   }
+
 private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path_;
@@ -247,7 +249,7 @@ private:
   vec slam_last_state_ {STATE_SIZE, zeros}; //Init robot state guess to (0,0,0)
   mat slam_last_covariance_ {STATE_SIZE, STATE_SIZE, zeros}; //epsilon_t-1
   mat slam_process_noise_ {STATE_SIZE, STATE_SIZE, zeros}; //Q_bar
-  mat slam_sensor_noise_ {2*MAX_LANDMARKS, 2*MAX_LANDMARKS, zeros}; //R
+  mat slam_sensor_noise_ {2 * MAX_LANDMARKS, 2 * MAX_LANDMARKS, zeros}; //R
   std::vector<bool> slam_landmark_seen_ = std::vector<bool>(MAX_LANDMARKS, false);
   visualization_msgs::msg::Marker default_landmark_;
 
@@ -322,8 +324,8 @@ private:
 
     //Construct A matrix
     mat A = I;
-    A(1,0) += -delta_odom.translation().y;
-    A(2,0) += delta_odom.translation().x;
+    A(1, 0) += -delta_odom.translation().y;
+    A(2, 0) += delta_odom.translation().x;
 
     //KALMAN FILTER PREDICTION
     //Calculate state prediction
@@ -339,12 +341,12 @@ private:
     state_prediction_y += delta_odom.translation().y;
 
     //Calculate covariance prediction
-    mat covariance_prediction = A*slam_last_covariance_*A.t() + slam_process_noise_;
+    mat covariance_prediction = A * slam_last_covariance_ * A.t() + slam_process_noise_;
 
 
     //KALMAN FILTER CORRECTION
     //iterate through sensor measurements
-    
+
     for (size_t i = 0; i < msg.markers.size(); i++) {
       const auto & marker = msg.markers.at(i);
 
@@ -354,18 +356,20 @@ private:
       }
 
       //Temporary references for readability
-      auto & state_prediction_m_x = state_prediction(3 + 2*i);
-      auto & state_prediction_m_y = state_prediction(3 + 2*i + 1);
+      auto & state_prediction_m_x = state_prediction(3 + 2 * i);
+      auto & state_prediction_m_y = state_prediction(3 + 2 * i + 1);
 
       //Get range bearing measurement out of marker
-      auto [range, bearing] = relative_to_range_bearing(marker.pose.position.x, marker.pose.position.y);
+      auto [range, bearing] = relative_to_range_bearing(
+        marker.pose.position.x,
+        marker.pose.position.y);
 
       if (!slam_landmark_seen_.at(i)) {
         slam_landmark_seen_.at(i) = true;
 
         //Initialize landmark measurement
-        state_prediction_m_x = state_prediction_x + range*cos(bearing + state_prediction_theta);
-        state_prediction_m_y = state_prediction_y + range*sin(bearing + state_prediction_theta);
+        state_prediction_m_x = state_prediction_x + range * cos(bearing + state_prediction_theta);
+        state_prediction_m_y = state_prediction_y + range * sin(bearing + state_prediction_theta);
       }
 
       //Compute quantities for later use
@@ -376,15 +380,15 @@ private:
 
       //Construct Hi matrix
       mat Hi {2, STATE_SIZE, zeros};
-      Hi(1,0) = -1.0;
-      Hi(0,1) = -del_x / sqrt_d;
-      Hi(1,1) = del_y / d;
-      Hi(0,2) = -del_y / sqrt_d;
-      Hi(1,2) = -del_x / d;
-      Hi(0,3 + 2*i) = del_x / sqrt_d;
-      Hi(1,3 + 2*i) = -del_y / d;
-      Hi(0,3 + 2*i + 1) = del_y / sqrt_d;
-      Hi(1,3 + 2*i + 1) = del_x / sqrt_d;
+      Hi(1, 0) = -1.0;
+      Hi(0, 1) = -del_x / sqrt_d;
+      Hi(1, 1) = del_y / d;
+      Hi(0, 2) = -del_y / sqrt_d;
+      Hi(1, 2) = -del_x / d;
+      Hi(0, 3 + 2 * i) = del_x / sqrt_d;
+      Hi(1, 3 + 2 * i) = -del_y / d;
+      Hi(0, 3 + 2 * i + 1) = del_y / sqrt_d;
+      Hi(1, 3 + 2 * i + 1) = del_x / sqrt_d;
 
       //Get transpose
       mat Hi_t = Hi.t();
@@ -396,39 +400,42 @@ private:
       vec meas_act {range, bearing};
 
       //Calculate Kalman gain for this landmark
-      mat Ki = covariance_prediction * Hi_t * (Hi*covariance_prediction*Hi_t + slam_sensor_noise_.submat(2*i, 2*i, 2*i + 1, 2*i + 1)).i();
+      mat Ki = covariance_prediction * Hi_t *
+        (Hi * covariance_prediction * Hi_t +
+        slam_sensor_noise_.submat(2 * i, 2 * i, 2 * i + 1, 2 * i + 1)).i();
 
       //Update the state prediction
-      state_prediction += Ki*(meas_act - meas_theo);
+      state_prediction += Ki * (meas_act - meas_theo);
 
       //Normalize angle again
       state_prediction_theta = normalize_angle(state_prediction_theta);
 
       //Update the covariance prediction
-      covariance_prediction = (I - Ki*Hi)*covariance_prediction;
+      covariance_prediction = (I - Ki * Hi) * covariance_prediction;
     }
 
     auto slam_time = get_clock()->now(); //TODO synchronize?
 
     //Only add a new pose to the path if the turtlebot has moved
     if (!(
-      almost_equal(state_prediction(0), slam_last_state_(0)) &&
-      almost_equal(state_prediction(1), slam_last_state_(1)) &&
-      almost_equal(state_prediction(2), slam_last_state_(2))
-    )){
-      
+        almost_equal(state_prediction(0), slam_last_state_(0)) &&
+        almost_equal(state_prediction(1), slam_last_state_(1)) &&
+        almost_equal(state_prediction(2), slam_last_state_(2))
+    ))
+    {
+
       config_pose_msg_.pose.position.x = state_prediction_x;
       config_pose_msg_.pose.position.y = state_prediction_y;
       tf2::Quaternion q;
       q.setRPY(0.0, 0.0, state_prediction_theta);
       config_pose_msg_.pose.orientation = tf2::toMsg(q);
       config_pose_msg_.header.stamp = slam_time;
-      
+
       //Remove oldest element if we've reached the max number of path points
       if (path_num_points_ != 0 && path_.poses.size() >= path_num_points_) {
         path_.poses.erase(path_.poses.begin());
       }
-      
+
       path_.poses.push_back(config_pose_msg_);
     }
 
@@ -437,11 +444,11 @@ private:
 
     //Publish path
     pub_path_->publish(path_);
-    
+
     //Determine the map to odometry transformation
     Transform2D Tmr {{state_prediction_x, state_prediction_y}, state_prediction_theta};
 
-    auto Tmo = Tmr*turtlebot_.config().location.inv();
+    auto Tmo = Tmr * turtlebot_.config().location.inv();
 
     //Build transform
     map_odom_tf_.transform = tf_to_tf_msg(Tmo);
@@ -454,14 +461,14 @@ private:
     visualization_msgs::msg::MarkerArray estimated_landmarks;
 
     for (size_t i = 0; i < MAX_LANDMARKS; i++) {
-      
+
       //Skip marker if it hasn't been seen
       if (!slam_landmark_seen_.at(i)) {continue;}
 
       auto marker = default_landmark_;
       marker.id = i + MARKER_ID_OFFSET_LANDMARKS;
-      marker.pose.position.x = state_prediction(3 + 2*i);
-      marker.pose.position.y = state_prediction(3 + 2*i + 1);
+      marker.pose.position.x = state_prediction(3 + 2 * i);
+      marker.pose.position.y = state_prediction(3 + 2 * i + 1);
 
       estimated_landmarks.markers.push_back(marker);
     }
@@ -482,8 +489,8 @@ private:
 std::tuple<double, double> relative_to_range_bearing(double x, double y)
 {
   return {
-    std::sqrt(std::pow(x,2) + std::pow(y,2)),
-    std::atan2(y,x)
+    std::sqrt(std::pow(x, 2) + std::pow(y, 2)),
+    std::atan2(y, x)
   };
 }
 
