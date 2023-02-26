@@ -514,6 +514,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /green/path
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: SLAMLandmarks
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /estimated_landmarks
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48

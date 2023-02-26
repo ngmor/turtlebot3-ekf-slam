@@ -42,6 +42,9 @@ constexpr std::string_view MAP_FRAME = "map";
 constexpr int MAX_LANDMARKS = 20; //TODO increase size
 constexpr int STATE_SIZE = 2*MAX_LANDMARKS + 3;
 constexpr double VERY_LARGE_NUMBER = 1e10;
+constexpr double LANDMARK_HEIGHT = 0.25;
+constexpr double LANDMARK_RADIUS = 0.038;
+constexpr int32_t MARKER_ID_OFFSET_LANDMARKS = 100;
 
 //Function prototypes
 std::tuple<double, double> relative_to_range_bearing(double x, double y);
@@ -151,6 +154,7 @@ public:
     //Publishers
     pub_odom_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
     pub_path_ = create_publisher<nav_msgs::msg::Path>("path", 10);
+    pub_estimated_landmarks_ = create_publisher<visualization_msgs::msg::MarkerArray>("estimated_landmarks", 10);
 
     //Subscribers
     sub_joint_states_ = create_subscription<sensor_msgs::msg::JointState>(
@@ -217,12 +221,26 @@ public:
     map_odom_tf_.child_frame_id = odom_id_;
     map_odom_tf_.transform.translation.z = 0.0;
 
+    //Default landmark marker
+    default_landmark_.header.frame_id = MAP_FRAME;
+    default_landmark_.type = visualization_msgs::msg::Marker::CYLINDER;
+    default_landmark_.action = visualization_msgs::msg::Marker::ADD;
+    default_landmark_.pose.position.z = LANDMARK_HEIGHT / 2.0;
+    default_landmark_.scale.x = LANDMARK_RADIUS * 2.0;
+    default_landmark_.scale.y = LANDMARK_RADIUS * 2.0;
+    default_landmark_.scale.z = LANDMARK_HEIGHT;
+    default_landmark_.color.r = 0.0;
+    default_landmark_.color.g = 1.0;
+    default_landmark_.color.b = 0.0;
+    default_landmark_.color.a = 1.0;
+
     RCLCPP_INFO_STREAM(get_logger(), "nuslam node started");
   }
 private:
   rclcpp::TimerBase::SharedPtr timer_path_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_estimated_landmarks_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_joint_states_;
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr sub_fake_sensor_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster_;
@@ -240,6 +258,7 @@ private:
   mat slam_process_noise_ {STATE_SIZE, STATE_SIZE, zeros}; //Q_bar
   mat slam_sensor_noise_ {2*MAX_LANDMARKS, 2*MAX_LANDMARKS, zeros}; //R
   std::vector<bool> slam_landmark_seen_ = std::vector<bool>(MAX_LANDMARKS, false);
+  visualization_msgs::msg::Marker default_landmark_;
 
   /// \brief publish odometry estimate path
   void timer_path_callback() {
@@ -439,12 +458,32 @@ private:
 
     auto Tmo = Tmr*turtlebot_.config().location.inv();
 
+    auto slam_time = get_clock()->now(); //TODO synchronize?
+
     //Build transform
     map_odom_tf_.transform = tf_to_tf_msg(Tmo);
-    map_odom_tf_.header.stamp = get_clock()->now();
+    map_odom_tf_.header.stamp = slam_time;
 
     //Broadcast transform
     broadcaster_->sendTransform(map_odom_tf_);
+
+    //Build marker array
+    visualization_msgs::msg::MarkerArray estimated_landmarks;
+
+    for (size_t i = 0; i < MAX_LANDMARKS; i++) {
+      
+      //Skip marker if it hasn't been seen
+      if (!slam_landmark_seen_.at(i)) {continue;}
+
+      auto marker = default_landmark_;
+      marker.id = i + MARKER_ID_OFFSET_LANDMARKS;
+      marker.pose.position.x = state_prediction(3 + 2*i);
+      marker.pose.position.y = state_prediction(3 + 2*i + 1);
+
+      estimated_landmarks.markers.push_back(marker);
+    }
+
+    pub_estimated_landmarks_->publish(estimated_landmarks);
   }
 };
 
