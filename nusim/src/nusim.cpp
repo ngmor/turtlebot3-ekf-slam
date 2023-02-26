@@ -341,7 +341,7 @@ public:
 
     param.description =
       "Standard deviation for noise in lidar scan (m). Must be nonnegative.";
-    declare_parameter("lidar.noise", 0.0, param); //TODO inject noise
+    declare_parameter("lidar.noise", 0.0, param);
     auto lidar_noise =
       get_parameter("lidar.noise").get_parameter_value().get<double>();
 

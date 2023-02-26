@@ -78,6 +78,7 @@ std::tuple<double, double> relative_to_range_bearing(double x, double y);
 class NuSlam : public rclcpp::Node
 {
 public:
+  /// \brief initialize the node
   NuSlam()
   : Node("nuslam")
   {

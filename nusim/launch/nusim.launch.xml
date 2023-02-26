@@ -15,8 +15,6 @@
         description="Selects whether or not to launch the joint state publisher. Valid choices are: ['true', 'false']"
     />
 
-    <!-- TODO update README with new arguments for this launch file -->
-
     <node pkg="rviz2" exec="rviz2"
         args="-d $(find-pkg-share nusim)/config/nusim.rviz"
         if="$(var use_rviz)"
