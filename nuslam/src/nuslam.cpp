@@ -110,10 +110,6 @@ public:
       required_parameters_received = false;
     }
 
-    param.description = "The rate the path is updated at (Hz).";
-    declare_parameter("path.rate", 5.0, param);
-    auto path_interval = 1.0 / get_parameter("path.rate").get_parameter_value().get<double>();
-
     param.description = 
       "Number of path points retained before deleting. Set to 0 to disable limit.";
     declare_parameter("path.num_points", 100, param);
@@ -144,12 +140,6 @@ public:
         "Required parameters were not received or were invalid. Please provide valid parameters."
       );
     }
-
-    //Timers
-    timer_path_ = create_wall_timer(
-      static_cast<std::chrono::milliseconds>(static_cast<int>(path_interval * 1000.0)),
-      std::bind(&NuSlam::timer_path_callback, this)
-    );
 
     //Publishers
     pub_odom_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
@@ -191,11 +181,6 @@ public:
 
     //Init config pose message and path message
     config_pose_msg_.header.frame_id = odom_id_;
-    path_.header.frame_id = odom_id_;
-    
-    config_pose_msg_.pose = tf_to_pose_msg(turtlebot_.config().location);
-    config_pose_msg_.header.stamp = get_clock()->now();
-    path_.poses.push_back(config_pose_msg_);
 
     //SLAM
     slam_last_odom_location_ = turtlebot_.config().location;
@@ -234,10 +219,16 @@ public:
     default_landmark_.color.b = 0.0;
     default_landmark_.color.a = 1.0;
 
+    //Path from SLAM
+    path_.header.frame_id = MAP_FRAME;
+    
+    config_pose_msg_.pose = tf_to_pose_msg(turtlebot_.config().location);
+    config_pose_msg_.header.stamp = get_clock()->now();
+    path_.poses.push_back(config_pose_msg_);
+
     RCLCPP_INFO_STREAM(get_logger(), "nuslam node started");
   }
 private:
-  rclcpp::TimerBase::SharedPtr timer_path_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_estimated_landmarks_;
@@ -259,33 +250,6 @@ private:
   mat slam_sensor_noise_ {2*MAX_LANDMARKS, 2*MAX_LANDMARKS, zeros}; //R
   std::vector<bool> slam_landmark_seen_ = std::vector<bool>(MAX_LANDMARKS, false);
   visualization_msgs::msg::Marker default_landmark_;
-
-  /// \brief publish odometry estimate path
-  void timer_path_callback() {
-    static Transform2D last_published_tf = turtlebot_.config().location;
-
-    //Only add a new pose to the path if the turtlebot has moved
-    if (!almost_equal(last_published_tf, turtlebot_.config().location)) {
-      
-      config_pose_msg_.pose = odom_msg_.pose.pose;
-      config_pose_msg_.header.stamp = odom_msg_.header.stamp;
-      
-      //Remove oldest element if we've reached the max number of path points
-      if (path_num_points_ != 0 && path_.poses.size() >= path_num_points_) {
-        path_.poses.erase(path_.poses.begin());
-      }
-      
-      path_.poses.push_back(config_pose_msg_);
-
-      last_published_tf = turtlebot_.config().location;
-    }
-
-    //Update stamp
-    path_.header.stamp = get_clock()->now();
-
-    //Publish path
-    pub_path_->publish(path_);
-  }
 
   /// \brief update internal odometry from received joint states
   /// \param msg - joint states
@@ -443,22 +407,41 @@ private:
       //Update the covariance prediction
       covariance_prediction = (I - Ki*Hi)*covariance_prediction;
     }
+
+    auto slam_time = get_clock()->now(); //TODO synchronize?
+
+    //Only add a new pose to the path if the turtlebot has moved
+    if (!(
+      almost_equal(state_prediction(0), slam_last_state_(0)) &&
+      almost_equal(state_prediction(1), slam_last_state_(1)) &&
+      almost_equal(state_prediction(2), slam_last_state_(2))
+    )){
+      
+      config_pose_msg_.pose.position.x = state_prediction_x;
+      config_pose_msg_.pose.position.y = state_prediction_y;
+      tf2::Quaternion q;
+      q.setRPY(0.0, 0.0, state_prediction_theta);
+      config_pose_msg_.pose.orientation = tf2::toMsg(q);
+      config_pose_msg_.header.stamp = slam_time;
+      
+      //Remove oldest element if we've reached the max number of path points
+      if (path_num_points_ != 0 && path_.poses.size() >= path_num_points_) {
+        path_.poses.erase(path_.poses.begin());
+      }
+      
+      path_.poses.push_back(config_pose_msg_);
+    }
+
+    //Update stamp
+    path_.header.stamp = slam_time;
+
+    //Publish path
+    pub_path_->publish(path_);
     
-    //Save last odom config
-    slam_last_odom_location_ = turtlebot_.config().location;
-
-    //Save last state prediction
-    slam_last_state_ = state_prediction;
-
-    //Save last covariance prediction;
-    slam_last_covariance_ = covariance_prediction;
-
     //Determine the map to odometry transformation
     Transform2D Tmr {{state_prediction_x, state_prediction_y}, state_prediction_theta};
 
     auto Tmo = Tmr*turtlebot_.config().location.inv();
-
-    auto slam_time = get_clock()->now(); //TODO synchronize?
 
     //Build transform
     map_odom_tf_.transform = tf_to_tf_msg(Tmo);
@@ -484,6 +467,15 @@ private:
     }
 
     pub_estimated_landmarks_->publish(estimated_landmarks);
+
+    //Save last odom config
+    slam_last_odom_location_ = turtlebot_.config().location;
+
+    //Save last state prediction
+    slam_last_state_ = state_prediction;
+
+    //Save last covariance prediction;
+    slam_last_covariance_ = covariance_prediction;
   }
 };
 
