@@ -2,24 +2,45 @@
 /// \brief Runs the simulation for the NUTurtle.
 ///
 /// PARAMETERS:
+///     draw_only (bool): Only display walls, do not perform any simulation.
 ///     track_width (double): The wheel track width in meters (REQUIRED).
 ///     wheel_radius (double): The wheel radius in meters (REQUIRED).
 ///     motor_cmd_per_rad_sec (double): Motor command value per rad/sec conversion factor (REQUIRED).
 ///     motor_cmd_max (int32_t): Maximum possible motor command value (REQUIRED).
 ///     encoder_ticks_per_rad (double): Motor encoder ticks per radian conversion factor (REQUIRED).
 ///     rate (double): The rate the simulation runs at (Hz).
+///     path.rate (double): The rate the path is updated at (Hz).
+///     path.num_points (int): Number of path points retained before deleting. Set to 0 to disable limit.
 ///     x0 (double): Initial x position of the robot (m).
 ///     y0 (double): Initial y position of the robot (m).
 ///     theta0 (double): Initial rotation of the robot (rad).
+///     collision_radius (double): Collision radius of the robot (m).
+///     display_collision_cylinder (bool): Activates a marker to display collision cylinder of the robot.
+///     allow_collision_rotation (bool): Allow rotation when colliding with an obstacle.
 ///     obstacles.x (std::vector<double>): List of x starting positions of obstacles (m). Arbitrary length, but must match length of `y`.
 ///     obstacles.y (std::vector<double>): List of y starting positions of obstacles (m). Arbitray length, but must match length of `x`.
 ///     obstacles.r (double): Radius of all cylinder obstacles (m). Single value applies to all obstacles.
 ///     x_length (double): Length of the arena in the x direction (m).
 ///     y_length (double): Length of the arena in the y direction (m).
+///     input_noise (double): Standard deviation for noise on input wheel commands (rad/s). Must be nonnegative.
+///     slip_fraction (double): Bound of fraction of slip experienced by the wheels during motion (decimal fraction). Must be nonnegative.
+///     basic_sensor_variance (double): Standard deviation for noise in obstacle sensing (m). Must be nonnegative.
+///     max_range (double): Max range for obstacle sensing (m).
+///     lidar.range_min (double): Min range for lidar scanning (m).
+///     lidar.range_max (double): Max range for lidar scanning (m).
+///     lidar.angle_min (double): Min angle for lidar scanning (rad).
+///     lidar.angle_max (double): Max angle for lidar scanning (rad).
+///     lidar.angle_incr (double): Angle increment for lidar scanning (rad).
+///     lidar.resolution (double): Resolution for lidar scan (m). Set to 0 for perfect resolution.
+///     lidar.noise (double): Standard deviation for noise in lidar scan (m). Must be nonnegative.
 /// PUBLISHERS:
-///     ~/timestep (std_msgs/msg/UInt64): current timestep of the simulation
 ///     ~/obstacles (visualization_msgs/msg/MarkerArray): marker array containing cylindrical obstacles in the world.
-///     sensor_data (nuturtlebot_msgs/msg/SensorData): simulated sensor data
+///     ~/timestep (std_msgs/msg/UInt64): current timestep of the simulation
+///     ~/collision_cylinder (visualization_msgs/msg/Marker): marker representing the robot's collision cylinder
+///     ~/path (nav_msgs/msg/Path): the ground truth path data from the simulated robot
+///     sensor_data (nuturtlebot_msgs/msg/SensorData): simulated turtlebot sensor data
+///     fake_sensor (visualization_msgs/msg/MarkerArray): fake sensor data telling the relative location of the obstacles to the robot
+///     scan (sensor_msgs/msg/LaserScan): simulated lidar scan data
 /// SUBSCRIBERS:
 ///     wheel_cmd (nuturtlebot_msgs/msg/WheelCommands): wheel commands from control nodes
 /// SERVERS:
@@ -27,7 +48,6 @@
 ///     ~/teleport (nusim/srv/Teleport): teleports the actual turtlebot to a provided location
 /// CLIENTS:
 ///     none
-// TODO update above
 
 #include <chrono>
 #include <functional>
