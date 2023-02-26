@@ -1,3 +1,29 @@
+/// \file
+/// \brief Calculates extended Kalman Filter SLAM based on odometry and fake sensor data.
+///
+/// PARAMETERS:
+///     body_id (string): The name of the robot's body frame (REQUIRED)
+///     odom_id (string): The name of the robot's odometry frame
+///     wheel_left (string): The name of the robot's left wheel joint (REQUIRED)
+///     wheel_right (string): The name of the robot's right wheel joint (REQUIRED)
+///     track_width (double): The wheel track width in meters (REQUIRED)
+///     wheel_radius (double): The wheel radius in meters (REQUIRED)
+///     path.num_points (int): Number of path points retained before deleting. Set to 0 to disable limit.
+///     kalman.process_noise.theta (double): Kalman filter process noise for theta coordinate.
+///     kalman.process_noise.x (double): Kalman filter process noise for x coordinate.
+///     kalman.process_noise.y (double): Kalman filter process noise for y coordinate.
+///     kalman.sensor_noise (double): Kalman filter sensor noise.
+/// PUBLISHERS:
+///     odom (nav_msgs/msg/Odometry): the calculated odometry from the input joint states
+///     path (nav_msgs/msg/Path): the path data determined from the EKF SLAM calculations
+///     estimated_landmarks (visualization_msgs/msg/MarkerArray): the estimated map locations of landmarks from the EKF SLAM calculations
+/// SUBSCRIBERS:
+///     joint_states (sensor_msgs/msg/JointState): the robot's joint states
+/// SERVERS:
+///     none
+/// CLIENTS:
+///     none
+
 #include <stdexcept>
 #include <string>
 #include <array>
@@ -486,6 +512,11 @@ private:
   }
 };
 
+/// \brief convert a relative x and y measurement into a range bearing measurement
+/// \param x - relative x coordinate of measured object
+/// \param y - relative y coordinate of measured object
+/// \return a tuple where the first element is the range of the measured object
+/// and the second element is the bearing of the measured object
 std::tuple<double, double> relative_to_range_bearing(double x, double y)
 {
   return {
