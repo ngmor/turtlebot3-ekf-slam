@@ -357,7 +357,7 @@ private:
     auto & state_prediction_x = state_prediction(1);
     auto & state_prediction_y = state_prediction(2);
 
-    state_prediction_theta = map_robot_tf.rotation();
+    state_prediction_theta = normalize_angle(map_robot_tf.rotation());
     state_prediction_x = map_robot_tf.translation().x;
     state_prediction_y = map_robot_tf.translation().y;
 
@@ -389,6 +389,8 @@ private:
       auto [range, bearing] = relative_to_range_bearing(
         marker.pose.position.x,
         marker.pose.position.y);
+
+      bearing = normalize_angle(bearing);
 
       if (!slam_landmark_seen_.at(i)) {
         slam_landmark_seen_.at(i) = true;
@@ -430,8 +432,12 @@ private:
         (Hi * covariance_prediction * Hi_t +
         slam_sensor_noise_.submat(2 * i, 2 * i, 2 * i + 1, 2 * i + 1)).i();
 
+      //calculate the difference in the measurements
+      mat meas_delta = meas_act - meas_theo;
+      meas_delta(1) = normalize_angle(meas_delta(1));
+
       //Update the state prediction
-      state_prediction += Ki * (meas_act - meas_theo);
+      state_prediction += Ki * (meas_delta);
 
       //Normalize angle again
       state_prediction_theta = normalize_angle(state_prediction_theta);

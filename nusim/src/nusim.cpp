@@ -231,7 +231,7 @@ public:
       get_parameter("allow_collision_rotation").get_parameter_value().get<bool>();
 
     param.description = "Allow sliding when colliding with an obstacle.";
-    declare_parameter("allow_collision_sliding", true, param);
+    declare_parameter("allow_collision_sliding", false, param);
     allow_collision_sliding_ =
       get_parameter("allow_collision_sliding").get_parameter_value().get<bool>();
 
