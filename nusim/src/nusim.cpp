@@ -17,6 +17,7 @@
 ///     collision_radius (double): Collision radius of the robot (m).
 ///     display_collision_cylinder (bool): Activates a marker to display collision cylinder of the robot.
 ///     allow_collision_rotation (bool): Allow rotation when colliding with an obstacle.
+///     allow_collision_sliding (bool): Allow sliding when colliding with an obstacle.
 ///     obstacles.x (std::vector<double>): List of x starting positions of obstacles (m). Arbitrary length, but must match length of `y`.
 ///     obstacles.y (std::vector<double>): List of y starting positions of obstacles (m). Arbitray length, but must match length of `x`.
 ///     obstacles.r (double): Radius of all cylinder obstacles (m). Single value applies to all obstacles.
@@ -228,6 +229,11 @@ public:
     declare_parameter("allow_collision_rotation", true, param);
     allow_collision_rotation_ =
       get_parameter("allow_collision_rotation").get_parameter_value().get<bool>();
+
+    param.description = "Allow sliding when colliding with an obstacle.";
+    declare_parameter("allow_collision_sliding", true, param);
+    allow_collision_sliding_ =
+      get_parameter("allow_collision_sliding").get_parameter_value().get<bool>();
 
     param.description =
       "List of x starting positions of obstacles (m). Arbitrary length, but must match length of y.";
@@ -488,7 +494,7 @@ private:
   std::vector<double> obstacles_x_, obstacles_y_;
   double obstacles_r_, x_length_, y_length_, max_range_, collision_radius_, collision_dist_;
   visualization_msgs::msg::MarkerArray detected_obstacles_, obstacle_and_wall_markers_;
-  bool display_collision_cylinder_, allow_collision_rotation_;
+  bool display_collision_cylinder_, allow_collision_rotation_, allow_collision_sliding_;
   visualization_msgs::msg::Marker collision_cylinder_marker_;
   std::vector<Transform2D> obstacle_abs_tfs_, obstacle_rel_tfs_;
   double motor_cmd_per_rad_sec_, encoder_ticks_per_rad_;
@@ -608,19 +614,38 @@ private:
 
         //New position should be the collision distance away from the obstacle in the direction
         //of this vector
-        if (allow_collision_rotation_) {
-          turtlebot_.set_location(
-          {
-            Tabs.translation() + normalize(v) * collision_dist_,  //new location
-            turtlebot_.config().location.rotation()             //new rotation
-          });
+        if (allow_collision_sliding_) {
+          if (allow_collision_rotation_) {
+            turtlebot_.set_location(
+            {
+              turtlebot_.config().location.translation() + normalize(v) *
+              (collision_dist_ - obstacle_rel_tfs_.at(i).translation().magnitude()),                                                              //new location
+              turtlebot_.config().location.rotation()             //new rotation
+            });
+          } else {
+            turtlebot_.set_location(
+            {
+              turtlebot_.config().location.translation() + normalize(v) *
+              (collision_dist_ - obstacle_rel_tfs_.at(i).translation().magnitude()),                                                              //new location
+              turtlebot_last_config_.location.rotation()          //retain rotation
+            });
+          }
         } else {
-          turtlebot_.set_location(
-          {
-            Tabs.translation() + normalize(v) * collision_dist_,  //new location
-            turtlebot_last_config_.location.rotation()          //retain rotation
-          });
+          if (allow_collision_rotation_) {
+            turtlebot_.set_location(
+            {
+              Tabs.translation() + normalize(v) * collision_dist_,  //new location
+              turtlebot_.config().location.rotation()             //new rotation
+            });
+          } else {
+            turtlebot_.set_location(
+            {
+              Tabs.translation() + normalize(v) * collision_dist_,  //new location
+              turtlebot_last_config_.location.rotation()          //retain rotation
+            });
+          }
         }
+
 
         break;
       }

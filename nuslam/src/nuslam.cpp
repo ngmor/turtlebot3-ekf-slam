@@ -273,6 +273,7 @@ private:
   geometry_msgs::msg::PoseStamped config_pose_msg_;
   size_t path_num_points_;
   Transform2D slam_last_odom_location_;
+  Transform2D slam_map_odom_tf_;
   vec slam_last_state_ {STATE_SIZE, zeros}; //Init robot state guess to (0,0,0)
   mat slam_last_covariance_ {STATE_SIZE, STATE_SIZE, zeros}; //epsilon_t-1
   mat slam_process_noise_ {STATE_SIZE, STATE_SIZE, zeros}; //Q_bar
@@ -340,19 +341,12 @@ private:
   /// \param msg - contains markers which represent the fake sensor measurements
   void fake_sensor_callback(const visualization_msgs::msg::MarkerArray & msg)
   {
-    //Constructor of Transform2D automatically normalizes angles
-    Transform2D delta_odom {
-      turtlebot_.config().location.translation() - slam_last_odom_location_.translation(),
-      turtlebot_.config().location.rotation() - slam_last_odom_location_.rotation()
-    };
+
+    //Calculate new location of robot in map frame
+    auto map_robot_tf = slam_map_odom_tf_ * turtlebot_.config().location;
 
     //Construct identity matrix of the state size
     mat I = eye<mat>(STATE_SIZE, STATE_SIZE);
-
-    //Construct A matrix
-    mat A = I;
-    A(1, 0) += -delta_odom.translation().y;
-    A(2, 0) += delta_odom.translation().x;
 
     //KALMAN FILTER PREDICTION
     //Calculate state prediction
@@ -363,9 +357,14 @@ private:
     auto & state_prediction_x = state_prediction(1);
     auto & state_prediction_y = state_prediction(2);
 
-    state_prediction_theta = normalize_angle(state_prediction_theta + delta_odom.rotation());
-    state_prediction_x += delta_odom.translation().x;
-    state_prediction_y += delta_odom.translation().y;
+    state_prediction_theta = map_robot_tf.rotation();
+    state_prediction_x = map_robot_tf.translation().x;
+    state_prediction_y = map_robot_tf.translation().y;
+
+    //Construct A matrix
+    mat A = I;
+    A(1, 0) += -(state_prediction_y - slam_last_state_(2));
+    A(2, 0) += state_prediction_x - slam_last_state_(1);
 
     //Calculate covariance prediction
     mat covariance_prediction = A * slam_last_covariance_ * A.t() + slam_process_noise_;
@@ -415,7 +414,7 @@ private:
       Hi(0, 3 + 2 * i) = del_x / sqrt_d;
       Hi(1, 3 + 2 * i) = -del_y / d;
       Hi(0, 3 + 2 * i + 1) = del_y / sqrt_d;
-      Hi(1, 3 + 2 * i + 1) = del_x / sqrt_d;
+      Hi(1, 3 + 2 * i + 1) = del_x / d;
 
       //Get transpose
       mat Hi_t = Hi.t();
@@ -473,12 +472,12 @@ private:
     pub_path_->publish(path_);
 
     //Determine the map to odometry transformation
-    Transform2D Tmr {{state_prediction_x, state_prediction_y}, state_prediction_theta};
+    map_robot_tf = Transform2D {{state_prediction_x, state_prediction_y}, state_prediction_theta};
 
-    auto Tmo = Tmr * turtlebot_.config().location.inv();
+    slam_map_odom_tf_ = map_robot_tf * turtlebot_.config().location.inv();
 
     //Build transform
-    map_odom_tf_.transform = tf_to_tf_msg(Tmo);
+    map_odom_tf_.transform = tf_to_tf_msg(slam_map_odom_tf_);
     map_odom_tf_.header.stamp = slam_time;
 
     //Broadcast transform
