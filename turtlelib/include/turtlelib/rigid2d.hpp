@@ -81,6 +81,11 @@ namespace turtlelib
     /// \return normalized angle
     double normalize_angle(double rad);
 
+    /// \brief calculate the mean of a vector of values
+    /// \param values - values to average
+    /// \return the mean
+    double mean(const std::vector<double> & values);
+
     /// \brief A 2-Dimensional Vector
     struct Vector2D
     {

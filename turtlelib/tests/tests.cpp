@@ -15,6 +15,7 @@ using turtlelib::deg2rad;
 using turtlelib::PI;
 using turtlelib::INF;
 using turtlelib::normalize_angle;
+using turtlelib::mean;
 using turtlelib::dot;
 using turtlelib::angle;
 using turtlelib::integrate_twist;
@@ -31,6 +32,27 @@ TEST_CASE("angle normalization", "[normalize_angle]") { //Nick Morales
     REQUIRE_THAT(normalize_angle(-PI/4.0), WithinRel(-PI/4.0, FLOAT_TOL));
     REQUIRE_THAT(normalize_angle(3.0*PI/2.0), WithinRel(-PI/2.0, FLOAT_TOL));
     REQUIRE_THAT(normalize_angle(-5.0*PI/2.0), WithinRel(-PI/2.0, FLOAT_TOL));
+}
+
+TEST_CASE("mean calculation", "[mean]") { //Nick Morales
+    
+    SECTION("test 1") {
+        std::vector<double> v {5, 3, 8, 7, 9};
+        double correct = 6.4;
+
+        auto result = mean(v);
+
+        REQUIRE_THAT(result, WithinRel(correct, FLOAT_TOL));
+    }
+
+    SECTION("test 1") {
+        std::vector<double> v {5.3, 6.4, 7.2, 1.3};
+        double correct = 5.05;
+
+        auto result = mean(v);
+
+        REQUIRE_THAT(result, WithinRel(correct, FLOAT_TOL));
+    }
 }
 
 TEST_CASE("vector magnitude", "[vector]") { //Nick Morales

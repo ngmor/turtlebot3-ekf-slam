@@ -1,6 +1,6 @@
 #include "turtlelib/rigid2d.hpp"
 #include <iostream>
-#include <cmath>
+#include <numeric>
 
 namespace turtlelib
 {
@@ -15,6 +15,15 @@ namespace turtlelib
         }
 
         return rad;
+    }
+
+    //https://stackoverflow.com/questions/28574346/find-average-of-input-to-vector-c
+    double mean(const std::vector<double> & values) {
+        if(values.empty()) {
+            return 0.0;
+        }
+
+        return std::reduce(values.begin(), values.end()) / static_cast<double>(values.size());
     }
 
 
