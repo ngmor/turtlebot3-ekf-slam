@@ -4,6 +4,9 @@
 #include "turtlelib/diff_drive.hpp"
 #include <string>
 #include <sstream>
+using std::stringstream;
+using std::string;
+using Catch::Matchers::WithinRel;
 using turtlelib::Transform2D;
 using turtlelib::Vector2D;
 using turtlelib::Twist2D;
@@ -18,9 +21,6 @@ using turtlelib::integrate_twist;
 using turtlelib::DiffDrive;
 using turtlelib::DiffDriveConfig;
 using turtlelib::Wheel;
-using Catch::Matchers::WithinRel;
-using std::stringstream;
-using std::string;
 
 constexpr double FLOAT_TOL = 1e-8;
 
