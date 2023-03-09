@@ -9,7 +9,7 @@
 using turtlelib::Vector2D;
 using turtlelib::almost_equal;
 
-constexpr double OBSTACLE_HEIGHT = 0.25;
+constexpr double LANDMARK_HEIGHT = 0.25;
 
 /// \brief Performs landmark detections from input lidar data
 class Landmarks : public rclcpp::Node
@@ -44,12 +44,12 @@ public:
     if (clusters_visualize_) {
       default_marker_.type = visualization_msgs::msg::Marker::CYLINDER;
       default_marker_.action = visualization_msgs::msg::Marker::ADD;
-      default_marker_.pose.position.z = OBSTACLE_HEIGHT / 2.0;
-      default_marker_.scale.x = 0.005;
-      default_marker_.scale.y = 0.005;
-      default_marker_.scale.z = OBSTACLE_HEIGHT;
+      default_marker_.pose.position.z = LANDMARK_HEIGHT / 2.0;
+      default_marker_.scale.x = clusters_threshold_;
+      default_marker_.scale.y = clusters_threshold_;
+      default_marker_.scale.z = LANDMARK_HEIGHT;
       default_marker_.color.r = 1.0;
-      default_marker_.color.g = 1.0;
+      default_marker_.color.g = 0.647;
       default_marker_.color.b = 0.0;
       default_marker_.color.a = 1.0;
     }
@@ -120,11 +120,16 @@ private:
       last_measurement = measurement;
     }
 
-    //Wrap clusters
+    //Add last cluster
+    clusters.push_back(current_cluster);
+
+    // Wrap clusters
     if (clusters.size() > 1) {
       //if first and last measurements are within the threshold of each other,
       //add the last cluster to the first cluster
-      if ((measurements.back() - measurements.front()).magnitude() <= clusters_threshold_) {
+      const auto distance = (clusters.front().front() - clusters.back().back()).magnitude();
+      if (distance <= clusters_threshold_) {
+
         //Add last cluster to first cluster
         //https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
         clusters.front().reserve(clusters.front().size() + clusters.back().size());
@@ -137,7 +142,7 @@ private:
 
     //Publish markers
     if (clusters_visualize_) {
-      const auto markers_to_publish = measurements.size();
+      const auto markers_to_publish = clusters.size();
 
       if (max_markers_ < markers_to_publish) {
         max_markers_ = markers_to_publish;
@@ -152,9 +157,21 @@ private:
         
         marker.id = i;
 
-        if (i < (markers_to_publish - 1)) {
-          marker.pose.position.x = measurements.at(i).x;
-          marker.pose.position.y = measurements.at(i).y;
+        if (i < markers_to_publish) {
+          const auto & cluster = clusters.at(i);
+
+          double x_mean = 0.0;
+          double y_mean = 0.0;
+          for (auto & point : cluster) {
+            x_mean += point.x;
+            y_mean += point.y;
+          }
+
+          x_mean /= cluster.size();
+          y_mean /= cluster.size();
+
+          marker.pose.position.x = x_mean;
+          marker.pose.position.y = y_mean;
         } else { //delete markers beyond what we see
           marker.action = visualization_msgs::msg::Marker::DELETE;
         }

@@ -8,4 +8,4 @@
       sensor_noise: 0.1
     clusters:
       visualize: true
-      threshold: 0.01 # m
+      threshold: 0.1 # m
