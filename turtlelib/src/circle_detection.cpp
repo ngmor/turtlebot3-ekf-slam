@@ -156,8 +156,16 @@ namespace turtlelib
 
         
 
+        //Calculate root-mean-square-error
+        double error = 0.0;
 
-        //TODO return root-mean-square-error
+        for (size_t i = 0; i < num_points; i++) {
+            error += std::pow(std::pow(x_coords[i] - a, 2) + std::pow(y_coords[i] - b, 2) - R2, 2);
+        }
+
+        error = std::sqrt(error / num_points);
+
+        std::cout << "Error: " << error << std::endl;
 
         return {
             {a + centroid.x, b + centroid.y}, //center
