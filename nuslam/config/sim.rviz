@@ -477,6 +477,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /clusters
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Circles
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /circles
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -518,18 +530,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.29463937878608704
-        Y: -0.7692129015922546
-        Z: -0.7935072779655457
+        X: 0.37861987948417664
+        Y: 0.3277658224105835
+        Z: -0.09246060252189636
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4947971701622009
+      Pitch: 0.5147969126701355
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.4572560787200928
+      Yaw: 2.962259531021118
     Saved: ~
 Window Geometry:
   Displays:

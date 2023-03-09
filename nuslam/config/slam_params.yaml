@@ -9,3 +9,6 @@
     clusters:
       visualize: true
       threshold: 0.1 # m
+    circles:
+      visualize: true
+      radius_threshold: 0.1
