@@ -2,13 +2,14 @@
 #include <cmath>
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "visualization_msgs/msg/marker.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 #include "turtlelib/rigid2d.hpp"
 
 using turtlelib::Vector2D;
 using turtlelib::almost_equal;
 
-//TODO make parameter, confirm
-constexpr double OUT_OF_RANGE_VAL = 0.0;
+constexpr double OBSTACLE_HEIGHT = 0.25;
 
 /// \brief Performs landmark detections from input lidar data
 class Landmarks : public rclcpp::Node
@@ -29,20 +30,42 @@ public:
     declare_parameter("clusters.threshold", 0.01, param);
     clusters_threshold_ = get_parameter("clusters.threshold").get_parameter_value().get<double>();
 
+    //Publishers
+    pub_clusters_ = create_publisher<visualization_msgs::msg::MarkerArray>("clusters", 10);
+
+    //Subscribers
     sub_lidar_scan_ = create_subscription<sensor_msgs::msg::LaserScan>(
       "scan",
       10,
       std::bind(&Landmarks::lidar_scan_callback, this, std::placeholders::_1)
     );
 
+    //Init markers
+    if (clusters_visualize_) {
+      default_marker_.type = visualization_msgs::msg::Marker::CYLINDER;
+      default_marker_.action = visualization_msgs::msg::Marker::ADD;
+      default_marker_.pose.position.z = OBSTACLE_HEIGHT / 2.0;
+      default_marker_.scale.x = 0.005;
+      default_marker_.scale.y = 0.005;
+      default_marker_.scale.z = OBSTACLE_HEIGHT;
+      default_marker_.color.r = 1.0;
+      default_marker_.color.g = 1.0;
+      default_marker_.color.b = 0.0;
+      default_marker_.color.a = 1.0;
+    }
+
     RCLCPP_INFO_STREAM(get_logger(), "landmarks node started");
   }
 
 private:
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr sub_lidar_scan_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_clusters_;
 
   bool clusters_visualize_;
   double clusters_threshold_;
+  visualization_msgs::msg::MarkerArray cluster_markers_;
+  visualization_msgs::msg::Marker default_marker_;
+  size_t max_markers_ = 0;
 
   void lidar_scan_callback(const sensor_msgs::msg::LaserScan & msg)
   {
@@ -64,7 +87,7 @@ private:
       const auto & range = msg.ranges.at(i);
 
       //Do not consider out of range measurements in clustering
-      if (almost_equal(range, OUT_OF_RANGE_VAL)) {continue;}
+      if (range < msg.range_min) {continue;}
 
       //Calculate bearing from message
       const auto bearing = msg.angle_min + i*msg.angle_increment;
@@ -97,9 +120,6 @@ private:
       last_measurement = measurement;
     }
 
-    // RCLCPP_INFO_STREAM(get_logger(), "Pointer: " << (measurements.end() - 1)->x << ", " << (measurements.end() - 1)->y << " Index: " << measurements.at(measurements.size() - 1).x << ", " << measurements.at(measurements.size() - 1).y);
-    // RCLCPP_INFO_STREAM(get_logger(), "Pointer: " << measurements.begin()->x << ", " << measurements.begin()->y << " Index: " << measurements.at(0).x << ", " << measurements.at(0).y);
-
     //Wrap clusters
     if (clusters.size() > 1) {
       //if first and last measurements are within the threshold of each other,
@@ -113,6 +133,37 @@ private:
         //Remove last cluster
         clusters.pop_back();
       }
+    }
+
+    //Publish markers
+    if (clusters_visualize_) {
+      const auto markers_to_publish = measurements.size();
+
+      if (max_markers_ < markers_to_publish) {
+        max_markers_ = markers_to_publish;
+      }
+
+      cluster_markers_.markers.clear();
+
+      default_marker_.header = msg.header;
+
+      for (size_t i = 0; i < max_markers_; i++) {
+        auto marker = default_marker_;
+        
+        marker.id = i;
+
+        if (i < (markers_to_publish - 1)) {
+          marker.pose.position.x = measurements.at(i).x;
+          marker.pose.position.y = measurements.at(i).y;
+        } else { //delete markers beyond what we see
+          marker.action = visualization_msgs::msg::Marker::DELETE;
+        }
+
+        cluster_markers_.markers.push_back(marker);
+      }
+
+      //Publish markers
+      pub_clusters_->publish(cluster_markers_);
     }
   }
 };

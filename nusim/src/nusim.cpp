@@ -936,14 +936,15 @@ private:
       // the detected range at this angle
       if (possible_lidar_ranges_.size() > 0) {
         range = *std::min_element(possible_lidar_ranges_.begin(), possible_lidar_ranges_.end());
+      
+        //Add sensor noise if there is nonzero standard deviation
+        if (lidar_dist_.stddev() != 0.0) {
+          range += lidar_dist_(get_random());
+        }
+      
       } else {
         //Default range is 0
         range = 0.0;
-      }
-
-      //Add sensor noise if there is nonzero standard deviation
-      if (lidar_dist_.stddev() != 0.0) {
-        range += lidar_dist_(get_random());
       }
 
       //Round to nearest resolution mark
