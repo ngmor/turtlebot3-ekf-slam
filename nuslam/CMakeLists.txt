@@ -29,6 +29,14 @@ ament_target_dependencies(nuslam
   rclcpp geometry_msgs sensor_msgs nav_msgs tf2 tf2_ros tf2_geometry_msgs visualization_msgs
 )
 
+add_executable(landmarks src/landmarks.cpp)
+target_link_libraries(landmarks
+  turtlelib::turtlelib
+)
+ament_target_dependencies(landmarks
+  rclcpp
+)
+
 # install targets
 install(TARGETS
   nuslam
