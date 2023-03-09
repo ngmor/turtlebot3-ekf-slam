@@ -34,7 +34,7 @@ target_link_libraries(landmarks
   turtlelib::turtlelib
 )
 ament_target_dependencies(landmarks
-  rclcpp
+  rclcpp sensor_msgs
 )
 
 # install targets
