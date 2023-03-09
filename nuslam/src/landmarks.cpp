@@ -14,14 +14,19 @@ public:
     auto param = rcl_interfaces::msg::ParameterDescriptor{};
 
     param.description = "Controls whether clustered points are published as markers.";
-    declare_parameter("visualize_clusters", true, param);
-    visualize_clusters_ = get_parameter("visualize_clusters").get_parameter_value().get<bool>();
+    declare_parameter("clusters.visualize", false, param);
+    clusters_visualize_ = get_parameter("clusters.visualize").get_parameter_value().get<bool>();
+
+    param.description = "Euclidean distance between points to be considered part of the same cluster.";
+    declare_parameter("clusters.threshold", 0.01, param);
+    clusters_threshold_ = get_parameter("clusters.threshold").get_parameter_value().get<double>();
 
     RCLCPP_INFO_STREAM(get_logger(), "landmarks node started");
   }
 
 private:
-  bool visualize_clusters_;
+  bool clusters_visualize_;
+  double clusters_threshold_;
 };
 
 /// \brief Run the node

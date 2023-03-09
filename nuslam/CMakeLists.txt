@@ -39,7 +39,7 @@ ament_target_dependencies(landmarks
 
 # install targets
 install(TARGETS
-  nuslam
+  nuslam landmarks
   DESTINATION lib/${PROJECT_NAME}
 )
 
