@@ -10,6 +10,7 @@ using turtlelib::Vector2D;
 using turtlelib::almost_equal;
 
 constexpr double LANDMARK_HEIGHT = 0.25;
+constexpr size_t CLUSTER_NUMBER_THRESHOLD = 3;
 
 /// \brief Performs landmark detections from input lidar data
 class Landmarks : public rclcpp::Node
@@ -140,9 +141,20 @@ private:
       }
     }
 
+    //filter clusters
+    std::vector<std::vector<Vector2D>> filtered_clusters {};
+    filtered_clusters.reserve(clusters.size()); //max size is all clusters
+
+    //throw out clusters with less than 3 points
+    for (const auto & cluster : clusters) {
+      if (cluster.size() >= CLUSTER_NUMBER_THRESHOLD) {
+        filtered_clusters.push_back(cluster);
+      }
+    }
+
     //Publish markers
     if (clusters_visualize_) {
-      const auto markers_to_publish = clusters.size();
+      const auto markers_to_publish = filtered_clusters.size();
 
       if (max_markers_ < markers_to_publish) {
         max_markers_ = markers_to_publish;
@@ -158,7 +170,7 @@ private:
         marker.id = i;
 
         if (i < markers_to_publish) {
-          const auto & cluster = clusters.at(i);
+          const auto & cluster = filtered_clusters.at(i);
 
           double x_mean = 0.0;
           double y_mean = 0.0;
