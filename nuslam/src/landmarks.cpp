@@ -5,6 +5,10 @@
 #include "turtlelib/rigid2d.hpp"
 
 using turtlelib::Vector2D;
+using turtlelib::almost_equal;
+
+//TODO make parameter, confirm
+constexpr double OUT_OF_RANGE_VAL = 0.0;
 
 /// \brief Performs landmark detections from input lidar data
 class Landmarks : public rclcpp::Node
@@ -43,22 +47,72 @@ private:
   void lidar_scan_callback(const sensor_msgs::msg::LaserScan & msg)
   {
 
-    std::vector<Vector2D> measurements {msg.ranges.size(), Vector2D{}};
+    std::vector<Vector2D> measurements {};
+    measurements.reserve(msg.ranges.size()); //max number of measurements equals the number of ranges
 
-    //Convert into points as Vector2Ds
+    std::vector<std::vector<Vector2D>> clusters {};
+    clusters.reserve(msg.ranges.size()); //max number of clusters equals the number of ranges
+
+    std::vector<Vector2D> current_cluster;
+
+    Vector2D last_measurement;
+
+    //Cluster points
     for (size_t i = 0; i < msg.ranges.size(); i++) {
-      auto & measurement = measurements.at(i);
-
-      const auto & range = msg.ranges.at(i);
-      const auto bearing = msg.angle_min + i*msg.angle_increment;
       
-      measurement = {
+      //Get range of point from message
+      const auto & range = msg.ranges.at(i);
+
+      //Do not consider out of range measurements in clustering
+      if (almost_equal(range, OUT_OF_RANGE_VAL)) {continue;}
+
+      //Calculate bearing from message
+      const auto bearing = msg.angle_min + i*msg.angle_increment;
+
+      //Convert into point as Vector2D
+      const Vector2D measurement = {
         range * std::cos(bearing),
         range * std::sin(bearing)
       };
 
-      //Skip clustering for first point
-      if (i == 0) {continue;}
+      //Store measurement
+      measurements.push_back(measurement);
+
+      //Do not perform distance comparison for first point
+      if (measurements.size() > 1) {
+        //calculate distance between this and last point
+        const auto distance = (measurement - last_measurement).magnitude();
+
+        //if measurement is above current threshold, store current cluster and start a new one
+        if (distance > clusters_threshold_) {
+          clusters.push_back(current_cluster);
+          current_cluster.clear();
+        }
+      }
+
+      //Add measurement to current cluster
+      current_cluster.push_back(measurement);
+
+      //Store last measurement for next iteration
+      last_measurement = measurement;
+    }
+
+    // RCLCPP_INFO_STREAM(get_logger(), "Pointer: " << (measurements.end() - 1)->x << ", " << (measurements.end() - 1)->y << " Index: " << measurements.at(measurements.size() - 1).x << ", " << measurements.at(measurements.size() - 1).y);
+    // RCLCPP_INFO_STREAM(get_logger(), "Pointer: " << measurements.begin()->x << ", " << measurements.begin()->y << " Index: " << measurements.at(0).x << ", " << measurements.at(0).y);
+
+    //Wrap clusters
+    if (clusters.size() > 1) {
+      //if first and last measurements are within the threshold of each other,
+      //add the last cluster to the first cluster
+      if ((measurements.back() - measurements.front()).magnitude() <= clusters_threshold_) {
+        //Add last cluster to first cluster
+        //https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
+        clusters.front().reserve(clusters.front().size() + clusters.back().size());
+        clusters.front().insert(clusters.front().end(), clusters.back().begin(), clusters.back().end());
+
+        //Remove last cluster
+        clusters.pop_back();
+      }
     }
   }
 };
