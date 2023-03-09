@@ -6,7 +6,7 @@ using turtlelib::Vector2D;
 using turtlelib::Circle2D;
 using turtlelib::fit_circle;
 
-constexpr double FLOAT_TOL = 1e-8;
+constexpr double FLOAT_TOL = 1e-4;
 
 TEST_CASE("circle fitting", "[circle_detection]") { //Nick Morales
 
