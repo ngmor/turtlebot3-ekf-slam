@@ -5,13 +5,14 @@
 
 #include "rigid2d.hpp"
 #include <vector>
+#include <tuple>
 
 namespace turtlelib
 {
     /// \brief fit a circle from a cluster of points
     /// \param points - points to fit a circle on, represented as vectors from the origin
     /// \return the best fit circle
-    Circle2D fit_circle(const std::vector<Vector2D> & points);
+    std::tuple<Circle2D, double> fit_circle(const std::vector<Vector2D> & points);
 }
 
 #endif

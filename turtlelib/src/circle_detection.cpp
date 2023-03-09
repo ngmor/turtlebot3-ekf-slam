@@ -6,7 +6,7 @@
 
 namespace turtlelib
 {
-    Circle2D fit_circle(const std::vector<Vector2D> & points) {
+    std::tuple<Circle2D, double> fit_circle(const std::vector<Vector2D> & points) {
         //based on:
         //https://projecteuclid.org/journals/electronic-journal-of-statistics/volume-3/issue-none/Error-analysis-for-circle-fitting-algorithms/10.1214/09-EJS419.full
 
@@ -85,11 +85,6 @@ namespace turtlelib
             sigma(i,i) = s(i);
         }
 
-        std::cout << "U:\n" << U << '\n'
-                  << "s:\n" << s << '\n'
-                  << "V:\n" << V << '\n'
-                  << "Sigma:\n" << sigma << std::endl;
-
         arma::cx_vec A;
 
         //The smallest singular value is the last value in s.
@@ -124,19 +119,8 @@ namespace turtlelib
                 throw (std::logic_error("Positive eigenvalue not found"));
             }
 
-            
-
             //Solve for A
             A = Y.i()*eigvecs.col(index);
-
-            std::cout << "Y:\n" << Y << '\n'
-                  << "Q:\n" << Q << '\n'
-                  << "eigvals:\n" << eigvals << '\n'
-                  << "eigvecs:\n" << eigvecs << '\n'
-                  << "A*:" << eigvecs.col(index) << '\n'
-                  << "A: " << A << std::endl;
-
-
 
         } else {
             arma::vec A_temp = V.col(3);
@@ -154,8 +138,6 @@ namespace turtlelib
         const auto b = -A3 / (2.0*A1);
         const auto R2 = (A2*A2 + A3*A3 - 4.0*A1*A4)/(4.0*A1*A1);
 
-        
-
         //Calculate root-mean-square-error
         double error = 0.0;
 
@@ -165,11 +147,12 @@ namespace turtlelib
 
         error = std::sqrt(error / num_points);
 
-        std::cout << "Error: " << error << std::endl;
-
         return {
-            {a + centroid.x, b + centroid.y}, //center
-            std::sqrt(R2) //radius
+            {
+                {a + centroid.x, b + centroid.y}, //center
+                std::sqrt(R2) //radius
+            },
+            error
         };
     }
 }

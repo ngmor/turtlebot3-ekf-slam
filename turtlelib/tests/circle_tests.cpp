@@ -14,7 +14,7 @@ TEST_CASE("circle fitting", "[circle_detection]") { //Nick Morales
         std::vector<Vector2D> points = {{1,7},{2,6},{5,8},{7,7},{9,5},{3,7}};
         Circle2D correct = {{4.615482, 2.807354}, 4.8275};
 
-        auto result = fit_circle(points);
+        auto [result, error] = fit_circle(points);
 
         REQUIRE_THAT(result.center.x, WithinRel(correct.center.x, FLOAT_TOL));
         REQUIRE_THAT(result.center.y, WithinRel(correct.center.y, FLOAT_TOL));
@@ -25,7 +25,7 @@ TEST_CASE("circle fitting", "[circle_detection]") { //Nick Morales
         std::vector<Vector2D> points = {{-1,0},{-0.3,-0.06},{0.3,0.1},{1,0}};
         Circle2D correct = {{0.4908357, -22.15212}, 22.17979};
 
-        auto result = fit_circle(points);
+        auto [result, error] = fit_circle(points);
 
         REQUIRE_THAT(result.center.x, WithinRel(correct.center.x, FLOAT_TOL));
         REQUIRE_THAT(result.center.y, WithinRel(correct.center.y, FLOAT_TOL));
