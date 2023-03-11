@@ -40,9 +40,13 @@ public:
     declare_parameter("circles.visualize", false, param);
     circles_visualize_ = get_parameter("circles.visualize").get_parameter_value().get<bool>();
 
-    param.description = "Radius threshold for considering a circle fit as a legitimate circle.";
-    declare_parameter("circles.radius_threshold", 0.1, param);
-    circles_radius_threshold_ = get_parameter("circles.radius_threshold").get_parameter_value().get<double>();
+    param.description = "Radius minimum for considering a circle fit as a legitimate circle.";
+    declare_parameter("circles.radius_min", 0.01, param);
+    circles_radius_min_ = get_parameter("circles.radius_min").get_parameter_value().get<double>();
+
+    param.description = "Radius maximum for considering a circle fit as a legitimate circle.";
+    declare_parameter("circles.radius_max", 0.1, param);
+    circles_radius_max_ = get_parameter("circles.radius_max").get_parameter_value().get<double>();
 
     //Publishers
     if (clusters_visualize_) {
@@ -98,7 +102,7 @@ private:
   visualization_msgs::msg::Marker cluster_default_marker_;
   size_t max_cluster_markers_ = 0;
 
-  double circles_radius_threshold_;
+  double circles_radius_min_, circles_radius_max_;
   bool circles_visualize_;
   visualization_msgs::msg::MarkerArray circle_markers_;
   visualization_msgs::msg::Marker circle_default_marker_;
@@ -201,9 +205,10 @@ private:
     filtered_circles.reserve(circles.size());
 
     //TODO filter circles better
+    //Filter circles based on maximum and minimum radius thresholds
     for (const auto & circle_data : circles) {
       const auto & circle = std::get<0>(circle_data);
-      if (circle.radius < circles_radius_threshold_) {
+      if ((circle.radius > circles_radius_min_) && (circle.radius < circles_radius_max_)) {
         filtered_circles.push_back(circle_data);
       }
     }
