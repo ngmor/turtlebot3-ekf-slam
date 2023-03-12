@@ -42,6 +42,7 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
+#include "nuslam/msg/landmarks.hpp"
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib_ros/convert.hpp"
 
@@ -161,6 +162,10 @@ public:
     auto kalman_sensor_noise = get_parameter(
       "kalman.sensor_noise").get_parameter_value().get<double>();
 
+    param.description = "Use fake sensor data instead of lidar data.";
+    declare_parameter("use_fake_sensor", true, param);
+    auto use_fake_sensor = get_parameter("use_fake_sensor").get_parameter_value().get<bool>();
+
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
@@ -180,11 +185,19 @@ public:
       10,
       std::bind(&NuSlam::joint_states_callback, this, std::placeholders::_1)
     );
-    sub_fake_sensor_ = create_subscription<visualization_msgs::msg::MarkerArray>(
-      "fake_sensor",
-      10,
-      std::bind(&NuSlam::fake_sensor_callback, this, std::placeholders::_1)
-    );
+    if (use_fake_sensor) {
+      sub_fake_sensor_ = create_subscription<visualization_msgs::msg::MarkerArray>(
+        "fake_sensor",
+        10,
+        std::bind(&NuSlam::fake_sensor_callback, this, std::placeholders::_1)
+      );
+    } else {
+      sub_landmarks_ = create_subscription<nuslam::msg::Landmarks>(
+        "landmarks",
+        10,
+        std::bind(&NuSlam::landmarks_callback, this, std::placeholders::_1)
+      );
+    }
 
     //Broadcasters
     broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -263,6 +276,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_estimated_landmarks_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_joint_states_;
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr sub_fake_sensor_;
+  rclcpp::Subscription<nuslam::msg::Landmarks>::SharedPtr sub_landmarks_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster_;
 
   std::string body_id_, odom_id_, wheel_left_joint_, wheel_right_joint_;
@@ -516,7 +530,17 @@ private:
     //Save last covariance prediction;
     slam_last_covariance_ = covariance_prediction;
   }
+
+  void landmarks_callback(const nuslam::msg::Landmarks & msg)
+  {
+    RCLCPP_INFO_STREAM(get_logger(), "callback");
+    for (const auto & landmark : msg.landmarks) {
+      RCLCPP_INFO_STREAM(get_logger(), "X: " << landmark.center.x << " Y: " << landmark.center.y);
+    }
+  }
 };
+
+
 
 /// \brief convert a relative x and y measurement into a range bearing measurement
 /// \param x - relative x coordinate of measured object

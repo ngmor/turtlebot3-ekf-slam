@@ -11,6 +11,10 @@
     <arg name="use_rviz" default="true"
         description="Start RVIZ to visualize robot. Valid choices are: ['true', 'false']"
     />
+
+    <arg name="use_fake_sensor" default="true"
+        description="Use fake sensor data instead of lidar. Valid choices are: ['true', 'false']"
+    />
     <!-- ARG END -->
 
     <!-- TODO add conditional launching -->
@@ -52,6 +56,7 @@
         <param name="odom_id" value="green/odom"/>
         <param name="wheel_left" value="wheel_left_joint"/>
         <param name="wheel_right" value="wheel_right_joint"/>
+        <param name="use_fake_sensor" value="$(var use_fake_sensor)"/>
         <remap from="odom" to="green/odom"/>
         <remap from="path" to="green/path"/>
     </node>
