@@ -15,6 +15,9 @@ using turtlelib::Vector2D;
 using turtlelib::Circle2D;
 using turtlelib::almost_equal;
 using turtlelib::deg2rad;
+using turtlelib::rad2deg;
+using turtlelib::get_mean_and_std_dev;
+using turtlelib::angle_between;
 using turtlelib::fit_circle;
 
 constexpr double LANDMARK_HEIGHT = 0.125;
@@ -213,9 +216,27 @@ private:
         
         //classify as circle or not circle
 
-        //
+        //TODO comment better
+        //TODO get rid of commented print statements
 
-        filtered_clusters.push_back(cluster);
+        //Make a vector of angles between points and endpoints
+        std::vector<double> angles;
+        angles.reserve(cluster.size() - 2);
+        for (auto itr = (cluster.cbegin() + 1); itr != (cluster.cend() - 1); ++itr) {
+          const auto v_start = cluster.front() - *itr;
+          const auto v_end = cluster.back() - *itr;
+
+          angles.push_back(std::abs(angle_between(v_start, v_end)));
+        }
+
+        const auto [mean, std_dev] = get_mean_and_std_dev(angles);
+
+        // RCLCPP_INFO_STREAM(get_logger(), "Mean: " << rad2deg(mean) << " Std_dev: " << rad2deg(std_dev));
+
+        if ((mean > circles_classification_mean_min_) && (mean < circles_classification_mean_max_) && (std_dev < circles_classification_std_dev_max_)) {
+          // RCLCPP_INFO_STREAM(get_logger(), "added");
+          filtered_clusters.push_back(cluster);
+        }
       }
     }
 

@@ -17,7 +17,7 @@ using turtlelib::INF;
 using turtlelib::normalize_angle;
 using turtlelib::get_mean;
 using turtlelib::dot;
-using turtlelib::angle;
+using turtlelib::angle_between;
 using turtlelib::integrate_twist;
 using turtlelib::DiffDrive;
 using turtlelib::DiffDriveConfig;
@@ -211,13 +211,13 @@ TEST_CASE("vector angle", "[vector]") { //Nick Morales
     Vector2D Vupdiag {1,1};
     Vector2D Vdowndiag {1,-1};
 
-    REQUIRE_THAT(angle(Vright, Vup), WithinRel(PI/2, FLOAT_TOL));
-    REQUIRE_THAT(angle(Vright, Vdown), WithinRel(-PI/2, FLOAT_TOL));
-    REQUIRE_THAT(angle(Vup, Vright), WithinRel(-PI/2, FLOAT_TOL));
-    REQUIRE_THAT(angle(Vleft, Vdown), WithinRel(PI/2, FLOAT_TOL));
-    REQUIRE_THAT(angle(Vdown, Vleft), WithinRel(-PI/2, FLOAT_TOL));
-    REQUIRE_THAT(angle(Vupdiag, Vright), WithinRel(-PI/4, FLOAT_TOL));
-    REQUIRE_THAT(angle(Vdowndiag, Vleft), WithinRel(-3*PI/4, FLOAT_TOL));
+    REQUIRE_THAT(angle_between(Vright, Vup), WithinRel(PI/2, FLOAT_TOL));
+    REQUIRE_THAT(angle_between(Vright, Vdown), WithinRel(-PI/2, FLOAT_TOL));
+    REQUIRE_THAT(angle_between(Vup, Vright), WithinRel(-PI/2, FLOAT_TOL));
+    REQUIRE_THAT(angle_between(Vleft, Vdown), WithinRel(PI/2, FLOAT_TOL));
+    REQUIRE_THAT(angle_between(Vdown, Vleft), WithinRel(-PI/2, FLOAT_TOL));
+    REQUIRE_THAT(angle_between(Vupdiag, Vright), WithinRel(-PI/4, FLOAT_TOL));
+    REQUIRE_THAT(angle_between(Vdowndiag, Vleft), WithinRel(-3*PI/4, FLOAT_TOL));
 }
 
 TEST_CASE("constructors and getters", "[transform]") { //Nick Morales

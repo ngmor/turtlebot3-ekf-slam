@@ -197,7 +197,7 @@ namespace turtlelib
     /// \param end - the vector to which the measurement goes
     /// \return the angle between the vectors, signed positive for CCW motion and
     /// negative for CW motion
-    double angle(const Vector2D & start, const Vector2D & end);
+    double angle_between(const Vector2D & start, const Vector2D & end);
 
     /// \brief A 2-Dimensional Twist
     struct Twist2D {
