@@ -3,8 +3,7 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /TF1/Frames1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 814
   - Class: rviz_common/Selection
@@ -61,6 +60,22 @@ Visualization Manager:
           Value: false
         blue/wheel_right_link:
           Value: false
+        green/base_footprint:
+          Value: true
+        green/base_link:
+          Value: false
+        green/base_scan:
+          Value: false
+        green/caster_back_link:
+          Value: false
+        green/imu_link:
+          Value: false
+        green/odom:
+          Value: true
+        green/wheel_left_link:
+          Value: false
+        green/wheel_right_link:
+          Value: false
         map:
           Value: true
         nusim/world:
@@ -100,7 +115,19 @@ Visualization Manager:
                 blue/wheel_right_link:
                   {}
           map:
-            {}
+            green/odom:
+              green/base_footprint:
+                green/base_link:
+                  green/base_scan:
+                    {}
+                  green/caster_back_link:
+                    {}
+                  green/imu_link:
+                    {}
+                  green/wheel_left_link:
+                    {}
+                  green/wheel_right_link:
+                    {}
           red/base_footprint:
             red/base_link:
               red/base_scan:
@@ -417,6 +444,39 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        base_scan:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        caster_back_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        wheel_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_right_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Mass Properties:
         Inertia: false
         Mass: false
@@ -523,25 +583,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 6.501484394073486
+      Distance: 5.034749507904053
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.37861987948417664
-        Y: 0.3277658224105835
-        Z: -0.09246060252189636
+        X: 0.07026910036802292
+        Y: -0.013493316248059273
+        Z: -0.3435554802417755
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5147969126701355
+      Pitch: 0.49979692697525024
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.962259531021118
+      Yaw: 2.692256450653076
     Saved: ~
 Window Geometry:
   Displays:

@@ -66,7 +66,7 @@ using arma::fill::zeros;
 
 //Constants
 constexpr std::string_view MAP_FRAME = "map";
-constexpr int MAX_LANDMARKS = 20; //TODO increase size
+constexpr int MAX_LANDMARKS = 3; //TODO increase size
 constexpr int STATE_SIZE = 2 * MAX_LANDMARKS + 3;
 constexpr double VERY_LARGE_NUMBER = 1e10;
 constexpr double LANDMARK_HEIGHT = 0.25;
@@ -293,6 +293,7 @@ private:
   mat slam_process_noise_ {STATE_SIZE, STATE_SIZE, zeros}; //Q_bar
   mat slam_sensor_noise_ {2 * MAX_LANDMARKS, 2 * MAX_LANDMARKS, zeros}; //R
   std::vector<bool> slam_landmark_seen_ = std::vector<bool>(MAX_LANDMARKS, false);
+  size_t slam_landmark_count_ = 0;
   visualization_msgs::msg::Marker default_landmark_;
 
   /// \brief update internal odometry from received joint states
@@ -533,10 +534,112 @@ private:
 
   void landmarks_callback(const nuslam::msg::Landmarks & msg)
   {
-    RCLCPP_INFO_STREAM(get_logger(), "callback");
-    for (const auto & landmark : msg.landmarks) {
-      RCLCPP_INFO_STREAM(get_logger(), "X: " << landmark.center.x << " Y: " << landmark.center.y);
+    //Calculate new location of robot in map frame
+    auto map_robot_tf = slam_map_odom_tf_ * turtlebot_.config().location;
+
+    //Construct identity matrix of the state size
+    mat I = eye<mat>(STATE_SIZE, STATE_SIZE);
+
+    //KALMAN FILTER PREDICTION
+    //Calculate state prediction
+    vec state_prediction = slam_last_state_;
+
+    //Temporary references for readability
+    auto & state_prediction_theta = state_prediction(0);
+    auto & state_prediction_x = state_prediction(1);
+    auto & state_prediction_y = state_prediction(2);
+
+    state_prediction_theta = normalize_angle(map_robot_tf.rotation());
+    state_prediction_x = map_robot_tf.translation().x;
+    state_prediction_y = map_robot_tf.translation().y;
+
+    //Construct A matrix
+    mat A = I;
+    A(1, 0) += -(state_prediction_y - slam_last_state_(2));
+    A(2, 0) += state_prediction_x - slam_last_state_(1);
+
+    //Calculate covariance prediction
+    mat covariance_prediction = A * slam_last_covariance_ * A.t() + slam_process_noise_;
+
+
+
+
+    //TODO data association and kalman filter correction go here
+
+
+
+
+
+    auto slam_time = get_clock()->now(); //TODO synchronize?
+
+    //Only add a new pose to the path if the turtlebot has moved
+    if (!(
+        almost_equal(state_prediction(0), slam_last_state_(0)) &&
+        almost_equal(state_prediction(1), slam_last_state_(1)) &&
+        almost_equal(state_prediction(2), slam_last_state_(2))
+    ))
+    {
+
+      config_pose_msg_.pose.position.x = state_prediction_x;
+      config_pose_msg_.pose.position.y = state_prediction_y;
+      tf2::Quaternion q;
+      q.setRPY(0.0, 0.0, state_prediction_theta);
+      config_pose_msg_.pose.orientation = tf2::toMsg(q);
+      config_pose_msg_.header.stamp = slam_time;
+
+      //Remove oldest element if we've reached the max number of path points
+      if (path_num_points_ != 0 && path_.poses.size() >= path_num_points_) {
+        path_.poses.erase(path_.poses.begin());
+      }
+
+      path_.poses.push_back(config_pose_msg_);
     }
+
+    //Update stamp
+    path_.header.stamp = slam_time;
+
+    //Publish path
+    pub_path_->publish(path_);
+
+    //Determine the map to odometry transformation
+    map_robot_tf = Transform2D {{state_prediction_x, state_prediction_y}, state_prediction_theta};
+
+    slam_map_odom_tf_ = map_robot_tf * turtlebot_.config().location.inv();
+
+    //Build transform
+    map_odom_tf_.transform = tf_to_tf_msg(slam_map_odom_tf_);
+    map_odom_tf_.header.stamp = slam_time;
+
+    //Broadcast transform
+    broadcaster_->sendTransform(map_odom_tf_);
+
+    //TODO rework this
+    // //Build marker array
+    // visualization_msgs::msg::MarkerArray estimated_landmarks;
+
+    // for (size_t i = 0; i < MAX_LANDMARKS; i++) {
+
+    //   //Skip marker if it hasn't been seen
+    //   if (!slam_landmark_seen_.at(i)) {continue;}
+
+    //   auto marker = default_landmark_;
+    //   marker.id = i + MARKER_ID_OFFSET_LANDMARKS;
+    //   marker.pose.position.x = state_prediction(3 + 2 * i);
+    //   marker.pose.position.y = state_prediction(3 + 2 * i + 1);
+
+    //   estimated_landmarks.markers.push_back(marker);
+    // }
+
+    // pub_estimated_landmarks_->publish(estimated_landmarks);
+
+    //Save last odom config
+    slam_last_odom_location_ = turtlebot_.config().location;
+
+    //Save last state prediction
+    slam_last_state_ = state_prediction;
+
+    //Save last covariance prediction;
+    slam_last_covariance_ = covariance_prediction;
   }
 };
 
