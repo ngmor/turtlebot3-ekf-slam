@@ -8,6 +8,8 @@
 #include "visualization_msgs/msg/marker_array.hpp"
 #include "turtlelib/rigid2d.hpp"
 #include "turtlelib/circle_detection.hpp"
+#include "nuslam/msg/landmark.hpp"
+#include "nuslam/msg/landmarks.hpp"
 
 using turtlelib::Vector2D;
 using turtlelib::Circle2D;
@@ -56,6 +58,8 @@ public:
       pub_circles_ = create_publisher<visualization_msgs::msg::MarkerArray>("circles", 10);
     }
 
+    pub_landmarks_ = create_publisher<nuslam::msg::Landmarks>("landmarks", 10);
+
     //Subscribers
     sub_lidar_scan_ = create_subscription<sensor_msgs::msg::LaserScan>(
       "scan",
@@ -92,9 +96,11 @@ public:
   }
 
 private:
-  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr sub_lidar_scan_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_clusters_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_circles_;
+  rclcpp::Publisher<nuslam::msg::Landmarks>::SharedPtr pub_landmarks_;
+  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr sub_lidar_scan_;
+
 
   double clusters_threshold_;
   bool clusters_visualize_;
@@ -290,6 +296,18 @@ private:
       //Publish markers
       pub_circles_->publish(circle_markers_);
     }
+
+    //Publish landmarks
+    nuslam::msg::Landmarks landmarks;
+
+    for (const auto & circle_data : filtered_circles) {
+      nuslam::msg::Landmark landmark;
+      landmark.center.x = std::get<0>(circle_data).center.x;
+      landmark.center.y = std::get<0>(circle_data).center.y;
+      landmarks.landmarks.push_back(landmark);
+    }
+
+    pub_landmarks_->publish(landmarks);
   }
 };
 

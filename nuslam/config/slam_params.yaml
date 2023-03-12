@@ -11,5 +11,5 @@
       threshold: 0.1 # m
     circles:
       visualize: true
-      radius_min: 0.01
-      radius_max: 0.1
+      radius_min: 0.01 # m
+      radius_max: 0.1 # m

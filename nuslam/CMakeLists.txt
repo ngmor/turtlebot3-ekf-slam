@@ -7,6 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -18,12 +19,25 @@ find_package(visualization_msgs REQUIRED)
 find_package(turtlelib)
 find_package(turtlelib_ros)
 find_package(Armadillo)
+ament_export_dependencies(rosidl_default_runtime)
 
 include_directories(${ARMADILLO_INCLUDE_DIRS})
+
+rosidl_generate_interfaces(
+  ${PROJECT_NAME}_msg
+  "msg/Landmark.msg"
+  "msg/Landmarks.msg"
+  LIBRARY_NAME ${PROJECT_NAME}
+  DEPENDENCIES
+  geometry_msgs
+)
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_msg "rosidl_typesupport_cpp")
+
 
 add_executable(nuslam src/nuslam.cpp)
 target_link_libraries(nuslam
   turtlelib::turtlelib turtlelib_ros::turtlelib_ros ${ARMADILLO_LIBRARIES}
+  "${cpp_typesupport_target}"
 )
 ament_target_dependencies(nuslam
   rclcpp geometry_msgs sensor_msgs nav_msgs tf2 tf2_ros tf2_geometry_msgs visualization_msgs
@@ -31,7 +45,7 @@ ament_target_dependencies(nuslam
 
 add_executable(landmarks src/landmarks.cpp)
 target_link_libraries(landmarks
-  turtlelib::turtlelib
+  turtlelib::turtlelib ${ARMADILLO_LIBRARIES} "${cpp_typesupport_target}"
 )
 ament_target_dependencies(landmarks
   rclcpp sensor_msgs visualization_msgs
