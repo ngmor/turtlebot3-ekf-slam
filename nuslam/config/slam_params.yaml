@@ -11,7 +11,11 @@
       threshold: 0.1 # m
     circles:
       visualize: true
-      radius_min: 0.01 # m
-      radius_max: 0.1 # m
+      classification:
+        mean_min: 90.0 # deg
+        mean_max: 135.0 # deg
+        std_dev_max: 8.6 # deg
+      radius_min: 0.0 #0.01 # m TODO fix
+      radius_max: 100000000.0 #0.1 # m TODO fix
     mahalanobis:
       threshold: 1.0 # m

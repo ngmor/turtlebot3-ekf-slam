@@ -14,6 +14,7 @@
 using turtlelib::Vector2D;
 using turtlelib::Circle2D;
 using turtlelib::almost_equal;
+using turtlelib::deg2rad;
 using turtlelib::fit_circle;
 
 constexpr double LANDMARK_HEIGHT = 0.125;
@@ -42,6 +43,18 @@ public:
     declare_parameter("circles.visualize", false, param);
     circles_visualize_ = get_parameter("circles.visualize").get_parameter_value().get<bool>();
 
+    param.description = "Minimum mean angle for considering a cluster a circle (deg).";
+    declare_parameter("circles.classification.mean_min", 90.0, param);
+    circles_classification_mean_min_ = deg2rad(get_parameter("circles.classification.mean_min").get_parameter_value().get<double>());
+
+    param.description = "Maximum mean angle for considering a cluster a circle (deg).";
+    declare_parameter("circles.classification.mean_max", 135.0, param);
+    circles_classification_mean_max_ = deg2rad(get_parameter("circles.classification.mean_max").get_parameter_value().get<double>());
+
+    param.description = "Maximum standard deviation for considering a cluster a circle (deg).";
+    declare_parameter("circles.classification.std_dev_max", 8.6, param);
+    circles_classification_std_dev_max_ = deg2rad(get_parameter("circles.classification.std_dev_max").get_parameter_value().get<double>());
+
     param.description = "Radius minimum for considering a circle fit as a legitimate circle.";
     declare_parameter("circles.radius_min", 0.01, param);
     circles_radius_min_ = get_parameter("circles.radius_min").get_parameter_value().get<double>();
@@ -49,6 +62,8 @@ public:
     param.description = "Radius maximum for considering a circle fit as a legitimate circle.";
     declare_parameter("circles.radius_max", 0.1, param);
     circles_radius_max_ = get_parameter("circles.radius_max").get_parameter_value().get<double>();
+
+    
 
     //Publishers
     if (clusters_visualize_) {
@@ -108,6 +123,7 @@ private:
   visualization_msgs::msg::Marker cluster_default_marker_;
   size_t max_cluster_markers_ = 0;
 
+  double circles_classification_mean_min_, circles_classification_mean_max_, circles_classification_std_dev_max_;
   double circles_radius_min_, circles_radius_max_;
   bool circles_visualize_;
   visualization_msgs::msg::MarkerArray circle_markers_;
@@ -194,6 +210,11 @@ private:
     //throw out clusters with less than a certain threshold number of points
     for (const auto & cluster : clusters) {
       if (cluster.size() >= CLUSTER_NUMBER_THRESHOLD) {
+        
+        //classify as circle or not circle
+
+        //
+
         filtered_clusters.push_back(cluster);
       }
     }

@@ -18,12 +18,31 @@ namespace turtlelib
     }
 
     //https://stackoverflow.com/questions/28574346/find-average-of-input-to-vector-c
-    double mean(const std::vector<double> & values) {
+    double get_mean(const std::vector<double> & values) {
         if(values.empty()) {
             return 0.0;
         }
 
         return std::reduce(values.begin(), values.end()) / static_cast<double>(values.size());
+    }
+
+    std::tuple<double, double> get_mean_and_std_dev(const std::vector<double> & values) {
+        const auto mean = get_mean(values);
+
+        if (values.size() < 2) {
+            return {mean, 0.0};
+        }
+
+        double std_dev = 0.0;
+
+        for (const auto value : values) {
+            std_dev += std::pow((value - mean), 2);
+        }
+        
+        std_dev = std::sqrt(std_dev / (values.size() - 1));
+
+        return {mean, std_dev};
+
     }
 
 

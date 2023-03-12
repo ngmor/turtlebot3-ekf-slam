@@ -15,7 +15,7 @@ using turtlelib::deg2rad;
 using turtlelib::PI;
 using turtlelib::INF;
 using turtlelib::normalize_angle;
-using turtlelib::mean;
+using turtlelib::get_mean;
 using turtlelib::dot;
 using turtlelib::angle;
 using turtlelib::integrate_twist;
@@ -40,7 +40,7 @@ TEST_CASE("mean calculation", "[mean]") { //Nick Morales
         std::vector<double> v {5, 3, 8, 7, 9};
         double correct = 6.4;
 
-        auto result = mean(v);
+        auto result = get_mean(v);
 
         REQUIRE_THAT(result, WithinRel(correct, FLOAT_TOL));
     }
@@ -49,7 +49,7 @@ TEST_CASE("mean calculation", "[mean]") { //Nick Morales
         std::vector<double> v {5.3, 6.4, 7.2, 1.3};
         double correct = 5.05;
 
-        auto result = mean(v);
+        auto result = get_mean(v);
 
         REQUIRE_THAT(result, WithinRel(correct, FLOAT_TOL));
     }

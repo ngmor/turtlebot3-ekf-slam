@@ -29,7 +29,7 @@ namespace turtlelib
         }
 
         //Calculate centroid of points
-        const Vector2D centroid {mean(x_coords), mean(y_coords)};
+        const Vector2D centroid {get_mean(x_coords), get_mean(y_coords)};
 
         std::vector<double> z_vals (num_points, 0.0);
         arma::mat Z {num_points, 4, arma::fill::zeros};
@@ -55,7 +55,7 @@ namespace turtlelib
         }
 
         //Compute the mean of z
-        const auto z_mean = mean(z_vals);
+        const auto z_mean = get_mean(z_vals);
 
         //Form the moment matrix M
         arma::mat M = (1.0 / num_points) * Z.t() * Z;

@@ -8,6 +8,7 @@
 #include<cmath>
 #include<limits>
 #include<vector>
+#include<tuple>
 
 namespace turtlelib
 {
@@ -84,7 +85,12 @@ namespace turtlelib
     /// \brief calculate the mean of a vector of values
     /// \param values - values to average
     /// \return the mean
-    double mean(const std::vector<double> & values);
+    double get_mean(const std::vector<double> & values);
+
+    /// \brief calculate the mean and standard deviation of a vector of values
+    /// \param values - values to find mean and standard deviation
+    /// \return a tuple with the mean and the average
+    std::tuple<double, double> get_mean_and_std_dev(const std::vector<double> & values);
 
     /// \brief A 2-Dimensional Vector
     struct Vector2D
