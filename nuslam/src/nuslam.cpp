@@ -63,6 +63,7 @@ using arma::mat;
 using arma::vec;
 using arma::eye;
 using arma::fill::zeros;
+using arma::as_scalar;
 
 //Constants
 constexpr std::string_view MAP_FRAME = "map";
@@ -165,6 +166,11 @@ public:
     param.description = "Use fake sensor data instead of lidar data.";
     declare_parameter("use_fake_sensor", true, param);
     auto use_fake_sensor = get_parameter("use_fake_sensor").get_parameter_value().get<bool>();
+
+    param.description = "Mahalanobis distance threshold for a new landmark.";
+    declare_parameter("mahalanobis.threshold", 0.1, param);
+    mahalanobis_threshold_ = get_parameter(
+      "mahalanobis.threshold").get_parameter_value().get<double>();
 
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
@@ -294,6 +300,7 @@ private:
   mat slam_sensor_noise_ {2 * MAX_LANDMARKS, 2 * MAX_LANDMARKS, zeros}; //R
   std::vector<bool> slam_landmark_seen_ = std::vector<bool>(MAX_LANDMARKS, false);
   size_t slam_landmark_count_ = 0;
+  double mahalanobis_threshold_;
   visualization_msgs::msg::Marker default_landmark_;
 
   /// \brief update internal odometry from received joint states
@@ -416,10 +423,10 @@ private:
       }
 
       //Compute quantities for later use
-      auto del_x = state_prediction_m_x - state_prediction_x;
-      auto del_y = state_prediction_m_y - state_prediction_y;
-      auto d = std::pow(del_x, 2) + std::pow(del_y, 2);
-      auto sqrt_d = std::sqrt(d);
+      const auto del_x = state_prediction_m_x - state_prediction_x;
+      const auto del_y = state_prediction_m_y - state_prediction_y;
+      const auto d = std::pow(del_x, 2) + std::pow(del_y, 2);
+      const auto sqrt_d = std::sqrt(d);
 
       //Construct Hi matrix
       mat Hi {2, STATE_SIZE, zeros};
@@ -563,8 +570,152 @@ private:
 
 
 
+    RCLCPP_INFO_STREAM(get_logger(), "Callback");
+
 
     //TODO data association and kalman filter correction go here
+
+    //iterate through sensor measurements
+    for (const auto & landmark : msg.landmarks) {
+
+      //DATA ASSOCIATION
+      //Init landmark_index to highest index + 1 (N - 1 + 1 = N)
+      auto landmark_index = slam_landmark_count_;
+      //Init min_distance of any landmark to the new measurement to
+      //the mahalanobis threshold distance
+      auto min_distance = mahalanobis_threshold_;
+
+      RCLCPP_INFO_STREAM(get_logger(), "X: " << landmark.center.x << " Y: " << landmark.center.y);
+
+      //Get range bearing measurement out of marker
+      auto [range, bearing] = relative_to_range_bearing(
+        landmark.center.x,
+        landmark.center.y);
+
+      bearing = normalize_angle(bearing);
+
+      //Construct actual landmark measurement vector
+      vec meas_act {range, bearing};
+
+      //Iterate through previously found landmarks
+      for (size_t k = 0; k < slam_landmark_count_; k++) {
+
+        //Temporary references for readability
+        auto & state_prediction_m_x = state_prediction(3 + 2 * k);
+        auto & state_prediction_m_y = state_prediction(3 + 2 * k + 1);
+
+        //Compute quantities for later use
+        const auto del_x = state_prediction_m_x - state_prediction_x;
+        const auto del_y = state_prediction_m_y - state_prediction_y;
+        const auto d = std::pow(del_x, 2) + std::pow(del_y, 2);
+        const auto sqrt_d = std::sqrt(d);
+
+        //Construct Hk matrix
+        mat Hk {2, STATE_SIZE, zeros};
+        Hk(1, 0) = -1.0;
+        Hk(0, 1) = -del_x / sqrt_d;
+        Hk(1, 1) = del_y / d;
+        Hk(0, 2) = -del_y / sqrt_d;
+        Hk(1, 2) = -del_x / d;
+        Hk(0, 3 + 2 * k) = del_x / sqrt_d;
+        Hk(1, 3 + 2 * k) = -del_y / d;
+        Hk(0, 3 + 2 * k + 1) = del_y / sqrt_d;
+        Hk(1, 3 + 2 * k + 1) = del_x / d;
+
+        //Compute the covariance psi_k
+        mat covariance = Hk*covariance_prediction*Hk.t()
+          + slam_sensor_noise_.submat(2 * k, 2 * k, 2 * k + 1, 2 * k + 1);
+      
+        RCLCPP_INFO_STREAM(get_logger(), "Covariance:" << covariance);
+        RCLCPP_INFO_STREAM(get_logger(), "Covariance inverse:" << covariance.i());
+
+        //Compute the theoretical sensor measurement zhat_k given the current state estimate
+        vec meas_theo {sqrt_d, normalize_angle(std::atan2(del_y, del_x) - state_prediction_theta)};
+
+        //Compute the difference between the measurements
+        mat meas_delta = meas_act - meas_theo;
+        meas_delta(1) = normalize_angle(meas_delta(1));
+
+        //Compute the mahalanobis distance
+        const auto mahalanobis_distance = as_scalar((meas_delta.t() * covariance.i() * meas_delta));
+
+        RCLCPP_INFO_STREAM(get_logger(), "Mahalanobis Distance: " << mahalanobis_distance);
+
+        //If this mahalanobis distance is less than the stored minimum distance,
+        //update the stored minimum distance and store the index of the corresponding landmark
+        if (mahalanobis_distance < min_distance) {
+          min_distance = mahalanobis_distance;
+          landmark_index = k;
+        }
+      }
+
+      RCLCPP_INFO_STREAM(get_logger(), "Count: " << slam_landmark_count_);
+
+      //If our landmark index is still its initial value (N), we have a new landmark
+      if (landmark_index == slam_landmark_count_) {
+        
+        //Increment landmark counter
+        slam_landmark_count_++;
+
+        //Throw an error if we have too many landmarks
+        if (slam_landmark_count_ > MAX_LANDMARKS) {
+          throw std::logic_error("Landmark count exceeded maximum"); //TODO add more details?
+        }
+
+        //Initialize landmark measurement
+        state_prediction(3 + 2 * landmark_index) = landmark.center.x;
+        state_prediction(3 + 2 * landmark_index + 1) = landmark.center.y;
+      }
+
+      //KALMAN FILTER CORRECTION
+      //perform correction with associated landmark
+      //Temporary references for readability
+      auto & state_prediction_m_x = state_prediction(3 + 2 * landmark_index);
+      auto & state_prediction_m_y = state_prediction(3 + 2 * landmark_index + 1);
+
+      //Compute quantities for later use
+      const auto del_x = state_prediction_m_x - state_prediction_x;
+      const auto del_y = state_prediction_m_y - state_prediction_y;
+      const auto d = std::pow(del_x, 2) + std::pow(del_y, 2);
+      const auto sqrt_d = std::sqrt(d);
+
+      //Construct Hk matrix
+      mat Hk {2, STATE_SIZE, zeros};
+      Hk(1, 0) = -1.0;
+      Hk(0, 1) = -del_x / sqrt_d;
+      Hk(1, 1) = del_y / d;
+      Hk(0, 2) = -del_y / sqrt_d;
+      Hk(1, 2) = -del_x / d;
+      Hk(0, 3 + 2 * landmark_index) = del_x / sqrt_d;
+      Hk(1, 3 + 2 * landmark_index) = -del_y / d;
+      Hk(0, 3 + 2 * landmark_index + 1) = del_y / sqrt_d;
+      Hk(1, 3 + 2 * landmark_index + 1) = del_x / d;
+
+      //Get transpose
+      mat Hk_t = Hk.t();
+
+      //Compute the theoretical landmark measurement given the current state estimate
+      vec meas_theo {sqrt_d, normalize_angle(std::atan2(del_y, del_x) - state_prediction_theta)};
+
+      //Calculate Kalman gain for this landmark
+      mat Kk = covariance_prediction * Hk_t *
+        (Hk * covariance_prediction * Hk_t +
+        slam_sensor_noise_.submat(2 * landmark_index, 2 * landmark_index, 2 * landmark_index + 1, 2 * landmark_index + 1)).i();
+
+      //calculate the difference in the measurements
+      mat meas_delta = meas_act - meas_theo;
+      meas_delta(1) = normalize_angle(meas_delta(1));
+
+      //Update the state prediction
+      state_prediction += Kk * (meas_delta);
+
+      //Normalize angle again
+      state_prediction_theta = normalize_angle(state_prediction_theta);
+
+      //Update the covariance prediction
+      covariance_prediction = (I - Kk * Hk) * covariance_prediction;
+
+    }
 
 
 

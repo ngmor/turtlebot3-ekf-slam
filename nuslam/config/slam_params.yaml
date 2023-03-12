@@ -13,3 +13,5 @@
       visualize: true
       radius_min: 0.01 # m
       radius_max: 0.1 # m
+    mahalanobis:
+      threshold: 0.1 # m
