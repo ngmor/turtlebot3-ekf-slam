@@ -67,12 +67,13 @@ using arma::as_scalar;
 
 //Constants
 constexpr std::string_view MAP_FRAME = "map";
-constexpr int MAX_LANDMARKS = 3; //TODO increase size
+constexpr int MAX_LANDMARKS = 20; //TODO increase size
 constexpr int STATE_SIZE = 2 * MAX_LANDMARKS + 3;
 constexpr double VERY_LARGE_NUMBER = 1e10;
 constexpr double LANDMARK_HEIGHT = 0.25;
 constexpr double LANDMARK_RADIUS = 0.038;
 constexpr int32_t MARKER_ID_OFFSET_LANDMARKS = 100;
+const Transform2D ROBOT_LIDAR_TF {{-0.032, 0.0}}; //TODO make TF listener?
 
 //Function prototypes
 std::tuple<double, double> relative_to_range_bearing(double x, double y);
@@ -585,12 +586,15 @@ private:
       //the mahalanobis threshold distance
       auto min_distance = mahalanobis_threshold_;
 
-      RCLCPP_INFO_STREAM(get_logger(), "X: " << landmark.center.x << " Y: " << landmark.center.y);
+      //Correct for lidar offset
+      const auto Tlandmark = ROBOT_LIDAR_TF*Transform2D{{landmark.center.x, landmark.center.y}};
+
+      RCLCPP_INFO_STREAM(get_logger(), "X: " << Tlandmark.translation().x << " Y: " << Tlandmark.translation().y);
 
       //Get range bearing measurement out of marker
       auto [range, bearing] = relative_to_range_bearing(
-        landmark.center.x,
-        landmark.center.y);
+        Tlandmark.translation().x,
+        Tlandmark.translation().y);
 
       bearing = normalize_angle(bearing);
 
@@ -654,17 +658,20 @@ private:
       //If our landmark index is still its initial value (N), we have a new landmark
       if (landmark_index == slam_landmark_count_) {
         
+        //Throw an error if we have too many landmarks
+        if (slam_landmark_count_ == MAX_LANDMARKS) {
+          RCLCPP_ERROR_STREAM(get_logger(), "Landmark count exceed maximum but new landmark detected, ignoring.");
+          continue;
+        }
+
         //Increment landmark counter
         slam_landmark_count_++;
 
-        //Throw an error if we have too many landmarks
-        if (slam_landmark_count_ > MAX_LANDMARKS) {
-          throw std::logic_error("Landmark count exceeded maximum"); //TODO add more details?
-        }
+        
 
         //Initialize landmark measurement
-        state_prediction(3 + 2 * landmark_index) = landmark.center.x;
-        state_prediction(3 + 2 * landmark_index + 1) = landmark.center.y;
+        state_prediction(3 + 2 * landmark_index) = Tlandmark.translation().x;
+        state_prediction(3 + 2 * landmark_index + 1) = Tlandmark.translation().y;
       }
 
       //KALMAN FILTER CORRECTION
@@ -764,24 +771,20 @@ private:
     //Broadcast transform
     broadcaster_->sendTransform(map_odom_tf_);
 
-    //TODO rework this
-    // //Build marker array
-    // visualization_msgs::msg::MarkerArray estimated_landmarks;
+    //Build marker array
+    visualization_msgs::msg::MarkerArray estimated_landmarks;
 
-    // for (size_t i = 0; i < MAX_LANDMARKS; i++) {
+    for (size_t k = 0; k < slam_landmark_count_; k++) {
 
-    //   //Skip marker if it hasn't been seen
-    //   if (!slam_landmark_seen_.at(i)) {continue;}
+      auto marker = default_landmark_;
+      marker.id = k + MARKER_ID_OFFSET_LANDMARKS;
+      marker.pose.position.x = state_prediction(3 + 2 * k);
+      marker.pose.position.y = state_prediction(3 + 2 * k + 1);
 
-    //   auto marker = default_landmark_;
-    //   marker.id = i + MARKER_ID_OFFSET_LANDMARKS;
-    //   marker.pose.position.x = state_prediction(3 + 2 * i);
-    //   marker.pose.position.y = state_prediction(3 + 2 * i + 1);
+      estimated_landmarks.markers.push_back(marker);
+    }
 
-    //   estimated_landmarks.markers.push_back(marker);
-    // }
-
-    // pub_estimated_landmarks_->publish(estimated_landmarks);
+    pub_estimated_landmarks_->publish(estimated_landmarks);
 
     //Save last odom config
     slam_last_odom_location_ = turtlebot_.config().location;
