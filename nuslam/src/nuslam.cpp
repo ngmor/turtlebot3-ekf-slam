@@ -543,6 +543,7 @@ private:
   void landmarks_callback(const nuslam::msg::Landmarks & msg)
   {
     //TODO remove print statements
+    //TODO-DEBUG RCLCPP_INFO_STREAM(get_logger(), "Landmark callback start");
 
     //Calculate new location of robot in map frame
     auto map_robot_tf = slam_map_odom_tf_ * turtlebot_.config().location;
@@ -586,7 +587,7 @@ private:
 
 
       const auto Tlandmark_abs = map_robot_tf*Tlandmark;
-      RCLCPP_INFO_STREAM(get_logger(), "X: " << Tlandmark_abs.translation().x << " Y: " << Tlandmark_abs.translation().y);
+      //TODO-DEBUG //RCLCPP_INFO_STREAM(get_logger(), "X: " << Tlandmark_abs.translation().x << " Y: " << Tlandmark_abs.translation().y);
 
       //Get range bearing measurement out of marker
       auto [range, bearing] = relative_to_range_bearing(
@@ -637,7 +638,7 @@ private:
         //Compute the mahalanobis distance
         const auto mahalanobis_distance = as_scalar((meas_delta.t() * covariance.i() * meas_delta));
 
-        RCLCPP_INFO_STREAM(get_logger(), "Mahalanobis Distance: " << mahalanobis_distance);
+        //TODO-DEBUG //RCLCPP_INFO_STREAM(get_logger(), "Mahalanobis Distance: " << mahalanobis_distance);
 
         //If this mahalanobis distance is less than the stored minimum distance,
         //update the stored minimum distance and store the index of the corresponding landmark
@@ -647,21 +648,25 @@ private:
         }
       }
 
-      RCLCPP_INFO_STREAM(get_logger(), "Count: " << slam_landmark_count_);
+      
+      //TODO-DEBUG //RCLCPP_INFO_STREAM(get_logger(), "Landmark count: " << slam_landmark_count_);
 
       //If our landmark index is still its initial value (N), we have a new landmark
       if (landmark_index == slam_landmark_count_) {
 
-        RCLCPP_INFO_STREAM(get_logger(), "ADDED");
+        RCLCPP_INFO_STREAM(get_logger(), "New landmark found at (" << Tlandmark_abs.translation().x << ", " << Tlandmark_abs.translation().y << ")");
 
         //Throw an error if we have too many landmarks
         if (slam_landmark_count_ == MAX_LANDMARKS) {
           RCLCPP_ERROR_STREAM(get_logger(), "Landmark count exceed maximum but new landmark detected, ignoring.");
+          RCLCPP_INFO_STREAM(get_logger(), "Landmark count: " << slam_landmark_count_);
           continue;
         }
 
         //Increment landmark counter
         slam_landmark_count_++;
+
+        RCLCPP_INFO_STREAM(get_logger(), "Landmark count: " << slam_landmark_count_);
 
         //Initialize landmark measurement
         state_prediction(3 + 2 * landmark_index) = Tlandmark.translation().x;
