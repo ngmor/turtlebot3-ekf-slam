@@ -1,6 +1,4 @@
 <launch>
-<!-- TODO consider what all actually goes in this launch file -->
-
     <!-- ARG START -->
     <arg name="cmd_src" default="teleop"
         description="Source for cmd_vel messages. Valid choices are: ['teleop', 'circle', 'none']"
@@ -24,5 +22,4 @@
     <node pkg="nuslam" exec="landmarks" >
         <param from="$(find-pkg-share nuslam)/config/slam_params.yaml"/>
     </node>
-
 </launch>

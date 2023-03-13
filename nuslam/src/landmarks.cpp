@@ -213,12 +213,9 @@ private:
     for (const auto & cluster : clusters) {
       if (cluster.size() >= CLUSTER_NUMBER_THRESHOLD) {
         
-        //classify as circle or not circle
+        //classify as circle or not circl
 
-        //TODO comment better
-        //TODO get rid of commented print statements
-
-        //Make a vector of angles between points and endpoints
+        //Make a vector of angles between points in cluster and endpoints
         std::vector<double> angles;
         angles.reserve(cluster.size() - 2);
         for (auto itr = (cluster.cbegin() + 1); itr != (cluster.cend() - 1); ++itr) {
@@ -228,12 +225,11 @@ private:
           angles.push_back(std::abs(angle_between(v_start, v_end)));
         }
 
+        //Calculate the mean and standard deviation of the calculated angles
         const auto [mean, std_dev] = get_mean_and_std_dev(angles);
 
-        // RCLCPP_INFO_STREAM(get_logger(), "Mean: " << rad2deg(mean) << " Std_dev: " << rad2deg(std_dev));
-
+        //Filter out clusters based on thresholds for mean and standard deviation
         if ((mean > circles_classification_mean_min_) && (mean < circles_classification_mean_max_) && (std_dev < circles_classification_std_dev_max_)) {
-          // RCLCPP_INFO_STREAM(get_logger(), "added");
           filtered_clusters.push_back(cluster);
         }
       }
@@ -251,7 +247,6 @@ private:
     std::vector<std::tuple<Circle2D, double>> filtered_circles {};
     filtered_circles.reserve(circles.size());
 
-    //TODO filter circles better
     //Filter circles based on maximum and minimum radius thresholds
     for (const auto & circle_data : circles) {
       const auto & circle = std::get<0>(circle_data);

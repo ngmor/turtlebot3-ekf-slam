@@ -24,6 +24,8 @@
 /// CLIENTS:
 ///     none
 
+//TODO update
+
 #include <stdexcept>
 #include <string>
 #include <array>
@@ -73,7 +75,7 @@ constexpr double VERY_LARGE_NUMBER = 1e10;
 constexpr double LANDMARK_HEIGHT = 0.25;
 constexpr double LANDMARK_RADIUS = 0.038;
 constexpr int32_t MARKER_ID_OFFSET_LANDMARKS = 100;
-const Transform2D ROBOT_LIDAR_TF {{-0.032, 0.0}}; //TODO make TF listener?
+const Transform2D ROBOT_LIDAR_TF {{-0.032, 0.0}};
 
 //Function prototypes
 std::tuple<double, double> relative_to_range_bearing(double x, double y);
@@ -469,7 +471,7 @@ private:
       covariance_prediction = (I - Ki * Hi) * covariance_prediction;
     }
 
-    auto slam_time = get_clock()->now(); //TODO synchronize?
+    auto slam_time = get_clock()->now();
 
     //Only add a new pose to the path if the turtlebot has moved
     if (!(
@@ -542,8 +544,7 @@ private:
 
   void landmarks_callback(const nuslam::msg::Landmarks & msg)
   {
-    //TODO remove print statements
-    //TODO-DEBUG RCLCPP_INFO_STREAM(get_logger(), "Landmark callback start");
+    //DEBUG //RCLCPP_INFO_STREAM(get_logger(), "Landmark callback start");
 
     //Calculate new location of robot in map frame
     auto map_robot_tf = slam_map_odom_tf_ * turtlebot_.config().location;
@@ -587,7 +588,7 @@ private:
 
 
       const auto Tlandmark_abs = map_robot_tf*Tlandmark;
-      //TODO-DEBUG //RCLCPP_INFO_STREAM(get_logger(), "X: " << Tlandmark_abs.translation().x << " Y: " << Tlandmark_abs.translation().y);
+      //DEBUG //RCLCPP_INFO_STREAM(get_logger(), "X: " << Tlandmark_abs.translation().x << " Y: " << Tlandmark_abs.translation().y);
 
       //Get range bearing measurement out of marker
       auto [range, bearing] = relative_to_range_bearing(
@@ -638,7 +639,7 @@ private:
         //Compute the mahalanobis distance
         const auto mahalanobis_distance = as_scalar((meas_delta.t() * covariance.i() * meas_delta));
 
-        //TODO-DEBUG //RCLCPP_INFO_STREAM(get_logger(), "Mahalanobis Distance: " << mahalanobis_distance);
+        //DEBUG //RCLCPP_INFO_STREAM(get_logger(), "Mahalanobis Distance: " << mahalanobis_distance);
 
         //If this mahalanobis distance is less than the stored minimum distance,
         //update the stored minimum distance and store the index of the corresponding landmark
@@ -649,7 +650,7 @@ private:
       }
 
       
-      //TODO-DEBUG //RCLCPP_INFO_STREAM(get_logger(), "Landmark count: " << slam_landmark_count_);
+      //DEBUG //RCLCPP_INFO_STREAM(get_logger(), "Landmark count: " << slam_landmark_count_);
 
       //If our landmark index is still its initial value (N), we have a new landmark
       if (landmark_index == slam_landmark_count_) {
@@ -727,7 +728,7 @@ private:
 
 
 
-    auto slam_time = get_clock()->now(); //TODO synchronize?
+    auto slam_time = get_clock()->now();
 
     //Only add a new pose to the path if the turtlebot has moved
     if (!(

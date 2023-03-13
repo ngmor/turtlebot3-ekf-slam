@@ -10,7 +10,7 @@ namespace turtlelib
         //based on:
         //https://projecteuclid.org/journals/electronic-journal-of-statistics/volume-3/issue-none/Error-analysis-for-circle-fitting-algorithms/10.1214/09-EJS419.full
 
-        //If no points, return default circle object
+        //If less than minimum number of points, return default circle object
         if (points.size() < 4) {
             return {};
         }
@@ -120,8 +120,6 @@ namespace turtlelib
             }
 
             //Solve for A
-            //TODO figure out how to handle this if it's a singular matrix
-            //pseudo inverse?
             A = Y.i()*eigvecs.col(index);
 
         } else {

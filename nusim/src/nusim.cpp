@@ -101,7 +101,7 @@ using turtlelib_ros::tf_to_pose_msg;
 constexpr std::string_view WORLD_FRAME = "nusim/world";
 constexpr std::string_view ROBOT_GROUND_TRUTH_FRAME = "red/base_footprint";
 constexpr std::string_view LIDAR_GROUND_TRUTH_FRAME = "red/base_scan";
-const Transform2D ROBOT_LIDAR_TF {{-0.032, 0.0}}; //TODO make TF listener?
+const Transform2D ROBOT_LIDAR_TF {{-0.032, 0.0}};
 constexpr double OBSTACLE_HEIGHT = 0.25;
 constexpr double WALL_HEIGHT = 0.25;
 constexpr double WALL_WIDTH = 0.1;
@@ -342,7 +342,7 @@ public:
       get_parameter("lidar.angle_incr").get_parameter_value().get<double>();
 
     param.description = "Resolution for lidar scan (m). Set to 0 for perfect resolution.";
-    declare_parameter("lidar.resolution", 0.0, param); //TODO figure out actual turtlebot lidar resolution
+    declare_parameter("lidar.resolution", 0.0, param);
     lidar_resolution_ = get_parameter("lidar.resolution").get_parameter_value().get<double>();
 
     param.description =
@@ -391,7 +391,6 @@ public:
       pub_timestep_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
       pub_collision_cylinder_ =
         create_publisher<visualization_msgs::msg::Marker>("~/collision_cylinder", 10);
-      //TODO - I don't think this should have a prefix, have to check
       pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
       pub_fake_sensor_ = create_publisher<visualization_msgs::msg::MarkerArray>("fake_sensor", 10);
       pub_lidar_scan_ = create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
@@ -401,7 +400,7 @@ public:
     //Subscribers
     if (!draw_only_) {
       sub_wheel_cmd_ = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
-        "wheel_cmd", //TODO - I don't think this should have a prefix, have to check
+        "wheel_cmd",
         10,
         std::bind(&NuSim::wheel_cmd_callback, this, std::placeholders::_1)
       );
@@ -843,7 +842,6 @@ private:
 
       //Add sensor noise if there is nonzero standard deviation
       if (fake_sensor_dist_.stddev() != 0.0) {
-        //TODO is it ok to make them independent like this?
         marker.pose.position.x += fake_sensor_dist_(get_random());
         marker.pose.position.y += fake_sensor_dist_(get_random());
       }

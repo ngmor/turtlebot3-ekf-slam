@@ -17,8 +17,6 @@
     />
     <!-- ARG END -->
 
-    <!-- TODO add conditional launching -->
-
     <node pkg="rviz2" exec="rviz2"
         args="-d $(find-pkg-share nuslam)/config/sim.rviz"
         if="$(eval '\'$(var robot)\' == \'nusim\' and \'$(var use_rviz)\' == \'true\'')"
@@ -28,7 +26,6 @@
         args="-d $(find-pkg-share nuslam)/config/real.rviz"
         if="$(eval '\'$(var robot)\' == \'none\' and \'$(var use_rviz)\' == \'true\'')"
     />
-    <!-- TODO fix real.rviz -->
 
     <include file="$(find-pkg-share nuturtle_control)/launch/start_robot.launch.xml">
         <arg name="cmd_src" value="$(var cmd_src)"/>

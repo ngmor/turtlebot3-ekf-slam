@@ -181,7 +181,6 @@ private:
     wheel_cmd.right_velocity = static_cast<int32_t>(wheel_vel.right * motor_cmd_per_rad_sec_);
 
     //Clamp velocities
-    //TODO - remove logger statements for efficiency?
     if (wheel_cmd.left_velocity > motor_cmd_max_) {
       RCLCPP_WARN_STREAM(
         get_logger(),
