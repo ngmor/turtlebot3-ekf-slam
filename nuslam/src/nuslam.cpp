@@ -542,6 +542,8 @@ private:
 
   void landmarks_callback(const nuslam::msg::Landmarks & msg)
   {
+    //TODO remove print statements
+
     //Calculate new location of robot in map frame
     auto map_robot_tf = slam_map_odom_tf_ * turtlebot_.config().location;
 
@@ -569,17 +571,8 @@ private:
     //Calculate covariance prediction
     mat covariance_prediction = A * slam_last_covariance_ * A.t() + slam_process_noise_;
 
-
-
-    RCLCPP_INFO_STREAM(get_logger(), "Higher debug" << msg.debug);
-
-
-    //TODO data association and kalman filter correction go here
-
     //iterate through sensor measurements
     for (const auto & landmark : msg.landmarks) {
-
-      RCLCPP_INFO_STREAM(get_logger(), "Lower debug" << landmark.debug);
 
       //DATA ASSOCIATION
       //Init landmark_index to highest index + 1 (N - 1 + 1 = N)
@@ -661,7 +654,6 @@ private:
 
         RCLCPP_INFO_STREAM(get_logger(), "ADDED");
 
-        
         //Throw an error if we have too many landmarks
         if (slam_landmark_count_ == MAX_LANDMARKS) {
           RCLCPP_ERROR_STREAM(get_logger(), "Landmark count exceed maximum but new landmark detected, ignoring.");
@@ -670,8 +662,6 @@ private:
 
         //Increment landmark counter
         slam_landmark_count_++;
-
-        
 
         //Initialize landmark measurement
         state_prediction(3 + 2 * landmark_index) = Tlandmark.translation().x;
