@@ -136,6 +136,11 @@ private:
   void lidar_scan_callback(const sensor_msgs::msg::LaserScan & msg)
   {
 
+    static int32_t higher_debug = 0; //TODO remove
+    static int32_t lower_debug = 0; //TODO remove
+
+    RCLCPP_INFO_STREAM(get_logger(), "Higher debug:" << higher_debug);
+
     std::vector<Vector2D> measurements {};
     measurements.reserve(msg.ranges.size()); //max number of measurements equals the number of ranges
 
@@ -343,13 +348,18 @@ private:
     nuslam::msg::Landmarks landmarks;
 
     for (const auto & circle_data : filtered_circles) {
+      RCLCPP_INFO_STREAM(get_logger(), "Lower debug: " << lower_debug);
       nuslam::msg::Landmark landmark;
       landmark.center.x = std::get<0>(circle_data).center.x;
       landmark.center.y = std::get<0>(circle_data).center.y;
+      landmark.debug = lower_debug;
       landmarks.landmarks.push_back(landmark);
+      lower_debug++;
     }
 
+    landmarks.debug = higher_debug;
     pub_landmarks_->publish(landmarks);
+    higher_debug++;
   }
 };
 

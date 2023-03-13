@@ -571,13 +571,15 @@ private:
 
 
 
-    RCLCPP_INFO_STREAM(get_logger(), "Callback");
+    RCLCPP_INFO_STREAM(get_logger(), "Higher debug" << msg.debug);
 
 
     //TODO data association and kalman filter correction go here
 
     //iterate through sensor measurements
     for (const auto & landmark : msg.landmarks) {
+
+      RCLCPP_INFO_STREAM(get_logger(), "Lower debug" << landmark.debug);
 
       //DATA ASSOCIATION
       //Init landmark_index to highest index + 1 (N - 1 + 1 = N)
@@ -589,7 +591,9 @@ private:
       //Correct for lidar offset
       const auto Tlandmark = ROBOT_LIDAR_TF*Transform2D{{landmark.center.x, landmark.center.y}};
 
-      RCLCPP_INFO_STREAM(get_logger(), "X: " << Tlandmark.translation().x << " Y: " << Tlandmark.translation().y);
+
+      const auto Tlandmark_abs = map_robot_tf*Tlandmark;
+      RCLCPP_INFO_STREAM(get_logger(), "X: " << Tlandmark_abs.translation().x << " Y: " << Tlandmark_abs.translation().y);
 
       //Get range bearing measurement out of marker
       auto [range, bearing] = relative_to_range_bearing(
@@ -629,9 +633,6 @@ private:
         //Compute the covariance psi_k
         mat covariance = Hk*covariance_prediction*Hk.t()
           + slam_sensor_noise_.submat(2 * k, 2 * k, 2 * k + 1, 2 * k + 1);
-      
-        RCLCPP_INFO_STREAM(get_logger(), "Covariance:" << covariance);
-        RCLCPP_INFO_STREAM(get_logger(), "Covariance inverse:" << covariance.i());
 
         //Compute the theoretical sensor measurement zhat_k given the current state estimate
         vec meas_theo {sqrt_d, normalize_angle(std::atan2(del_y, del_x) - state_prediction_theta)};
@@ -657,6 +658,9 @@ private:
 
       //If our landmark index is still its initial value (N), we have a new landmark
       if (landmark_index == slam_landmark_count_) {
+
+        RCLCPP_INFO_STREAM(get_logger(), "ADDED");
+
         
         //Throw an error if we have too many landmarks
         if (slam_landmark_count_ == MAX_LANDMARKS) {
