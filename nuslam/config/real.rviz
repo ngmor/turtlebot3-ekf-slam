@@ -3,8 +3,7 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /TF1/Frames1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 814
   - Class: rviz_common/Selection
@@ -57,10 +56,6 @@ Visualization Manager:
           Value: false
         blue/odom:
           Value: true
-        blue/wheel_left_link:
-          Value: false
-        blue/wheel_right_link:
-          Value: false
         green/base_footprint:
           Value: true
         green/base_link:
@@ -71,30 +66,10 @@ Visualization Manager:
           Value: false
         green/imu_link:
           Value: false
-        green/odom:
-          Value: true
-        green/wheel_left_link:
-          Value: false
-        green/wheel_right_link:
-          Value: false
         map:
           Value: true
         nusim/world:
           Value: true
-        red/base_footprint:
-          Value: true
-        red/base_link:
-          Value: false
-        red/base_scan:
-          Value: false
-        red/caster_back_link:
-          Value: false
-        red/imu_link:
-          Value: false
-        red/wheel_left_link:
-          Value: false
-        red/wheel_right_link:
-          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: true
@@ -103,105 +78,11 @@ Visualization Manager:
       Tree:
         nusim/world:
           blue/odom:
-            blue/base_footprint:
-              blue/base_link:
-                blue/base_scan:
-                  {}
-                blue/caster_back_link:
-                  {}
-                blue/imu_link:
-                  {}
-                blue/wheel_left_link:
-                  {}
-                blue/wheel_right_link:
-                  {}
+            {}
           map:
-            green/odom:
-              green/base_footprint:
-                green/base_link:
-                  green/base_scan:
-                    {}
-                  green/caster_back_link:
-                    {}
-                  green/imu_link:
-                    {}
-                  green/wheel_left_link:
-                    {}
-                  green/wheel_right_link:
-                    {}
-          red/base_footprint:
-            red/base_link:
-              red/base_scan:
-                {}
-              red/caster_back_link:
-                {}
-              red/imu_link:
-                {}
-              red/wheel_left_link:
-                {}
-              red/wheel_right_link:
-                {}
+            {}
       Update Interval: 0
       Value: true
-    - Alpha: 1
-      Class: rviz_default_plugins/RobotModel
-      Collision Enabled: false
-      Description File: ""
-      Description Source: Topic
-      Description Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /red/robot_description
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        base_footprint:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_scan:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        caster_back_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        wheel_left_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_right_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-      Mass Properties:
-        Inertia: false
-        Mass: false
-      Name: GroundTruthRobot
-      TF Prefix: red
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: GroundTruthObstacles
@@ -212,60 +93,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /nusim/obstacles
-      Value: true
-    - Class: rviz_default_plugins/Marker
-      Enabled: true
-      Name: GroundTruthCollisionCylinder
-      Namespaces:
-        {}
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /nusim/collision_cylinder
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz_default_plugins/Path
-      Color: 255; 0; 0
-      Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Lines
-      Line Width: 0.029999999329447746
-      Name: GroundTruthPath
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /nusim/path
-      Value: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
-      Name: FakeSensorObstacles
-      Namespaces:
-        "": true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /fake_sensor
+        Value: /nuwall/obstacles
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -276,7 +104,7 @@ Visualization Manager:
       Axis: Z
       Channel Name: intensity
       Class: rviz_default_plugins/LaserScan
-      Color: 255; 0; 0
+      Color: 255; 255; 0
       Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
@@ -518,13 +346,37 @@ Visualization Manager:
       Enabled: true
       Name: SLAMLandmarks
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /estimated_landmarks
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Clusters
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /clusters
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Circles
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /circles
       Value: true
   Enabled: true
   Global Options:
@@ -560,25 +412,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 4.518729209899902
+      Distance: 5.034749507904053
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.04126894474029541
-        Y: -0.0892576277256012
-        Z: -0.10668662935495377
+        X: 0.07026910036802292
+        Y: -0.013493316248059273
+        Z: -0.3435554802417755
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.569797158241272
+      Pitch: 0.49979692697525024
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.8072546124458313
+      Yaw: 2.692256450653076
     Saved: ~
 Window Geometry:
   Displays:
