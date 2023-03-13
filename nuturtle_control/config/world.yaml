@@ -5,8 +5,8 @@
     y0: 0.0 # m
     theta0: 0.0 # rad
     obstacles:
-      x: [-0.6, 0.7, 0.5] # m
-      y: [-0.8, -0.7, 0.9] # m
+      x: [ 0.496, -0.187, 0.784,  0.808] #[-0.6, 0.7, 0.5] # m
+      y: [ 0.838, -0.529, 0.587, -0.275] #[-0.8, -0.7, 0.9] # m
       r: 0.038 # m
     input_noise: 0.025 # rad/s
     slip_fraction: 0.25
@@ -14,4 +14,4 @@
     max_range: 2.0 # m
     lidar:
       resolution: 0.01 #m
-      # noise: 0.01 #m TODO add back in!
+      noise: 0.01 #m TODO add back in!

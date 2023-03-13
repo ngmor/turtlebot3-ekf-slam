@@ -2,9 +2,9 @@
   ros__parameters:
     kalman:
       process_noise:
-        theta: 0.1
-        x: 0.1
-        y: 0.1
+        theta: 0.05
+        x: 0.05
+        y: 0.05
       sensor_noise: 0.1
     clusters:
       visualize: true
@@ -18,4 +18,4 @@
       radius_min: 0.01 # m
       radius_max: 0.1 # m
     mahalanobis:
-      threshold: 10.0 # m
+      threshold: 0.25 # m
