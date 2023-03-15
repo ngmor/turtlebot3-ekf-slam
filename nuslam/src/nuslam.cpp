@@ -510,6 +510,7 @@ private:
     //Build transform
     map_odom_tf_.transform = tf_to_tf_msg(slam_map_odom_tf_);
     map_odom_tf_.header.stamp = slam_time;
+    map_odom_tf_.header.stamp.sec += 6; //offset to handle past extrapolation garbage
 
     //Broadcast transform
     broadcaster_->sendTransform(map_odom_tf_);

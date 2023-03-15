@@ -39,14 +39,19 @@
         --frame-id nusim/world
         --child-frame-id map
         "
+        if="$(eval '\'$(var robot)\' == \'nusim\' or \'$(var robot)\' == \'localhost\'')"
     />
 
-    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py"
+        if="$(eval '\'$(var robot)\' == \'nusim\' or \'$(var robot)\' == \'localhost\'')"
+    >
         <arg name="color" value="green"/>
         <arg name="use_rviz" value="false"/>
     </include>
 
-    <node pkg="nuslam" exec="nuslam" >
+    <node pkg="nuslam" exec="nuslam"
+        if="$(eval '\'$(var robot)\' == \'nusim\' or \'$(var robot)\' == \'localhost\'')"
+    >
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
         <param from="$(find-pkg-share nuslam)/config/slam_params.yaml"/>
         <param name="body_id" value="green/base_footprint"/>
@@ -56,6 +61,7 @@
         <param name="use_fake_sensor" value="$(var use_fake_sensor)"/>
         <remap from="odom" to="green/odom"/>
         <remap from="path" to="green/path"/>
+        
     </node>
 
     

@@ -3,6 +3,7 @@
 #include <vector>
 #include <tuple>
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/qos.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -81,7 +82,7 @@ public:
     //Subscribers
     sub_lidar_scan_ = create_subscription<sensor_msgs::msg::LaserScan>(
       "scan",
-      10,
+      rclcpp::SensorDataQoS(),
       std::bind(&Landmarks::lidar_scan_callback, this, std::placeholders::_1)
     );
 
