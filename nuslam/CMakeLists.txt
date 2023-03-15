@@ -51,9 +51,14 @@ ament_target_dependencies(landmarks
   rclcpp sensor_msgs visualization_msgs
 )
 
+add_executable(real_lidar_visualize src/real_lidar_visualize.cpp)
+ament_target_dependencies(real_lidar_visualize
+  rclcpp sensor_msgs
+)
+
 # install targets
 install(TARGETS
-  nuslam landmarks
+  nuslam landmarks real_lidar_visualize
   DESTINATION lib/${PROJECT_NAME}
 )
 

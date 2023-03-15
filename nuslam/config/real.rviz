@@ -57,9 +57,9 @@ Visualization Manager:
         blue/odom:
           Value: true
         blue/wheel_left_link:
-          Value: true
+          Value: false
         blue/wheel_right_link:
-          Value: true
+          Value: false
         green/base_footprint:
           Value: true
         green/base_link:
@@ -73,9 +73,9 @@ Visualization Manager:
         green/odom:
           Value: true
         green/wheel_left_link:
-          Value: true
+          Value: false
         green/wheel_right_link:
-          Value: true
+          Value: false
         map:
           Value: true
         nusim/world:
@@ -117,17 +117,17 @@ Visualization Manager:
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: GroundTruthObstacles
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /nuwall/obstacles
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -158,7 +158,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Best Effort
-        Value: /scan
+        Value: /real_lidar_visualize
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -238,7 +238,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 50
       Name: Odometry
       Position Tolerance: 0.10000000149011612
@@ -259,7 +259,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /blue/odom
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
@@ -388,29 +388,29 @@ Visualization Manager:
         Value: /estimated_landmarks
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: Clusters
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /clusters
-      Value: true
+      Value: false
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: Circles
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /circles
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -460,10 +460,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.49979692697525024
+      Pitch: 0.6247968077659607
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.692256450653076
+      Yaw: 1.2722535133361816
     Saved: ~
 Window Geometry:
   Displays:

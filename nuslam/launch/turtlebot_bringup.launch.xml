@@ -5,4 +5,5 @@
         <arg name="use_rviz" value="false"/>
         <arg name="use_fake_sensor" value="false" />
     </include>
+    <node pkg="nuslam" exec="real_lidar_visualize" />
 </launch>
