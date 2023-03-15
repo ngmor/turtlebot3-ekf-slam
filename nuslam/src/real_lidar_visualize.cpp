@@ -1,4 +1,17 @@
-//TODO - document
+/// \file
+/// \brief A passthrough node for lidar data that removes the problematic
+/// time_increment field so it can be displayed in RVIZ.
+/// PARAMETERS:
+///     none
+/// PUBLISHERS:
+///     real_lidar_visualize (sensor_msgs/msg/LaserScan): lidar data with the time_increment field removed
+/// SUBSCRIBERS:
+///     scan (sensor_msgs/msg/LaserScan): lidar data to process
+/// SERVERS:
+///     none
+/// CLIENTS:
+///     none
+
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/qos.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
@@ -29,6 +42,8 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr pub_real_lidar_visualize_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr sub_lidar_scan_;
 
+  /// \brief remove the time_increment field from lidar data and republish
+  /// \param msg lidar data
   void lidar_scan_callback(const sensor_msgs::msg::LaserScan & msg)
   {
     auto edited_msg = msg;

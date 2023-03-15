@@ -13,18 +13,21 @@
 ///     kalman.process_noise.x (double): Kalman filter process noise for x coordinate.
 ///     kalman.process_noise.y (double): Kalman filter process noise for y coordinate.
 ///     kalman.sensor_noise (double): Kalman filter sensor noise.
+///     use_fake_sensor (bool): Use fake sensor data instead of lidar data.
+///     mahalanobis.threshold (double): Mahalanobis distance threshold for a new landmark.
 /// PUBLISHERS:
 ///     odom (nav_msgs/msg/Odometry): the calculated odometry from the input joint states
 ///     path (nav_msgs/msg/Path): the path data determined from the EKF SLAM calculations
 ///     estimated_landmarks (visualization_msgs/msg/MarkerArray): the estimated map locations of landmarks from the EKF SLAM calculations
 /// SUBSCRIBERS:
 ///     joint_states (sensor_msgs/msg/JointState): the robot's joint states
+///     fake_sensor (visualization_msgs/msg/MarkerArray): fake sensor data for testing EKF SLAM
+///     landmarks (nuslam::msg::Landmarks): detected landmarks for doing EKF SLAM with lidar data
 /// SERVERS:
 ///     none
 /// CLIENTS:
 ///     none
 
-//TODO update
 
 #include <stdexcept>
 #include <string>
@@ -69,7 +72,7 @@ using arma::as_scalar;
 
 //Constants
 constexpr std::string_view MAP_FRAME = "map";
-constexpr int MAX_LANDMARKS = 20; //TODO increase size
+constexpr int MAX_LANDMARKS = 20; //adjust size here if necessary, would be good to make a parameter
 constexpr int STATE_SIZE = 2 * MAX_LANDMARKS + 3;
 constexpr double VERY_LARGE_NUMBER = 1e10;
 constexpr double LANDMARK_HEIGHT = 0.25;

@@ -1,4 +1,26 @@
-//TODO - document
+/// \file
+/// \brief Detects landmarks from lidar data.
+///
+/// PARAMETERS:
+///     clusters.visualize (bool): Controls whether clustered points are published as markers.
+///     clusters.threshold (double): Euclidean distance between points to be considered part of the same cluster.
+///     circles.visualize (bool): Controls whether fit circles are published as markers.
+///     circles.classification.mean_min (double): Minimum mean angle for considering a cluster a circle (deg).
+///     circles.classification.mean_max (double): Maximum mean angle for considering a cluster a circle (deg).
+///     circles.classification.std_dev_max (double): Maximum standard deviation for considering a cluster a circle (deg).
+///     circles.radius_min (double): Radius minimum for considering a circle fit as a legitimate circle.
+///     circles.radius_max (double): Radius maximum for considering a circle fit as a legitimate circle.
+/// PUBLISHERS:
+///     clusters (visualization_msgs/msg/MarkerArray): cylinder markers representing the detected and filtered clusters
+///     circles (visualization_msgs/msg/MarkerArray): cylinder markers representing the detected and filtered circles
+///     landmarks (nuslam/msg/landmarks): an array of detected landmark locations.
+/// SUBSCRIBERS:
+///     scan (sensor_msgs/msg/LaserScan): lidar data to use for landmark detection
+/// SERVERS:
+///     none
+/// CLIENTS:
+///     none
+
 #include <cmath>
 #include <vector>
 #include <tuple>
@@ -134,6 +156,8 @@ private:
   visualization_msgs::msg::Marker circle_default_marker_;
   size_t max_circle_markers_ = 0;
 
+  /// \brief detect landmarks from lidar data
+  /// \param msg - lidar data
   void lidar_scan_callback(const sensor_msgs::msg::LaserScan & msg)
   {
     std::vector<Vector2D> measurements {};
