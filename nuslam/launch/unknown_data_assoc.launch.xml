@@ -19,7 +19,15 @@
         <arg name="use_fake_sensor" value="false" />
     </include>
 
-    <node pkg="nuslam" exec="landmarks" >
-        <param from="$(find-pkg-share nuslam)/config/slam_params.yaml"/>
+    <node pkg="nuslam" exec="landmarks" 
+        if="$(eval '\'$(var robot)\' == \'nusim\'')"
+    >
+        <param from="$(find-pkg-share nuslam)/config/slam_params_sim.yaml"/>
+    </node>
+
+    <node pkg="nuslam" exec="landmarks" 
+        if="$(eval '\'$(var robot)\' == \'localhost\'')"
+    >
+        <param from="$(find-pkg-share nuslam)/config/slam_params_real.yaml"/>
     </node>
 </launch>

@@ -50,16 +50,30 @@
     </include>
 
     <node pkg="nuslam" exec="nuslam"
-        if="$(eval '\'$(var robot)\' == \'nusim\' or \'$(var robot)\' == \'localhost\'')"
+        if="$(eval '\'$(var robot)\' == \'nusim\'')"
     >
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-        <param from="$(find-pkg-share nuslam)/config/slam_params.yaml"/>
+        <param from="$(find-pkg-share nuslam)/config/slam_params_sim.yaml"/>
         <param name="body_id" value="green/base_footprint"/>
         <param name="odom_id" value="green/odom"/>
         <param name="wheel_left" value="wheel_left_joint"/>
         <param name="wheel_right" value="wheel_right_joint"/>
         <param name="use_fake_sensor" value="$(var use_fake_sensor)"/>
-        <param name="tf_fix.enable" value="$(eval '\'$(var robot)\' == \'localhost\'')"/>
+        <remap from="odom" to="green/odom"/>
+        <remap from="path" to="green/path"/>
+        
+    </node>
+
+    <node pkg="nuslam" exec="nuslam"
+        if="$(eval '\'$(var robot)\' == \'localhost\'')"
+    >
+        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+        <param from="$(find-pkg-share nuslam)/config/slam_params_real.yaml"/>
+        <param name="body_id" value="green/base_footprint"/>
+        <param name="odom_id" value="green/odom"/>
+        <param name="wheel_left" value="wheel_left_joint"/>
+        <param name="wheel_right" value="wheel_right_joint"/>
+        <param name="use_fake_sensor" value="$(var use_fake_sensor)"/>
         <remap from="odom" to="green/odom"/>
         <remap from="path" to="green/path"/>
         
