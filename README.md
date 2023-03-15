@@ -2,10 +2,12 @@
 * Nicolas Morales
 * Winter 2023
 
+TODO add final demo video here
+
 # Package List
 This repository consists of several ROS packages
 - [`nusim`](nusim) - contains simulator for the NUTurtle world.
-- [`nuslam`](nuslam) - contains a node for performing Extended Kalman Filter SLAM with the NUTurtle. **A demo video for this EKF SLAM (Task L) is embedded in this package's README.**
+- [`nuslam`](nuslam) - contains a node for performing Extended Kalman Filter SLAM with the NUTurtle. **Demo videos for this EKF SLAM (Task L) are embedded in this package's README.**
 - [`nuturtle_control`](nuturtle_control) - contains nodes for interfacing with and controlling the NUTurtle. **A demo video for this package (Task F) is embedded in this package's README.**
 - [`nuturtle_description`](nuturtle_description) - contains URDF and configuration parameters for the NUTurtle.
 

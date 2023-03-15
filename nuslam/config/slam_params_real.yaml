@@ -7,10 +7,10 @@
         y: 0.001
       sensor_noise: 0.1
     clusters:
-      visualize: true
+      visualize: false
       threshold: 0.2 # m
     circles:
-      visualize: true
+      visualize: false
       classification:
         mean_min: 70.0 # deg
         mean_max: 155.0 # deg
