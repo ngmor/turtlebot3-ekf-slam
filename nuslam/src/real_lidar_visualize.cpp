@@ -26,7 +26,8 @@ public:
   {
 
     //Publishers
-    pub_real_lidar_visualize_ = create_publisher<sensor_msgs::msg::LaserScan>("real_lidar_visualize", 10);
+    pub_real_lidar_visualize_ = create_publisher<sensor_msgs::msg::LaserScan>(
+      "real_lidar_visualize", 10);
 
     //Subscribers
     sub_lidar_scan_ = create_subscription<sensor_msgs::msg::LaserScan>(

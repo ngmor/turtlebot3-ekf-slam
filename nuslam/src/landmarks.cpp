@@ -61,7 +61,8 @@ public:
     declare_parameter("clusters.visualize", false, param);
     clusters_visualize_ = get_parameter("clusters.visualize").get_parameter_value().get<bool>();
 
-    param.description = "Euclidean distance between points to be considered part of the same cluster.";
+    param.description =
+      "Euclidean distance between points to be considered part of the same cluster.";
     declare_parameter("clusters.threshold", 0.1, param);
     clusters_threshold_ = get_parameter("clusters.threshold").get_parameter_value().get<double>();
 
@@ -71,15 +72,21 @@ public:
 
     param.description = "Minimum mean angle for considering a cluster a circle (deg).";
     declare_parameter("circles.classification.mean_min", 90.0, param);
-    circles_classification_mean_min_ = deg2rad(get_parameter("circles.classification.mean_min").get_parameter_value().get<double>());
+    circles_classification_mean_min_ = deg2rad(
+      get_parameter(
+        "circles.classification.mean_min").get_parameter_value().get<double>());
 
     param.description = "Maximum mean angle for considering a cluster a circle (deg).";
     declare_parameter("circles.classification.mean_max", 135.0, param);
-    circles_classification_mean_max_ = deg2rad(get_parameter("circles.classification.mean_max").get_parameter_value().get<double>());
+    circles_classification_mean_max_ = deg2rad(
+      get_parameter(
+        "circles.classification.mean_max").get_parameter_value().get<double>());
 
     param.description = "Maximum standard deviation for considering a cluster a circle (deg).";
     declare_parameter("circles.classification.std_dev_max", 8.6, param);
-    circles_classification_std_dev_max_ = deg2rad(get_parameter("circles.classification.std_dev_max").get_parameter_value().get<double>());
+    circles_classification_std_dev_max_ = deg2rad(
+      get_parameter(
+        "circles.classification.std_dev_max").get_parameter_value().get<double>());
 
     param.description = "Radius minimum for considering a circle fit as a legitimate circle.";
     declare_parameter("circles.radius_min", 0.01, param);
@@ -89,7 +96,6 @@ public:
     declare_parameter("circles.radius_max", 0.1, param);
     circles_radius_max_ = get_parameter("circles.radius_max").get_parameter_value().get<double>();
 
-    
 
     //Publishers
     if (clusters_visualize_) {
@@ -112,7 +118,7 @@ public:
     if (clusters_visualize_) {
       cluster_default_marker_.type = visualization_msgs::msg::Marker::CYLINDER;
       cluster_default_marker_.action = visualization_msgs::msg::Marker::ADD;
-      cluster_default_marker_.pose.position.z = LANDMARK_HEIGHT*2.0;
+      cluster_default_marker_.pose.position.z = LANDMARK_HEIGHT * 2.0;
       cluster_default_marker_.scale.x = clusters_threshold_;
       cluster_default_marker_.scale.y = clusters_threshold_;
       cluster_default_marker_.scale.z = LANDMARK_HEIGHT;
@@ -149,7 +155,8 @@ private:
   visualization_msgs::msg::Marker cluster_default_marker_;
   size_t max_cluster_markers_ = 0;
 
-  double circles_classification_mean_min_, circles_classification_mean_max_, circles_classification_std_dev_max_;
+  double circles_classification_mean_min_, circles_classification_mean_max_,
+    circles_classification_std_dev_max_;
   double circles_radius_min_, circles_radius_max_;
   bool circles_visualize_;
   visualization_msgs::msg::MarkerArray circle_markers_;
@@ -172,7 +179,7 @@ private:
 
     //Cluster points
     for (size_t i = 0; i < msg.ranges.size(); i++) {
-      
+
       //Get range of point from message
       const auto & range = msg.ranges.at(i);
 
@@ -180,7 +187,7 @@ private:
       if (range < msg.range_min) {continue;}
 
       //Calculate bearing from message
-      const auto bearing = msg.angle_min + i*msg.angle_increment;
+      const auto bearing = msg.angle_min + i * msg.angle_increment;
 
       //Convert into point as Vector2D
       const Vector2D measurement = {
@@ -223,7 +230,9 @@ private:
         //Add last cluster to first cluster
         //https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
         clusters.front().reserve(clusters.front().size() + clusters.back().size());
-        clusters.front().insert(clusters.front().end(), clusters.back().begin(), clusters.back().end());
+        clusters.front().insert(
+          clusters.front().end(), clusters.back().begin(),
+          clusters.back().end());
 
         //Remove last cluster
         clusters.pop_back();
@@ -237,7 +246,7 @@ private:
     //throw out clusters with less than a certain threshold number of points
     for (const auto & cluster : clusters) {
       if (cluster.size() >= CLUSTER_NUMBER_THRESHOLD) {
-        
+
         //classify as circle or not circl
 
         //Make a vector of angles between points in cluster and endpoints
@@ -254,7 +263,10 @@ private:
         const auto [mean, std_dev] = get_mean_and_std_dev(angles);
 
         //Filter out clusters based on thresholds for mean and standard deviation
-        if ((mean > circles_classification_mean_min_) && (mean < circles_classification_mean_max_) && (std_dev < circles_classification_std_dev_max_)) {
+        if ((mean > circles_classification_mean_min_) &&
+          (mean < circles_classification_mean_max_) &&
+          (std_dev < circles_classification_std_dev_max_))
+        {
           filtered_clusters.push_back(cluster);
         }
       }
@@ -294,7 +306,7 @@ private:
 
       for (size_t i = 0; i < max_cluster_markers_; i++) {
         auto marker = cluster_default_marker_;
-        
+
         marker.id = i;
 
         if (i < markers_to_publish) {
@@ -337,7 +349,7 @@ private:
 
       for (size_t i = 0; i < max_circle_markers_; i++) {
         auto marker = circle_default_marker_;
-        
+
         marker.id = i;
 
         if (i < markers_to_publish) {
@@ -345,8 +357,8 @@ private:
 
           marker.pose.position.x = circle.center.x;
           marker.pose.position.y = circle.center.y;
-          marker.scale.x = circle.radius*2;
-          marker.scale.y = circle.radius*2;
+          marker.scale.x = circle.radius * 2;
+          marker.scale.y = circle.radius * 2;
         } else { //delete markers beyond what we see
           marker.action = visualization_msgs::msg::Marker::DELETE;
         }

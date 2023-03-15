@@ -394,7 +394,9 @@ public:
         create_publisher<visualization_msgs::msg::Marker>("~/collision_cylinder", 10);
       pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
       pub_fake_sensor_ = create_publisher<visualization_msgs::msg::MarkerArray>("fake_sensor", 10);
-      pub_lidar_scan_ = create_publisher<sensor_msgs::msg::LaserScan>("scan", rclcpp::SensorDataQoS());
+      pub_lidar_scan_ = create_publisher<sensor_msgs::msg::LaserScan>(
+        "scan",
+        rclcpp::SensorDataQoS());
       pub_path_ = create_publisher<nav_msgs::msg::Path>("~/path", 10);
     }
 
@@ -935,12 +937,12 @@ private:
       // the detected range at this angle
       if (possible_lidar_ranges_.size() > 0) {
         range = *std::min_element(possible_lidar_ranges_.begin(), possible_lidar_ranges_.end());
-      
+
         //Add sensor noise if there is nonzero standard deviation
         if (lidar_dist_.stddev() != 0.0) {
           range += lidar_dist_(get_random());
         }
-      
+
       } else {
         //Default range is 0
         range = 0.0;

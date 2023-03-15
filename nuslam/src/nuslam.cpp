@@ -179,7 +179,6 @@ public:
       "mahalanobis.threshold").get_parameter_value().get<double>();
 
 
-
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
@@ -311,7 +310,7 @@ private:
   size_t slam_landmark_count_ = 0;
   double mahalanobis_threshold_;
   visualization_msgs::msg::Marker default_landmark_;
-  
+
 
   /// \brief update internal odometry from received joint states
   /// \param msg - joint states
@@ -598,10 +597,10 @@ private:
       auto min_distance = mahalanobis_threshold_;
 
       //Correct for lidar offset
-      const auto Tlandmark = ROBOT_LIDAR_TF*Transform2D{{landmark.center.x, landmark.center.y}};
+      const auto Tlandmark = ROBOT_LIDAR_TF * Transform2D{{landmark.center.x, landmark.center.y}};
 
 
-      const auto Tlandmark_abs = map_robot_tf*Tlandmark;
+      const auto Tlandmark_abs = map_robot_tf * Tlandmark;
       //DEBUG //RCLCPP_INFO_STREAM(get_logger(), "X: " << Tlandmark_abs.translation().x << " Y: " << Tlandmark_abs.translation().y);
 
       //Get range bearing measurement out of marker
@@ -640,8 +639,8 @@ private:
         Hk(1, 3 + 2 * k + 1) = del_x / d;
 
         //Compute the covariance psi_k
-        mat covariance = Hk*covariance_prediction*Hk.t()
-          + slam_sensor_noise_.submat(2 * k, 2 * k, 2 * k + 1, 2 * k + 1);
+        mat covariance = Hk * covariance_prediction * Hk.t() +
+          slam_sensor_noise_.submat(2 * k, 2 * k, 2 * k + 1, 2 * k + 1);
 
         //Compute the theoretical sensor measurement zhat_k given the current state estimate
         vec meas_theo {sqrt_d, normalize_angle(std::atan2(del_y, del_x) - state_prediction_theta)};
@@ -663,17 +662,21 @@ private:
         }
       }
 
-      
+
       //DEBUG //RCLCPP_INFO_STREAM(get_logger(), "Landmark count: " << slam_landmark_count_);
 
       //If our landmark index is still its initial value (N), we have a new landmark
       if (landmark_index == slam_landmark_count_) {
 
-        RCLCPP_INFO_STREAM(get_logger(), "New landmark found at (" << Tlandmark_abs.translation().x << ", " << Tlandmark_abs.translation().y << ")");
+        RCLCPP_INFO_STREAM(
+          get_logger(),
+          "New landmark found at (" << Tlandmark_abs.translation().x << ", " << Tlandmark_abs.translation().y <<
+            ")");
 
         //Throw an error if we have too many landmarks
         if (slam_landmark_count_ == MAX_LANDMARKS) {
-          RCLCPP_ERROR_STREAM(get_logger(), "Landmark count exceed maximum but new landmark detected, ignoring.");
+          RCLCPP_ERROR_STREAM(
+            get_logger(), "Landmark count exceed maximum but new landmark detected, ignoring.");
           RCLCPP_INFO_STREAM(get_logger(), "Landmark count: " << slam_landmark_count_);
           continue;
         }
@@ -721,7 +724,9 @@ private:
       //Calculate Kalman gain for this landmark
       mat Kk = covariance_prediction * Hk_t *
         (Hk * covariance_prediction * Hk_t +
-        slam_sensor_noise_.submat(2 * landmark_index, 2 * landmark_index, 2 * landmark_index + 1, 2 * landmark_index + 1)).i();
+        slam_sensor_noise_.submat(
+          2 * landmark_index, 2 * landmark_index, 2 * landmark_index + 1,
+          2 * landmark_index + 1)).i();
 
       //calculate the difference in the measurements
       mat meas_delta = meas_act - meas_theo;
@@ -737,9 +742,6 @@ private:
       covariance_prediction = (I - Kk * Hk) * covariance_prediction;
 
     }
-
-
-
 
 
     auto slam_time = get_clock()->now();
@@ -810,7 +812,6 @@ private:
     slam_last_covariance_ = covariance_prediction;
   }
 };
-
 
 
 /// \brief convert a relative x and y measurement into a range bearing measurement
