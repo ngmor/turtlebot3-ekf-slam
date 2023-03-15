@@ -61,6 +61,7 @@
 #include <random>
 #include <cmath>
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/qos.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
 #include "std_srvs/srv/empty.hpp"
@@ -393,7 +394,7 @@ public:
         create_publisher<visualization_msgs::msg::Marker>("~/collision_cylinder", 10);
       pub_sensor_data_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
       pub_fake_sensor_ = create_publisher<visualization_msgs::msg::MarkerArray>("fake_sensor", 10);
-      pub_lidar_scan_ = create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
+      pub_lidar_scan_ = create_publisher<sensor_msgs::msg::LaserScan>("scan", rclcpp::SensorDataQoS());
       pub_path_ = create_publisher<nav_msgs::msg::Path>("~/path", 10);
     }
 
