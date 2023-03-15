@@ -175,6 +175,20 @@ public:
     mahalanobis_threshold_ = get_parameter(
       "mahalanobis.threshold").get_parameter_value().get<double>();
 
+    param.description = "Increment the timestep of the map to odom transform to fix extrapolation into the future error message.";
+    declare_parameter("tf_fix.enable", false, param);
+    tf_fix_enable_ = get_parameter("tf_fix.enable").get_parameter_value().get<bool>();
+
+    param.description = "Seconds to increment the timestep of the map to odom transform by.";
+    declare_parameter("tf_fix.seconds", 1, param);
+    tf_fix_seconds_ = get_parameter("tf_fix.seconds").get_parameter_value().get<int64_t>();
+
+    param.description = "Nanoseconds to increment the timestep of the map to odom transform by.";
+    declare_parameter("tf_fix.nanoseconds", 0, param);
+    tf_fix_nanoseconds_ = get_parameter("tf_fix.nanoseconds").get_parameter_value().get<int64_t>();
+
+
+
     //Abort if any required parameters were not provided
     if (!required_parameters_received) {
       throw std::logic_error(
@@ -292,6 +306,7 @@ private:
   DiffDrive turtlebot_ {0.16, 0.033}; //Default values, to be overwritten in constructor
   nav_msgs::msg::Odometry odom_msg_;
   geometry_msgs::msg::TransformStamped odom_tf_, map_odom_tf_;
+  bool first_joint_states_ = true;
   nav_msgs::msg::Path path_;
   geometry_msgs::msg::PoseStamped config_pose_msg_;
   size_t path_num_points_;
@@ -305,6 +320,9 @@ private:
   size_t slam_landmark_count_ = 0;
   double mahalanobis_threshold_;
   visualization_msgs::msg::Marker default_landmark_;
+  bool tf_fix_enable_;
+  int64_t tf_fix_seconds_, tf_fix_nanoseconds_;
+  
 
   /// \brief update internal odometry from received joint states
   /// \param msg - joint states
@@ -334,6 +352,13 @@ private:
     //No point in doing odometry if both wheels have not been detected
     if (wheel_count != 2) {return;}
 
+    //init wheel pos with first received states
+    if (first_joint_states_) {
+      turtlebot_.set_wheel_pos(wheel_pos);
+      first_joint_states_ = false;
+      return;
+    }
+
     //Get body twist
     Twist2D body_twist = turtlebot_.get_body_twist(wheel_pos);
 
@@ -357,6 +382,10 @@ private:
     odom_tf_.transform.translation.y = odom_msg_.pose.pose.position.y;
     odom_tf_.transform.rotation = odom_msg_.pose.pose.orientation;
     odom_tf_.header.stamp = odom_msg_.header.stamp;
+    // if (tf_fix_enable_) {
+    //   odom_tf_.header.stamp.sec += tf_fix_seconds_;
+    //   odom_tf_.header.stamp.nanosec += tf_fix_nanoseconds_;
+    // }
 
     //Broadcast transform
     broadcaster_->sendTransform(odom_tf_);
@@ -510,7 +539,10 @@ private:
     //Build transform
     map_odom_tf_.transform = tf_to_tf_msg(slam_map_odom_tf_);
     map_odom_tf_.header.stamp = slam_time;
-    map_odom_tf_.header.stamp.sec += 6; //offset to handle past extrapolation garbage
+    // if (tf_fix_enable_) {
+    //   map_odom_tf_.header.stamp.sec += tf_fix_seconds_;
+    //   map_odom_tf_.header.stamp.nanosec += tf_fix_nanoseconds_;
+    // }
 
     //Broadcast transform
     broadcaster_->sendTransform(map_odom_tf_);

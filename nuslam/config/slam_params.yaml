@@ -2,20 +2,20 @@
   ros__parameters:
     kalman:
       process_noise:
-        theta: 0.05
-        x: 0.05
-        y: 0.05
+        theta: 0.001
+        x: 0.001
+        y: 0.001
       sensor_noise: 0.1
     clusters:
       visualize: true
-      threshold: 0.1 # m
+      threshold: 0.2 # m
     circles:
       visualize: true
       classification:
-        mean_min: 90.0 #0.0 #70.0 # deg
-        mean_max: 135.0 #360.0  #55.0 # deg
-        std_dev_max: 8.6 #1000.0 # deg
+        mean_min: 70.0 # deg
+        mean_max: 155.0 # deg
+        std_dev_max: 8.6 # deg
       radius_min: 0.01 # m
       radius_max: 0.1 # m
     mahalanobis:
-      threshold: 0.25 # m
+      threshold: 1.0 # m

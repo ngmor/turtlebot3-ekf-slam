@@ -200,6 +200,7 @@ private:
   nav_msgs::msg::Path path_;
   geometry_msgs::msg::PoseStamped config_pose_msg_;
   size_t path_num_points_;
+  bool first_joint_states_ = true;
 
 
   /// \brief publish odometry estimate path
@@ -257,6 +258,13 @@ private:
 
     //No point in doing odometry if both wheels have not been detected
     if (wheel_count != 2) {return;}
+
+    //init wheel pos with first received states
+    if (first_joint_states_) {
+      turtlebot_.set_wheel_pos(wheel_pos);
+      first_joint_states_ = false;
+      return;
+    }
 
     //Get body twist
     Twist2D body_twist = turtlebot_.get_body_twist(wheel_pos);
