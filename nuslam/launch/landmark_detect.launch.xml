@@ -41,11 +41,15 @@
         if="$(eval '\'$(var robot)\' == \'nusim\'')"
     >
         <param from="$(find-pkg-share nuslam)/config/slam_params_sim.yaml"/>
+        <param name="clusters.visualize" value="true"/>
+        <param name="circles.visualize" value="true"/>
     </node>
 
     <node pkg="nuslam" exec="landmarks" 
         if="$(eval '\'$(var robot)\' == \'localhost\'')"
     >
         <param from="$(find-pkg-share nuslam)/config/slam_params_real.yaml"/>
+        <param name="clusters.visualize" value="true"/>
+        <param name="circles.visualize" value="true"/>
     </node>
 </launch>
