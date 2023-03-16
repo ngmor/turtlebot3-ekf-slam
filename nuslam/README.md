@@ -1,8 +1,6 @@
 # NUSLAM
 A package implementing Extended Kalman Filter SLAM with landmark detection and unknown data association for the NUTurtle with a 2D lidar.
 
-TODO - update this file and add the real robot video.
-
 `ros2 launch nuslam turtlebot_bringup.launch.xml` to launch EKF SLAM using landmark detection and unknown data association on a TurtleBot3.
 
 `ros2 launch nuslam pc_bringup.launch.xml` to bring up corresponding RVIZ nodes to visualize the position of the TurtleBot3.
@@ -13,47 +11,81 @@ TODO - update this file and add the real robot video.
 
 `ros2 launch nuslam landmark_detect.launch.xml` to launch a simulation to test landmark detection.
 
+## Demo Video (Real Robot)
+[EKF SLAM with Landmark Detection and Unknown Data Association on Real Robot](https://user-images.githubusercontent.com/113186159/225492968-baeebdf7-f481-4faf-a2ae-2aefef27c33b.mp4)
+
+### Results
+#### Final Poses
+##### Ground Truth
+```
+x: 0.0 m
+y: 0.0 m
+θ: 0.0 rad
+```
+
+Although this may not be the case, I assume I drove the real robot back to its precise starting location.
+
+##### Odometry Estimate (Blue)
+```
+x:  0.234 m
+y:  0.190 m
+θ: -0.502 rad
+
+Positional error: 0.301 m
+Rotational error: 0.502 rad
+```
+
+Odometry uses the movement of the wheels and kinematics to determine the estimated pose of the robot after driving some distance. However, it has quite some error. This error is entirely induced due to slip of the wheels on the ground as the robot moves quickly. The pose of the robot estimated by odometry is pretty inaccurate by the time the end of the loop is reached.
+
+##### EKF SLAM with Landmark Detection and Unknown Data Association (Green)
+```
+x:  0.016 m
+y:  0.010 m
+θ:  0.036 rad
+
+Positional error: 0.019 m
+Rotational error: 0.036 rad
+```
+
+The EKF SLAM algorithm also uses odometry data for its prediction of the changing state of the robot. However, it also uses lidar data, processed with supervised and unsupervised learning to detect landmarks. Landmark data is then associated with previously detected data using a Mahalanobis distance threshold. This associated data is then used to correct the odometry prediction and arrive at a much closer estimate to the actual pose of the robot.
+
 ## Demo Video (Simulation)
-[EKF SLAM with Landmark Detection and Unknown Data Association](https://user-images.githubusercontent.com/113186159/224628096-42106e8a-a0df-489a-b64e-3a5f029f5f36.webm)
-
-The video is unfortunately choppy due to the screencasting software. The real simulation runs smoothly.
-
-TODO update with better video
+[EKF SLAM with Landmark Detection and Unknown Data Association in Simulation](https://user-images.githubusercontent.com/113186159/225497535-290d4c54-8d28-4348-8bd8-1ac47e9ae1f5.mp4)
 
 ### Results
 #### Final Poses
 ##### Ground Truth (Red)
 ```
-x: -0.001 m
-y: -0.005 m
-θ: -0.028 rad
+x:  0.010 m
+y:  0.012 m
+θ: -0.039 rad
 ```
 
 This ground truth data comes from simulation motion of the robot. It is subject to input command noise and slipping and can also crash into obstacles. All these together mean this robot will not follow the theoretical perfect path it is commanded to follow.
 
 ##### Odometry Estimate (Blue)
 ```
-x: -0.555 m
-y: -0.396 m
-θ:  0.030 rad
+x: -0.649 m
+y: -0.150 m
+θ: -0.193 rad
 
-Positional error: 0.678 m
-Rotational error: 0.058 rad
+Positional error: 0.679 m
+Rotational error: 0.154 rad
 ```
 
-This large error is primarily due to the robot crashing into an obstacle during its path (but is also due to slipping when not colliding with an obstacle). Odometry has no way to detect this, and so quite a bit of error is introduced.
+This large error is primarily due to the robot crashing into an obstacle during its path (but is also due to simulated wheel slippage when not colliding with an obstacle). Odometry has no way to detect this, and so quite a bit of error is introduced.
 
 ##### EKF SLAM with Landmark Detection and Unknown Data Association (Green)
 ```
-x: -0.003 m
-y: -0.005 m
-θ: -0.036 rad
+x:  0.011 m
+y:  0.011 m
+θ: -0.054 rad
 
-Positional error: 0.002 m
-Rotational error: 0.008 rad
+Positional error: 0.001 m
+Rotational error: 0.015 rad
 ```
 
-The EKF SLAM algorithm also uses odometry data for its prediction of the changing state of the robot. However, it also uses simulated lidar data, processed with supervised and unsupervised learning to detect landmarks. Landmark data is then associated with previously detected data using a Mahalanobis distance threshold. This associated data is then used to correct the odometry prediction and arrive at a much closer estimate to the actual pose of the robot.
+The EKF SLAM algorithm outperforms odometry in simulation as well.
 
 ## Demo Screenshot (Simulation with Fake Sensor Data)
 ![SLAM Demo](images/demo.png)

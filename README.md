@@ -2,7 +2,8 @@
 * Nicolas Morales
 * Winter 2023
 
-TODO add final demo video here
+## Demo Video
+[EKF SLAM with Landmark Detection and Unknown Data Association on Real Robot](https://user-images.githubusercontent.com/113186159/225492968-baeebdf7-f481-4faf-a2ae-2aefef27c33b.mp4)
 
 # Package List
 This repository consists of several ROS packages
